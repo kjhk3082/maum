@@ -36,54 +36,13 @@ export const signInWithKakaoSDK = async () => {
       return await signInWithKakaoPopup()
     }
 
-    // 데스크톱에서는 카카오 SDK 표준 로그인 사용
+    // 데스크톱에서는 팝업 방식 사용 (원래 잘 되던 방식)
     try {
-      console.log('데스크톱 환경 - 카카오 SDK 로그인 시도...')
-      
-      return new Promise((resolve) => {
-        window.Kakao.Auth.login({
-          success: async (authObj) => {
-            console.log('카카오 인증 성공:', authObj)
-            
-            try {
-              const userResponse = await window.Kakao.API.request({
-                url: '/v2/user/me'
-              })
-              
-              console.log('카카오 사용자 정보 성공:', userResponse)
-
-              const userInfo = {
-                id: userResponse.id.toString(),
-                uid: userResponse.id.toString(),
-                name: userResponse.properties?.nickname || '카카오 사용자',
-                email: userResponse.kakao_account?.email || '',
-                profileImage: userResponse.properties?.profile_image || '',
-                loginType: 'kakao',
-                loginAt: new Date().toISOString(),
-                accessToken: authObj.access_token
-              }
-
-              await saveUserToFirestore(userInfo)
-              
-              resolve({
-                success: true,
-                user: userInfo
-              })
-            } catch (apiError) {
-              console.error('사용자 정보 조회 실패:', apiError)
-              resolve(await createDemoUser())
-            }
-          },
-          fail: (error) => {
-            console.error('카카오 로그인 실패:', error)
-            resolve(createDemoUser())
-          }
-        })
-      })
-
-    } catch (authError) {
-      console.error('카카오 SDK 로그인 실패, 팝업 방식으로 전환:', authError)
+      console.log('데스크톱 환경 - 팝업 로그인 시도...')
       return await signInWithKakaoPopup()
+    } catch (authError) {
+      console.error('팝업 로그인 실패:', authError)
+      return await createDemoUser()
     }
 
   } catch (error) {
