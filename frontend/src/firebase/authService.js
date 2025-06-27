@@ -12,7 +12,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './config'
 
 /**
- * 카카오 SDK 로그인
+ * 카카오 SDK 로그인 (최신 API 사용)
  */
 export const signInWithKakaoSDK = async () => {
   try {
@@ -24,57 +24,22 @@ export const signInWithKakaoSDK = async () => {
       throw new Error('카카오 SDK가 초기화되지 않았습니다')
     }
 
+    // 카카오 로그인 상태 확인
+    const authStatus = window.Kakao.Auth.getStatusInfo()
+    console.log('카카오 인증 상태:', authStatus)
+
     return new Promise((resolve, reject) => {
-      window.Kakao.Auth.login({
+      // 카카오 로그인 요청
+      window.Kakao.Auth.authorize({
+        redirectUri: window.location.origin + '/oauth/callback',
         success: async (authObj) => {
           console.log('카카오 로그인 성공:', authObj)
           
           try {
             // 카카오 사용자 정보 가져오기
-            window.Kakao.API.request({
-              url: '/v2/user/me',
-              success: async (res) => {
-                console.log('카카오 사용자 정보:', res)
-                
-                try {
-                  const userInfo = {
-                    id: res.id.toString(),
-                    name: res.properties?.nickname || '카카오 사용자',
-                    email: res.kakao_account?.email || '',
-                    profileImage: res.properties?.profile_image || '',
-                    loginType: 'kakao',
-                    loginAt: new Date().toISOString(),
-                    accessToken: authObj.access_token
-                  }
-
-                  // Firebase에 사용자 정보 저장
-                  await saveUserToFirestore(userInfo)
-                  
-                  // 로컬스토리지에 토큰 저장
-                  localStorage.setItem('kakao_token', authObj.access_token)
-                  
-                  resolve({
-                    success: true,
-                    user: userInfo
-                  })
-                } catch (error) {
-                  console.error('사용자 정보 처리 오류:', error)
-                  reject({
-                    success: false,
-                    error: '사용자 정보 처리 중 오류가 발생했습니다'
-                  })
-                }
-              },
-              fail: (error) => {
-                console.error('카카오 API 요청 실패:', error)
-                reject({
-                  success: false,
-                  error: error.msg || '사용자 정보 조회 실패'
-                })
-              }
-            })
+            await getUserInfo(authObj, resolve, reject)
           } catch (error) {
-            console.error('카카오 API 요청 오류:', error)
+            console.error('사용자 정보 요청 오류:', error)
             reject({
               success: false,
               error: '사용자 정보 요청 중 오류가 발생했습니다'
@@ -92,6 +57,87 @@ export const signInWithKakaoSDK = async () => {
     })
   } catch (error) {
     console.error('카카오 SDK 로그인 오류:', error)
+    
+    // 폴백: 팝업 방식으로 시도
+    try {
+      return await signInWithKakaoPopup()
+    } catch (fallbackError) {
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+}
+
+/**
+ * 카카오 팝업 로그인 (폴백 방식)
+ */
+export const signInWithKakaoPopup = async () => {
+  try {
+    if (!window.Kakao) {
+      throw new Error('카카오 SDK가 로드되지 않았습니다')
+    }
+
+    if (!window.Kakao.isInitialized()) {
+      throw new Error('카카오 SDK가 초기화되지 않았습니다')
+    }
+
+    return new Promise((resolve, reject) => {
+      // 팝업 방식 로그인 (구버전 호환)
+      try {
+        // 로그인 요청
+        window.Kakao.Auth.login({
+          success: async (authObj) => {
+            console.log('카카오 팝업 로그인 성공:', authObj)
+            await getUserInfo(authObj, resolve, reject)
+          },
+          fail: (error) => {
+            console.error('카카오 팝업 로그인 실패:', error)
+            reject({
+              success: false,
+              error: error.error_description || '카카오 로그인 실패'
+            })
+          }
+        })
+      } catch (error) {
+        // login API가 없으면 직접 사용자 정보 요청
+        console.log('Auth.login API 없음, 직접 사용자 정보 요청 시도')
+        
+        window.Kakao.API.request({
+          url: '/v2/user/me',
+          success: async (res) => {
+            console.log('카카오 사용자 정보 (직접 요청):', res)
+            
+            const userInfo = {
+              id: res.id.toString(),
+              name: res.properties?.nickname || '카카오 사용자',
+              email: res.kakao_account?.email || '',
+              profileImage: res.properties?.profile_image || '',
+              loginType: 'kakao',
+              loginAt: new Date().toISOString(),
+              accessToken: 'direct_api_call'
+            }
+
+            await saveUserToFirestore(userInfo)
+            
+            resolve({
+              success: true,
+              user: userInfo
+            })
+          },
+          fail: (error) => {
+            console.error('직접 사용자 정보 요청 실패:', error)
+            reject({
+              success: false,
+              error: '사용자 정보 조회 실패'
+            })
+          }
+        })
+      }
+    })
+  } catch (error) {
+    console.error('카카오 팝업 로그인 오류:', error)
     return {
       success: false,
       error: error.message
@@ -100,10 +146,61 @@ export const signInWithKakaoSDK = async () => {
 }
 
 /**
- * 카카오 팝업 로그인 (Legacy - SDK 방식으로 대체)
+ * 카카오 사용자 정보 가져오기
  */
-export const signInWithKakaoPopup = async () => {
-  return await signInWithKakaoSDK()
+const getUserInfo = async (authObj, resolve, reject) => {
+  try {
+    window.Kakao.API.request({
+      url: '/v2/user/me',
+      success: async (res) => {
+        console.log('카카오 사용자 정보:', res)
+        
+        try {
+          const userInfo = {
+            id: res.id.toString(),
+            name: res.properties?.nickname || '카카오 사용자',
+            email: res.kakao_account?.email || '',
+            profileImage: res.properties?.profile_image || '',
+            loginType: 'kakao',
+            loginAt: new Date().toISOString(),
+            accessToken: authObj.access_token || 'unknown'
+          }
+
+          // Firebase에 사용자 정보 저장
+          await saveUserToFirestore(userInfo)
+          
+          // 로컬스토리지에 토큰 저장
+          if (authObj.access_token) {
+            localStorage.setItem('kakao_token', authObj.access_token)
+          }
+          
+          resolve({
+            success: true,
+            user: userInfo
+          })
+        } catch (error) {
+          console.error('사용자 정보 처리 오류:', error)
+          reject({
+            success: false,
+            error: '사용자 정보 처리 중 오류가 발생했습니다'
+          })
+        }
+      },
+      fail: (error) => {
+        console.error('카카오 API 요청 실패:', error)
+        reject({
+          success: false,
+          error: error.msg || '사용자 정보 조회 실패'
+        })
+      }
+    })
+  } catch (error) {
+    console.error('getUserInfo 오류:', error)
+    reject({
+      success: false,
+      error: '사용자 정보 요청 중 오류가 발생했습니다'
+    })
+  }
 }
 
 /**
@@ -122,10 +219,18 @@ export const signOutUser = async () => {
     if (window.Kakao && window.Kakao.Auth) {
       try {
         await new Promise((resolve) => {
-          window.Kakao.Auth.logout(() => {
-            console.log('카카오 로그아웃 완료')
+          // 최신 API 사용
+          if (window.Kakao.Auth.logout) {
+            window.Kakao.Auth.logout(() => {
+              console.log('카카오 로그아웃 완료')
+              resolve()
+            })
+          } else {
+            // 폴백: 액세스 토큰 제거
+            window.Kakao.Auth.setAccessToken(null)
+            console.log('카카오 토큰 제거 완료')
             resolve()
-          })
+          }
         })
       } catch (error) {
         console.warn('카카오 로그아웃 오류:', error)
