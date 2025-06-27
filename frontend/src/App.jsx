@@ -9,7 +9,7 @@ import FAQ from './components/FAQ'
 import Login from './components/Login'
 import MyPage from './components/MyPage'
 import AdminDashboard from './components/AdminDashboard'
-import { onAuthStateChange, getCurrentUser, initializeAuth, handleRedirectResult } from './firebase/authService'
+import { onAuthStateChange, initializeAuth } from './firebase/authService'
 import './App.css'
 
 // 다크모드 컨텍스트
@@ -67,17 +67,10 @@ function App() {
   // Firebase 인증 상태 리스너
   useEffect(() => {
     const setupAuth = async () => {
-      // 앱 시작 시 Firebase 초기화 (기존 사용자 제거)
+      // 앱 시작 시 Firebase 초기화
       await initializeAuth()
       
-      // 카카오 리다이렉트 결과 처리
-      const redirectResult = await handleRedirectResult()
-      if (redirectResult.success) {
-        console.log('카카오 로그인 성공 (리다이렉트):', redirectResult.user)
-        handleLogin(redirectResult.user)
-      }
-      
-      // 카카오 로그인 사용자만 인정하는 리스너 설정
+      // Google 로그인 사용자 인증 상태 리스너 설정
       const unsubscribe = onAuthStateChange((user) => {
         setUser(user)
         setIsLoggedIn(!!user)

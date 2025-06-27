@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MessageCircle, Star, Heart, Sparkles, Shield, Zap, Layers, CheckCircle, Loader, XCircle } from 'lucide-react'
-import { signInWithKakaoSDK, checkKakaoSDK } from '../firebase/authService'
+import { signInWithGoogle } from '../firebase/authService'
 import { ThemeContext } from '../App'
 
 function Login({ onLogin }) {
@@ -15,19 +15,14 @@ function Login({ onLogin }) {
     // SDK 방식에서는 리다이렉트 처리가 App.jsx에서 됨
   }, [navigate, onLogin])
 
-  // 카카오 SDK 로그인
-  const handleKakaoLogin = async () => {
+  // Google 로그인
+  const handleGoogleLogin = async () => {
     setIsLoading(true)
     setError('')
     setLoginStatus('processing')
     
     try {
-      // 카카오 SDK 상태 확인
-      if (!checkKakaoSDK()) {
-        throw new Error('카카오 SDK가 초기화되지 않았습니다. 페이지를 새로고침해주세요.')
-      }
-
-      const result = await signInWithKakaoSDK()
+      const result = await signInWithGoogle()
       
       if (result.success) {
         setLoginStatus('success')
@@ -376,9 +371,9 @@ function Login({ onLogin }) {
 
           {/* 로그인 버튼들 */}
           <div style={{ marginBottom: '32px' }}>
-            {/* 카카오 로그인 버튼 */}
+            {/* Google 로그인 버튼 */}
             <button
-              onClick={handleKakaoLogin}
+              onClick={handleGoogleLogin}
               disabled={isLoading}
               style={{
                 width: '100%',
@@ -387,15 +382,15 @@ function Login({ onLogin }) {
                 justifyContent: 'center',
                 gap: '16px',
                 padding: '20px 32px',
-                background: 'linear-gradient(145deg, #FEE500, #FFCD00)',
+                background: 'linear-gradient(145deg, #4285F4, #3367D6)',
                 border: 'none',
                 borderRadius: '20px',
-                color: '#000000',
+                color: '#ffffff',
                 fontSize: '17px',
                 fontWeight: '600',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                boxShadow: '0 12px 24px rgba(254, 229, 0, 0.3), 0 4px 8px rgba(254, 229, 0, 0.2)',
+                boxShadow: '0 12px 24px rgba(66, 133, 244, 0.3), 0 4px 8px rgba(66, 133, 244, 0.2)',
                 marginBottom: '16px',
                 opacity: isLoading ? 0.7 : 1,
                 position: 'relative',
@@ -404,13 +399,13 @@ function Login({ onLogin }) {
               onMouseEnter={(e) => {
                 if (!isLoading) {
                   e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)'
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(254, 229, 0, 0.4), 0 8px 16px rgba(254, 229, 0, 0.3)'
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(66, 133, 244, 0.4), 0 8px 16px rgba(66, 133, 244, 0.3)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isLoading) {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(254, 229, 0, 0.3), 0 4px 8px rgba(254, 229, 0, 0.2)'
+                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(66, 133, 244, 0.3), 0 4px 8px rgba(66, 133, 244, 0.2)'
                 }
               }}
             >
@@ -418,15 +413,20 @@ function Login({ onLogin }) {
                 <div style={{
                   width: '24px',
                   height: '24px',
-                  border: '3px solid #000000',
+                  border: '3px solid #ffffff',
                   borderTop: '3px solid transparent',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }} />
               ) : (
                 <>
-                  <MessageCircle size={24} strokeWidth={2} />
-                  <span style={{ letterSpacing: '-0.01em' }}>카카오로 시작하기</span>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span style={{ letterSpacing: '-0.01em' }}>Google로 시작하기</span>
                 </>
               )}
             </button>
