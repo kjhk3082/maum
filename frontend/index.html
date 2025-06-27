@@ -15,6 +15,7 @@
     <meta name="description" content="감정을 기록하고 마음을 돌보는 일기 앱" />
     
     <!-- PWA 메타 태그 -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="마음일기" />
@@ -33,23 +34,36 @@
     <meta name="twitter:image" content="/icon-512x512.png" />
     
     <title>마음일기</title>
-    <!-- 카카오 JavaScript SDK -->
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" onload="initializeKakao()" onerror="console.error('카카오 SDK 로드 실패')"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- 카카오 JavaScript SDK -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
     <script>
-      // 카카오 SDK 초기화
+      // 카카오 SDK 초기화 함수
       function initializeKakao() {
         try {
           if (window.Kakao && !window.Kakao.isInitialized()) {
             window.Kakao.init('240138285eefbcd9ab66f4a85efbfbb5')
             console.log('카카오 SDK 초기화 완료:', window.Kakao.isInitialized())
+            console.log('카카오 SDK 버전:', window.Kakao.VERSION)
           }
         } catch (error) {
           console.error('카카오 SDK 초기화 실패:', error)
         }
+      }
+      
+      // SDK 로드 완료 후 초기화
+      if (window.Kakao) {
+        initializeKakao()
+      } else {
+        // SDK가 아직 로드되지 않았다면 잠시 후 재시도
+        setTimeout(() => {
+          if (window.Kakao) {
+            initializeKakao()
+          }
+        }, 100)
       }
       
       // DOM 로드 완료 후에도 한 번 더 확인
@@ -58,8 +72,10 @@
           if (window.Kakao && !window.Kakao.isInitialized()) {
             initializeKakao()
           }
-        }, 100)
+        }, 200)
       })
     </script>
+    
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

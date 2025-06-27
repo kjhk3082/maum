@@ -540,37 +540,37 @@ export default function CalendarModern({ onLogout, user }) {
         {/* 통계 카드들 */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '12px',
+          marginBottom: '16px'
         }}>
           {/* 월간 일기 수 */}
           <div style={{
             backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '16px',
-            padding: '20px',
+            borderRadius: '12px',
+            padding: '16px',
             boxShadow: isDarkMode 
-              ? '0 2px 10px rgba(0, 0, 0, 0.3)' 
-              : '0 2px 10px rgba(0, 0, 0, 0.05)',
+              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
+              : '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '40px',
-                height: '40px',
+                width: '32px',
+                height: '32px',
                 backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Calendar size={20} color="#17A2B8" />
+                <Calendar size={16} color="#17A2B8" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
                   이번 달 일기
                 </h3>
-                <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#17A2B8' }}>
+                <p style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#17A2B8' }}>
                   {monthlyEntries}개
                 </p>
               </div>
@@ -580,30 +580,31 @@ export default function CalendarModern({ onLogout, user }) {
           {/* 연속 작성일 */}
           <div style={{
             backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '16px',
-            padding: '20px',
+            borderRadius: '12px',
+            padding: '16px',
             boxShadow: isDarkMode 
-              ? '0 2px 10px rgba(0, 0, 0, 0.3)' 
-              : '0 2px 10px rgba(0, 0, 0, 0.05)',
+              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
+              : '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '40px',
-                height: '40px',
+                width: '32px',
+                height: '32px',
                 backgroundColor: 'rgba(255, 149, 0, 0.1)',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                fontSize: '14px'
               }}>
                 🔥
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
                   연속 작성일
                 </h3>
-                <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#FF9500' }}>
+                <p style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#FF9500' }}>
                   {streakDays}일
                 </p>
               </div>
@@ -613,31 +614,31 @@ export default function CalendarModern({ onLogout, user }) {
           {/* 이번 달 주요 감정 */}
           <div style={{
             backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '16px',
-            padding: '20px',
+            borderRadius: '12px',
+            padding: '16px',
             boxShadow: isDarkMode 
-              ? '0 2px 10px rgba(0, 0, 0, 0.3)' 
-              : '0 2px 10px rgba(0, 0, 0, 0.05)',
+              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
+              : '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '40px',
-                height: '40px',
+                width: '32px',
+                height: '32px',
                 backgroundColor: mostFrequentEmotion ? `${emotions[mostFrequentEmotion]?.bgColor}` : 'rgba(142, 142, 147, 0.1)',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '20px'
+                fontSize: '16px'
               }}>
                 {mostFrequentEmotion ? emotions[mostFrequentEmotion]?.emoji : '😊'}
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
+                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
                   이번 달 주요 감정
                 </h3>
-                <p style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: mostFrequentEmotion ? emotions[mostFrequentEmotion]?.color : '#8E8E93' }}>
+                <p style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: mostFrequentEmotion ? emotions[mostFrequentEmotion]?.color : '#8E8E93' }}>
                   {mostFrequentEmotion ? 
                     (mostFrequentEmotion === 'HAPPY' ? '기쁨' : 
                      mostFrequentEmotion === 'SAD' ? '슬픔' : 
@@ -654,26 +655,26 @@ export default function CalendarModern({ onLogout, user }) {
         {/* 캘린더 헤더 */}
         <div style={{
           backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-          borderRadius: '20px',
-          padding: '24px',
-          marginBottom: '20px',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '0',
           boxShadow: isDarkMode 
-            ? '0 2px 10px rgba(0, 0, 0, 0.3)' 
-            : '0 2px 10px rgba(0, 0, 0, 0.05)',
+            ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
+            : '0 2px 8px rgba(0, 0, 0, 0.04)',
           border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '20px'
+            marginBottom: '16px'
           }}>
             <button
               onClick={prevMonth}
               style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)',
                 border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(23, 162, 184, 0.3)'}`,
                 cursor: 'pointer',
@@ -692,25 +693,25 @@ export default function CalendarModern({ onLogout, user }) {
               }}
             >
               <ChevronLeft 
-                size={32} 
+                size={28} 
                 color={isDarkMode ? '#FFFFFF' : '#17A2B8'} 
-                strokeWidth={4}
-                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}
+                strokeWidth={3}
+                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
               />
             </button>
 
-            <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: '10px' }}>
               {/* 년도 선택 */}
               <select
                 value={currentYear}
                 onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentMonth, 1))}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
                   border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
                   backgroundColor: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                   color: isDarkMode ? '#FFFFFF' : '#1D1D1F',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   outline: 'none'
@@ -726,12 +727,12 @@ export default function CalendarModern({ onLogout, user }) {
                 value={currentMonth}
                 onChange={(e) => setCurrentDate(new Date(currentYear, parseInt(e.target.value), 1))}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
                   border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
                   backgroundColor: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                   color: isDarkMode ? '#FFFFFF' : '#1D1D1F',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   outline: 'none'
@@ -746,12 +747,12 @@ export default function CalendarModern({ onLogout, user }) {
               <button
                 onClick={() => setCurrentDate(new Date())}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
                   backgroundColor: '#17A2B8',
                   color: 'white',
                   border: 'none',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
@@ -770,9 +771,9 @@ export default function CalendarModern({ onLogout, user }) {
             <button
               onClick={nextMonth}
               style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)',
                 border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(23, 162, 184, 0.3)'}`,
                 cursor: 'pointer',
@@ -791,10 +792,10 @@ export default function CalendarModern({ onLogout, user }) {
               }}
             >
               <ChevronRight 
-                size={32} 
+                size={28} 
                 color={isDarkMode ? '#FFFFFF' : '#17A2B8'} 
-                strokeWidth={4}
-                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}
+                strokeWidth={3}
+                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
               />
             </button>
           </div>
@@ -803,18 +804,18 @@ export default function CalendarModern({ onLogout, user }) {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: '8px',
-            marginBottom: '16px'
+            gap: '6px',
+            marginBottom: '12px'
           }}>
             {weekDays.map((day, index) => (
               <div
                 key={day}
                 style={{
                   textAlign: 'center',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: '600',
                   color: index === 0 ? '#FF3B30' : index === 6 ? '#17A2B8' : (isDarkMode ? '#8E8E93' : '#6D6D70'),
-                  padding: '8px 0'
+                  padding: '6px 0'
                 }}
               >
                 {day}
@@ -826,7 +827,7 @@ export default function CalendarModern({ onLogout, user }) {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: '8px'
+            gap: '6px'
           }}>
             {calendarDays.map((date, index) => {
               const entry = hasEntry(date)
@@ -839,8 +840,9 @@ export default function CalendarModern({ onLogout, user }) {
                   onClick={() => handleDateClick(date)}
                   style={{
                     aspectRatio: '1',
-                    minHeight: '48px',
-                    borderRadius: '12px',
+                    minHeight: '36px',
+                    maxHeight: '40px',
+                    borderRadius: '8px',
                     border: 'none',
                     backgroundColor: isTodayDate 
                       ? '#17A2B8' 
@@ -853,7 +855,7 @@ export default function CalendarModern({ onLogout, user }) {
                         ? (isDarkMode ? '#48484A' : '#C7C7CC')
                         : (isDarkMode ? '#FFFFFF' : '#1D1D1F'),
                     cursor: 'pointer',
-                    fontSize: '16px',
+                    fontSize: '14px',
                     fontWeight: isTodayDate ? '700' : '500',
                     transition: 'all 0.2s',
                     position: 'relative',
@@ -861,12 +863,13 @@ export default function CalendarModern({ onLogout, user }) {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '2px',
+                    gap: '1px',
                     opacity: !isCurrentMonthDate ? 0.4 : 1
                   }}
                   onMouseOver={(e) => {
                     if (!isTodayDate) {
                       e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(23, 162, 184, 0.1)'
+                      e.currentTarget.style.transform = 'scale(1.05)'
                     }
                   }}
                   onMouseOut={(e) => {
@@ -874,14 +877,16 @@ export default function CalendarModern({ onLogout, user }) {
                       e.currentTarget.style.backgroundColor = entry 
                         ? (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(23, 162, 184, 0.1)')
                         : 'transparent'
+                      e.currentTarget.style.transform = 'scale(1)'
                     }
                   }}
                 >
-                  <span>{date.getDate()}</span>
+                  <span style={{ fontSize: '13px' }}>{date.getDate()}</span>
                   {entry && (
                     <div style={{
-                      fontSize: '12px',
-                      opacity: 0.8
+                      fontSize: '10px',
+                      opacity: 0.9,
+                      lineHeight: '1'
                     }}>
                       {emotions[entry.emotion]?.emoji}
                     </div>
