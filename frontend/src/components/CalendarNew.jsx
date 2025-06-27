@@ -15,67 +15,19 @@ function CalendarNew() {
   const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState(new Date())
   
-  // 더미 데이터 초기화 함수
-  const initializeDummyData = () => {
-    // 개발 중이므로 항상 더미 데이터 초기화
-    console.log('🚀 CalendarNew: 더미 데이터 초기화 중...')
-    
-    // 6월 더미 데이터 (연속 작성일을 위해 6일 연속으로 설정)
-    const dummyData = {
-      '2025-06-15': {
-        title: '새로운 시작',
-        content: '오늘은 새로운 프로젝트를 시작했다. 설레기도 하고 긴장되기도 한다.',
-        emotion: 'HAPPY',
-        timestamp: '2025-06-15T20:30:00'
-      },
-      '2025-06-16': {
-        title: '조금 힘든 하루',
-        content: '프로젝트 진행이 생각보다 어렵다. 예상하지 못한 문제들이 계속 발생해서 스트레스를 받았다.',
-        emotion: 'ANXIOUS',
-        timestamp: '2025-06-16T21:15:00'
-      },
-      '2025-06-17': {
-        title: '돌파구를 찾다',
-        content: '어제의 문제를 해결할 방법을 찾았다! 동료와 함께 고민하니 좋은 아이디어가 나왔다.',
-        emotion: 'HAPPY',
-        timestamp: '2025-06-17T19:45:00'
-      },
-      '2025-06-18': {
-        title: '평온한 일상',
-        content: '오늘은 특별한 일 없이 평범한 하루를 보냈다. 가끔은 이런 평온한 일상이 더 소중하게 느껴진다.',
-        emotion: 'PEACEFUL',
-        timestamp: '2025-06-18T20:00:00'
-      },
-      '2025-06-19': {
-        title: '성취감',
-        content: '드디어 프로젝트의 첫 번째 단계를 완료했다! 며칠 동안 고생한 보람이 있다.',
-        emotion: 'HAPPY',
-        timestamp: '2025-06-19T22:30:00'
-      },
-      '2025-06-20': {
-        title: '좋은 하루',
-        content: '친구들과 오랜만에 만나서 즐거운 시간을 보냈다. 맛있는 음식도 먹고 많은 이야기도 나눴다.',
-        emotion: 'HAPPY',
-        timestamp: '2025-06-20T23:00:00'
-      }
-    }
-    
-    // 항상 더미 데이터로 초기화 (개발 중)
-    localStorage.setItem('diaryEntries', JSON.stringify(dummyData))
-    console.log('✅ 더미 데이터 저장 완료:', Object.keys(dummyData).length, '개 일기')
-    
-    return dummyData
-  }
-  
-  // 더미 데이터 초기화 및 상태 설정
+  // 더미 데이터 제거 - 로컬스토리지에서 실제 사용자 데이터만 사용
   const [diaryEntries, setDiaryEntries] = useState(() => {
-    return initializeDummyData()
+    return JSON.parse(localStorage.getItem('diaryEntries') || '{}')
   })
   
-  // 컴포넌트 마운트 시 더미 데이터 초기화
+  // 로컬스토리지 변경 감지
   useEffect(() => {
-    const initializedData = initializeDummyData()
-    setDiaryEntries(initializedData)
+    const handleStorageChange = () => {
+      setDiaryEntries(JSON.parse(localStorage.getItem('diaryEntries') || '{}'))
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   const today = new Date()

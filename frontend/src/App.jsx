@@ -5,6 +5,7 @@ import DiaryWrite from './components/DiaryWrite'
 import DiaryView from './components/DiaryView'
 import DiarySearch from './components/DiarySearch'
 import StatsPage from './components/StatsPage'
+import FAQ from './components/FAQ'
 import Login from './components/Login'
 import KakaoCallback from './components/KakaoCallback'
 import { onAuthStateChange, getCurrentUser } from './firebase/authService'
@@ -73,6 +74,39 @@ function App() {
     return () => unsubscribe()
   }, [])
 
+  // 앱 초기화 시 더미 데이터 정리 (한 번만 실행)
+  useEffect(() => {
+    const cleanupDummyData = () => {
+      const dummyDataCleared = localStorage.getItem('dummyDataCleared')
+      if (!dummyDataCleared) {
+        const existingData = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+        const dummyTitles = [
+          '새로운 시작', '조금 힘든 하루', '돌파구를 찾다', '평온한 일상', 
+          '성취감', '좋은 하루', '새로운 프로젝트 시작', '평온한 하루', 
+          '친구들과의 시간', '동마구를 찾다'
+        ]
+        
+        // 더미 데이터 제거
+        const cleanedData = {}
+        Object.entries(existingData).forEach(([date, diary]) => {
+          if (!dummyTitles.includes(diary.title)) {
+            cleanedData[date] = diary
+          }
+        })
+        
+        localStorage.setItem('diaryEntries', JSON.stringify(cleanedData))
+        localStorage.setItem('dummyDataCleared', 'true')
+        
+        const removedCount = Object.keys(existingData).length - Object.keys(cleanedData).length
+        if (removedCount > 0) {
+          console.log('🧹 더미 데이터 정리 완료:', removedCount, '개 제거')
+        }
+      }
+    }
+
+    cleanupDummyData()
+  }, [])
+
   const handleLogin = (userData) => {
     setUser(userData)
     setIsLoggedIn(true)
@@ -132,6 +166,7 @@ function App() {
             <Route path="/stats" element={
               isLoggedIn ? <StatsPage user={user} /> : <Login onLogin={handleLogin} />
             } />
+            <Route path="/faq" element={<FAQ />} />
           </Routes>
         </Router>
       </div>

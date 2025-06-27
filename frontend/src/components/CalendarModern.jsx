@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon } from 'lucide-react'
+import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle } from 'lucide-react'
 import { useTheme } from '../App'
 import { notificationService } from '../services/notificationService'
 import { getDiariesByMonth, getStreakDays } from '../firebase/diaryService'
@@ -421,6 +421,33 @@ export default function CalendarModern({ onLogout, user }) {
             >
               <BarChart3 size={16} />
               통계
+            </button>
+            
+            <button
+              onClick={() => navigate('/faq')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '400',
+                color: '#17A2B8',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(23, 162, 184, 0.1)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <HelpCircle size={16} />
+              FAQ
             </button>
             
             <button

@@ -24,10 +24,8 @@ export default function CalendarApple() {
     const storedDiaryEntries = localStorage.getItem('diaryEntries')
     if (storedDiaryEntries) {
       setDiaryEntries(JSON.parse(storedDiaryEntries))
-    } else {
-      // 데모 데이터 로드
-      loadDemoData()
     }
+    // 더미 데이터 로드 제거 - 실제 사용자 데이터만 사용
   }, [])
 
   useEffect(() => {
@@ -37,42 +35,7 @@ export default function CalendarApple() {
     }
   }, [diaryEntries, currentDate])
 
-  const loadDemoData = () => {
-    const demoDiaries = {
-      '2025-01-23': {
-        title: '새로운 프로젝트 시작',
-        content: '오늘부터 새로운 일기 프로젝트를 시작했다. 애플 스타일로 깔끔하게 만들어보자.',
-        emotion: 'HAPPY',
-        createdAt: '2025-01-23T19:30:00.000Z'
-      },
-      '2025-01-22': {
-        title: '평온한 하루',
-        content: '집에서 조용히 책을 읽으며 차를 마셨다. 마음이 편안해지는 하루였다.',
-        emotion: 'PEACEFUL',
-        createdAt: '2025-01-22T20:15:00.000Z'
-      },
-      '2025-01-21': {
-        title: '친구들과의 시간',
-        content: '오랜만에 친구들을 만나서 즐거운 시간을 보냈다. 함께 있을 때가 가장 행복하다.',
-        emotion: 'HAPPY',
-        createdAt: '2025-01-21T21:00:00.000Z'
-      },
-      '2025-01-20': {
-        title: '조금 힘든 날',
-        content: '일이 많아서 피곤했지만 그래도 하나씩 해결해나가고 있다.',
-        emotion: 'ANXIOUS',
-        createdAt: '2025-01-20T22:00:00.000Z'
-      },
-      '2025-01-19': {
-        title: '성취감',
-        content: '드디어 프로젝트의 중요한 부분을 완성했다. 뿌듯하다.',
-        emotion: 'HAPPY',
-        createdAt: '2025-01-19T20:30:00.000Z'
-      }
-    }
-    setDiaryEntries(demoDiaries)
-    localStorage.setItem('diaryEntries', JSON.stringify(demoDiaries))
-  }
+  // 더미 데이터 함수 제거 - 실제 사용자 데이터만 사용
 
   const calculateStats = () => {
     const currentYear = currentDate.getFullYear()

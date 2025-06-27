@@ -122,51 +122,70 @@ function EmotionStats({ user }) {
   // Firebase에서 감정 통계 데이터 로드
   useEffect(() => {
     const loadStatsData = async () => {
-      if (!user) return
-
       setIsLoading(true)
       try {
-        // 병렬로 데이터 로드
-        const [emotionResult, streakResult, diariesResult] = await Promise.all([
-          getEmotionStats(),
-          getStreakDays(),
-          getAllDiaries(365) // 최근 1년 데이터
-        ])
+        // 로컬스토리지에서 기본 데이터 로드
+        const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+        const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+          ...diary,
+          date: date,
+          id: date
+        }))
 
-        let newStatsData = {
+        console.log('📊 로컬 일기 데이터:', localDiariesArray.length, '개')
+
+        // 로컬 데이터로 기본 통계 계산
+        let localStatsData = calculateLocalStats(localDiariesArray)
+        setStatsData(localStatsData)
+
+        // Firebase 데이터 로드 시도 (백그라운드)
+        if (user) {
+          try {
+            const [emotionResult, streakResult, diariesResult] = await Promise.all([
+              getEmotionStats(),
+              getStreakDays(),
+              getAllDiaries(365)
+            ])
+
+            // Firebase 데이터가 있으면 업데이트
+            if (emotionResult.success && emotionResult.stats.totalDiaries > 0) {
+              console.log('🔥 Firebase 데이터로 업데이트:', emotionResult.stats.totalDiaries, '개')
+              
+              let firebaseStatsData = {
+                totalDiaries: emotionResult.stats.totalDiaries,
+                streakDays: streakResult.success ? streakResult.streakDays : 0,
+                emotionStats: emotionResult.stats.emotionStats,
+                emotionCounts: emotionResult.stats.emotionCounts,
+                monthlyData: [],
+                weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+              }
+
+              if (diariesResult.success) {
+                firebaseStatsData.monthlyData = calculateMonthlyData(diariesResult.diaries)
+                firebaseStatsData.weeklyPattern = calculateWeeklyPattern(diariesResult.diaries)
+              }
+
+              setStatsData(firebaseStatsData)
+            } else {
+              console.log('🔄 Firebase 데이터 없음, 로컬 데이터 유지')
+            }
+          } catch (firebaseError) {
+            console.warn('Firebase 로드 실패, 로컬 데이터 사용:', firebaseError)
+          }
+        }
+
+      } catch (error) {
+        console.error('감정 통계 로드 오류:', error)
+        
+        // 오류 시에도 기본값 설정
+        setStatsData({
           totalDiaries: 0,
           streakDays: 0,
           emotionStats: [],
           emotionCounts: {},
           monthlyData: [],
           weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
-        }
-
-        // 감정 통계 데이터 처리
-        if (emotionResult.success) {
-          newStatsData.totalDiaries = emotionResult.stats.totalDiaries
-          newStatsData.emotionStats = emotionResult.stats.emotionStats
-          newStatsData.emotionCounts = emotionResult.stats.emotionCounts
-        }
-
-        // 연속 작성일 데이터 처리
-        if (streakResult.success) {
-          newStatsData.streakDays = streakResult.streakDays
-        }
-
-        // 월별 및 주간 패턴 계산
-        if (diariesResult.success) {
-          const monthlyData = calculateMonthlyData(diariesResult.diaries)
-          const weeklyPattern = calculateWeeklyPattern(diariesResult.diaries)
-          
-          newStatsData.monthlyData = monthlyData
-          newStatsData.weeklyPattern = weeklyPattern
-        }
-
-        setStatsData(newStatsData)
-
-      } catch (error) {
-        console.error('감정 통계 로드 오류:', error)
+        })
       } finally {
         setIsLoading(false)
       }
@@ -174,6 +193,92 @@ function EmotionStats({ user }) {
 
     loadStatsData()
   }, [user])
+
+  // 로컬 데이터로 통계 계산
+  const calculateLocalStats = (diaries) => {
+    console.log('📈 로컬 통계 계산 시작:', diaries)
+    
+    if (diaries.length === 0) {
+      return {
+        totalDiaries: 0,
+        streakDays: 0,
+        emotionStats: [],
+        emotionCounts: {},
+        monthlyData: [],
+        weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+      }
+    }
+
+    // 감정별 카운트
+    const emotionCounts = {}
+    let totalDiaries = 0
+
+    diaries.forEach(diary => {
+      if (diary.emotion) {
+        emotionCounts[diary.emotion] = (emotionCounts[diary.emotion] || 0) + 1
+        totalDiaries++
+      }
+    })
+
+    // 감정 통계 생성
+    const emotionStats = Object.entries(emotionCounts).map(([emotion, count]) => ({
+      emotion,
+      count,
+      percentage: totalDiaries > 0 ? Math.round((count / totalDiaries) * 100) : 0
+    })).sort((a, b) => b.count - a.count)
+
+    // 연속 작성일 계산
+    const streakDays = calculateLocalStreak(diaries)
+
+    // 월별 및 주간 패턴 계산
+    const monthlyData = calculateMonthlyData(diaries)
+    const weeklyPattern = calculateWeeklyPattern(diaries)
+
+    console.log('📊 로컬 통계 결과:', {
+      totalDiaries,
+      streakDays,
+      emotionStats: emotionStats.length,
+      monthlyData: monthlyData.length
+    })
+
+    return {
+      totalDiaries,
+      streakDays,
+      emotionStats,
+      emotionCounts,
+      monthlyData,
+      weeklyPattern
+    }
+  }
+
+  // 로컬 데이터로 연속 작성일 계산
+  const calculateLocalStreak = (diaries) => {
+    if (diaries.length === 0) return 0
+
+    const sortedDiaries = diaries.sort((a, b) => new Date(b.date) - new Date(a.date))
+    
+    let streakDays = 0
+    let currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0)
+
+    for (const diary of sortedDiaries) {
+      const diaryDate = new Date(diary.date + 'T00:00:00')
+      const diffTime = currentDate - diaryDate
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+      if (diffDays === streakDays) {
+        streakDays++
+        currentDate.setDate(currentDate.getDate() - 1)
+      } else if (diffDays === streakDays + 1 && streakDays === 0) {
+        streakDays++
+        currentDate.setDate(currentDate.getDate() - 1)
+      } else {
+        break
+      }
+    }
+
+    return streakDays
+  }
 
   // 월별 데이터 계산
   const calculateMonthlyData = (diaries) => {
