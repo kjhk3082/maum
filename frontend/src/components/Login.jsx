@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MessageCircle, Star, Heart, Sparkles } from 'lucide-react'
+import { Calendar, MessageCircle, Star, Heart, Sparkles, Shield, Zap, Layers } from 'lucide-react'
 import { signInWithKakaoSDK, handleRedirectResult, checkKakaoSDK } from '../firebase/authService'
 import { ThemeContext } from '../App'
 
@@ -79,397 +79,438 @@ function Login({ onLogin }) {
     <div style={{
       minHeight: '100vh',
       background: isDarkMode 
-        ? 'linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 50%, #1C1C1E 100%)'
-        : 'linear-gradient(135deg, #F2F2F7 0%, #E5E5EA 50%, #F2F2F7 100%)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif',
+        ? 'radial-gradient(ellipse at top, #1a1a1a 0%, #0d0d0d 100%)' 
+        : 'radial-gradient(ellipse at top, #f7fafc 0%, #edf2f7 100%)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
-      {/* 배경 장식 요소들 */}
+      
+      {/* 고급스러운 배경 패턴 */}
       <div style={{
         position: 'absolute',
-        top: '20%',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: isDarkMode 
+          ? 'radial-gradient(circle at 20% 50%, rgba(74, 144, 226, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%)'
+          : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%)',
+        animation: 'breathe 8s ease-in-out infinite alternate'
+      }} />
+
+      {/* 떠다니는 장식 요소들 */}
+      <div style={{
+        position: 'absolute',
+        top: '10%',
         left: '10%',
+        width: '300px',
+        height: '300px',
+        background: isDarkMode 
+          ? 'linear-gradient(45deg, rgba(59, 130, 246, 0.1), transparent)'
+          : 'linear-gradient(45deg, rgba(59, 130, 246, 0.1), transparent)',
+        borderRadius: '50%',
+        filter: 'blur(60px)',
+        animation: 'float 20s ease-in-out infinite'
+      }} />
+      
+      <div style={{
+        position: 'absolute',
+        bottom: '10%',
+        right: '10%',
         width: '200px',
         height: '200px',
         background: isDarkMode 
-          ? 'radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(23, 162, 184, 0.1) 0%, transparent 70%)',
+          ? 'linear-gradient(45deg, rgba(168, 85, 247, 0.1), transparent)'
+          : 'linear-gradient(45deg, rgba(168, 85, 247, 0.15), transparent)',
         borderRadius: '50%',
-        animation: 'float 6s ease-in-out infinite'
+        filter: 'blur(40px)',
+        animation: 'float 15s ease-in-out infinite reverse'
       }} />
-      
-      <div style={{
-        position: 'absolute',
-        top: '60%',
-        right: '15%',
-        width: '150px',
-        height: '150px',
-        background: isDarkMode 
-          ? 'radial-gradient(circle, rgba(52, 199, 89, 0.1) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(255, 107, 53, 0.1) 0%, transparent 70%)',
-        borderRadius: '50%',
-        animation: 'float 8s ease-in-out infinite reverse'
-      }} />
-
-      {/* 떠다니는 아이콘들 */}
-      <div style={{
-        position: 'absolute',
-        top: '15%',
-        right: '20%',
-        color: isDarkMode ? 'rgba(255, 107, 53, 0.3)' : 'rgba(23, 162, 184, 0.3)',
-        animation: 'bounce 3s ease-in-out infinite'
-      }}>
-        <Heart size={24} />
-      </div>
-      
-      <div style={{
-        position: 'absolute',
-        bottom: '20%',
-        left: '15%',
-        color: isDarkMode ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255, 107, 53, 0.3)',
-        animation: 'bounce 4s ease-in-out infinite'
-      }}>
-        <Star size={20} />
-      </div>
-      
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '5%',
-        color: isDarkMode ? 'rgba(255, 214, 10, 0.3)' : 'rgba(52, 199, 89, 0.3)',
-        animation: 'bounce 5s ease-in-out infinite'
-      }}>
-        <Sparkles size={18} />
-      </div>
 
       {/* 메인 컨테이너 */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        padding: '20px',
         position: 'relative',
-        zIndex: 10
+        zIndex: 10,
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 auto',
+        padding: '20px'
       }}>
+        
+        {/* 메인 카드 */}
         <div style={{
-          width: '100%',
-          maxWidth: '420px',
-          margin: '0 auto'
+          background: isDarkMode 
+            ? 'linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.9))'
+            : 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))',
+          backdropFilter: 'blur(40px)',
+          borderRadius: '32px',
+          padding: '48px 40px',
+          boxShadow: isDarkMode
+            ? '0 32px 64px rgba(0, 0, 0, 0.5), 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            : '0 32px 64px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          border: isDarkMode 
+            ? '1px solid rgba(255, 255, 255, 0.08)'
+            : '1px solid rgba(255, 255, 255, 0.6)',
+          position: 'relative'
         }}>
-          {/* 메인 카드 */}
+          
+          {/* 상단 그라데이션 라인 */}
           <div style={{
-            background: isDarkMode 
-              ? 'rgba(44, 44, 46, 0.8)'
-              : 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '40px 32px',
-            boxShadow: isDarkMode
-              ? '0 20px 40px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.1) inset'
-              : '0 20px 40px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.8) inset',
-            border: isDarkMode 
-              ? '1px solid rgba(255, 255, 255, 0.1)'
-              : '1px solid rgba(0, 0, 0, 0.05)',
-            position: 'relative'
-          }}>
-            
-            {/* 로고 섹션 */}
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              {/* 앱 아이콘 */}
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '60%',
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #06d6a0, transparent)',
+            borderRadius: '1px'
+          }} />
+          
+          {/* 로고 섹션 */}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            {/* 로고 컨테이너 */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: '32px',
+              position: 'relative'
+            }}>
               <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: '24px'
-              }}>
-                <div style={{
-                  position: 'relative',
-                  padding: '8px',
-                  background: isDarkMode 
-                    ? 'linear-gradient(135deg, #FF6B35 0%, #D74E2B 100%)'
-                    : 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-                  borderRadius: '20px',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-                  transform: 'perspective(1000px) rotateX(10deg)',
-                  transition: 'all 0.3s ease'
-                }}>
-                  <img 
-                    src="/app-icon.png" 
-                    alt="마음일기" 
-                    style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '16px',
-                      display: 'block'
-                    }}
-                  />
-                  
-                  {/* 반짝임 효과 */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    width: '20px',
-                    height: '20px',
-                    background: 'rgba(255, 255, 255, 0.6)',
-                    borderRadius: '50%',
-                    filter: 'blur(4px)',
-                    animation: 'shimmer 2s ease-in-out infinite'
-                  }} />
-                </div>
-              </div>
-              
-              {/* 앱 이름 */}
-              <h1 style={{
-                margin: '0 0 8px 0',
-                fontSize: '32px',
-                fontWeight: '700',
+                position: 'relative',
+                padding: '16px',
                 background: isDarkMode 
-                  ? 'linear-gradient(135deg, #FFFFFF 0%, #E5E5EA 100%)'
-                  : 'linear-gradient(135deg, #1D1D1F 0%, #48484A 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                textAlign: 'center'
-              }}>
-                마음일기
-              </h1>
-              
-              {/* 부제목 */}
+                  ? 'linear-gradient(145deg, #3b82f6, #1d4ed8)'
+                  : 'linear-gradient(145deg, #3b82f6, #2563eb)',
+                borderRadius: '24px',
+                boxShadow: '0 20px 40px rgba(59, 130, 246, 0.4), 0 8px 16px rgba(59, 130, 246, 0.2)',
+                transform: 'perspective(1000px) rotateX(5deg)',
+                transition: 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) scale(1.05)'
+                e.currentTarget.style.boxShadow = '0 25px 50px rgba(59, 130, 246, 0.5), 0 10px 20px rgba(59, 130, 246, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg) scale(1)'
+                e.currentTarget.style.boxShadow = '0 20px 40px rgba(59, 130, 246, 0.4), 0 8px 16px rgba(59, 130, 246, 0.2)'
+              }}
+              >
+                <img 
+                  src="/app-icon.png" 
+                  alt="마음일기" 
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '20px',
+                    display: 'block'
+                  }}
+                />
+                
+                {/* 반짝임 오버레이 */}
+                <div style={{
+                  position: 'absolute',
+                  top: '20px',
+                  left: '20px',
+                  width: '40px',
+                  height: '40px',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+                  borderRadius: '50%',
+                  filter: 'blur(8px)',
+                  animation: 'shimmer 3s ease-in-out infinite'
+                }} />
+              </div>
+            </div>
+            
+            {/* 앱 이름 */}
+            <h1 style={{
+              margin: '0 0 12px 0',
+              fontSize: '42px',
+              fontWeight: '700',
+              background: isDarkMode 
+                ? 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)'
+                : 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              textAlign: 'center',
+              letterSpacing: '-0.02em'
+            }}>
+              마음일기
+            </h1>
+            
+            {/* 부제목 */}
+            <p style={{
+              margin: 0,
+              fontSize: '18px',
+              color: isDarkMode ? '#94a3b8' : '#64748b',
+              fontWeight: '400',
+              letterSpacing: '-0.01em'
+            }}>
+              당신의 감정을 기록하고 마음을 돌보세요
+            </p>
+          </div>
+
+          {/* 오류 메시지 */}
+          {error && (
+            <div style={{
+              marginBottom: '32px',
+              padding: '20px 24px',
+              borderRadius: '20px',
+              background: isDarkMode 
+                ? 'linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))'
+                : 'linear-gradient(145deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.3))',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              textAlign: 'center'
+            }}>
               <p style={{
                 margin: 0,
-                fontSize: '17px',
-                color: isDarkMode ? '#99999D' : '#6D6D70',
-                fontWeight: '400'
+                fontSize: '15px',
+                color: '#ef4444',
+                fontWeight: '500'
               }}>
-                하루를 기록하고 감정을 정리하세요
+                {error}
               </p>
             </div>
+          )}
 
-            {/* 오류 메시지 */}
-            {error && (
-              <div style={{
-                marginBottom: '24px',
-                padding: '16px',
-                borderRadius: '16px',
+          {/* 기능 소개 카드들 */}
+          <div style={{ marginBottom: '40px' }}>
+            {[
+              { icon: Calendar, title: '캘린더 기반 일기', desc: '직관적인 달력에서 날짜를 선택해 쉽게 작성하세요', gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' },
+              { icon: Zap, title: 'AI 작성 도움', desc: 'GPT-4o AI가 키워드를 자연스러운 문장으로 확장해드려요', gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+              { icon: Shield, title: '보안 & 프라이버시', desc: 'Firebase 클라우드로 안전하게 보호되는 개인 일기장', gradient: 'linear-gradient(135deg, #06d6a0, #048c73)' }
+            ].map((feature, index) => (
+              <div key={index} style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                padding: '24px 28px',
+                marginBottom: '16px',
+                borderRadius: '20px',
                 background: isDarkMode 
-                  ? 'rgba(255, 59, 48, 0.1)'
-                  : 'rgba(255, 59, 48, 0.05)',
-                border: '1px solid rgba(255, 59, 48, 0.2)',
-                textAlign: 'center'
-              }}>
-                <p style={{
-                  margin: 0,
-                  fontSize: '14px',
-                  color: '#FF3B30',
-                  fontWeight: '500'
-                }}>
-                  {error}
-                </p>
-              </div>
-            )}
-
-            {/* 기능 소개 */}
-            <div style={{ marginBottom: '32px' }}>
-              {[
-                { icon: Calendar, title: '📅 달력 기반 일기', desc: '캘린더에서 날짜를 선택해 쉽게 작성하세요' },
-                { icon: Sparkles, title: '🤖 AI 작성 도움', desc: 'AI가 키워드를 문장으로 확장해드려요' },
-                { icon: Heart, title: '📊 감정 통계', desc: '하루의 감정을 기록하고 분석해보세요' }
-              ].map((feature, index) => (
-                <div key={index} style={{
+                  ? 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.2))'
+                  : 'linear-gradient(145deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.6))',
+                border: isDarkMode 
+                  ? '1px solid rgba(255, 255, 255, 0.05)'
+                  : '1px solid rgba(203, 213, 225, 0.3)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = isDarkMode 
+                  ? '0 12px 24px rgba(0, 0, 0, 0.3)'
+                  : '0 12px 24px rgba(0, 0, 0, 0.08)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+              >
+                {/* 호버시 그라데이션 오버레이 */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: feature.gradient,
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease',
+                  borderRadius: '20px',
+                  pointerEvents: 'none'
+                }} className="gradient-overlay" />
+                
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: feature.gradient,
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '16px 20px',
-                  marginBottom: '12px',
-                  borderRadius: '16px',
-                  background: isDarkMode 
-                    ? 'rgba(58, 58, 60, 0.3)'
-                    : 'rgba(242, 242, 247, 0.8)',
-                  border: isDarkMode 
-                    ? '1px solid rgba(255, 255, 255, 0.05)'
-                    : '1px solid rgba(0, 0, 0, 0.03)',
-                  transition: 'all 0.2s ease',
-                  cursor: 'default'
+                  justifyContent: 'center',
+                  marginRight: '20px',
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                  flexShrink: 0,
+                  position: 'relative',
+                  zIndex: 2
                 }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    background: isDarkMode 
-                      ? 'linear-gradient(135deg, #FF6B35 0%, #D74E2B 100%)'
-                      : 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '16px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                  }}>
-                    <feature.icon size={24} color="white" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{
-                      margin: '0 0 4px 0',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
-                    }}>
-                      {feature.title}
-                    </h3>
-                    <p style={{
-                      margin: 0,
-                      fontSize: '14px',
-                      color: isDarkMode ? '#99999D' : '#6D6D70',
-                      lineHeight: '1.4'
-                    }}>
-                      {feature.desc}
-                    </p>
-                  </div>
+                  <feature.icon size={28} color="white" strokeWidth={1.5} />
                 </div>
-              ))}
-            </div>
+                
+                <div style={{ flex: 1, position: 'relative', zIndex: 2 }}>
+                  <h3 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: isDarkMode ? '#ffffff' : '#1e293b',
+                    letterSpacing: '-0.01em'
+                  }}>
+                    {feature.title}
+                  </h3>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '15px',
+                    color: isDarkMode ? '#94a3b8' : '#64748b',
+                    lineHeight: '1.5',
+                    letterSpacing: '-0.005em'
+                  }}>
+                    {feature.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-            {/* 로그인 버튼들 */}
-            <div style={{ marginBottom: '24px' }}>
-              {/* 카카오 로그인 버튼 */}
+          {/* 로그인 버튼들 */}
+          <div style={{ marginBottom: '32px' }}>
+            {/* 카카오 로그인 버튼 */}
+            <button
+              onClick={handleKakaoLogin}
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '16px',
+                padding: '20px 32px',
+                background: 'linear-gradient(145deg, #FEE500, #FFCD00)',
+                border: 'none',
+                borderRadius: '20px',
+                color: '#000000',
+                fontSize: '17px',
+                fontWeight: '600',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                boxShadow: '0 12px 24px rgba(254, 229, 0, 0.3), 0 4px 8px rgba(254, 229, 0, 0.2)',
+                marginBottom: '16px',
+                opacity: isLoading ? 0.7 : 1,
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)'
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(254, 229, 0, 0.4), 0 8px 16px rgba(254, 229, 0, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(254, 229, 0, 0.3), 0 4px 8px rgba(254, 229, 0, 0.2)'
+                }
+              }}
+            >
+              {isLoading ? (
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '3px solid #000000',
+                  borderTop: '3px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+              ) : (
+                <>
+                  <MessageCircle size={24} strokeWidth={2} />
+                  <span style={{ letterSpacing: '-0.01em' }}>카카오로 시작하기</span>
+                </>
+              )}
+            </button>
+
+            {/* 데모 로그인 버튼 */}
+            {import.meta.env.DEV && (
               <button
-                onClick={handleKakaoLogin}
+                onClick={handleDemoLogin}
                 disabled={isLoading}
                 style={{
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '12px',
-                  padding: '16px 24px',
-                  background: '#FEE500',
-                  border: 'none',
+                  gap: '16px',
+                  padding: '16px 32px',
+                  background: isDarkMode 
+                    ? 'linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.6))'
+                    : 'linear-gradient(145deg, rgba(241, 245, 249, 0.8), rgba(226, 232, 240, 0.6))',
+                  border: isDarkMode 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(203, 213, 225, 0.4)',
                   borderRadius: '16px',
-                  color: '#000000',
-                  fontSize: '16px',
-                  fontWeight: '600',
+                  color: isDarkMode ? '#e2e8f0' : '#475569',
+                  fontSize: '15px',
+                  fontWeight: '500',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 4px 16px rgba(254, 229, 0, 0.3)',
-                  marginBottom: '12px',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)',
                   opacity: isLoading ? 0.7 : 1
                 }}
-                onMouseOver={(e) => {
+                onMouseEnter={(e) => {
                   if (!isLoading) {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(254, 229, 0, 0.4)'
+                    e.currentTarget.style.background = isDarkMode 
+                      ? 'linear-gradient(145deg, rgba(71, 85, 105, 0.8), rgba(51, 65, 85, 0.6))'
+                      : 'linear-gradient(145deg, rgba(226, 232, 240, 0.8), rgba(203, 213, 225, 0.6))'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
                   }
                 }}
-                onMouseOut={(e) => {
+                onMouseLeave={(e) => {
                   if (!isLoading) {
+                    e.currentTarget.style.background = isDarkMode 
+                      ? 'linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.6))'
+                      : 'linear-gradient(145deg, rgba(241, 245, 249, 0.8), rgba(226, 232, 240, 0.6))'
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(254, 229, 0, 0.3)'
                   }
                 }}
               >
                 {isLoading ? (
                   <div style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #000000',
+                    width: '18px',
+                    height: '18px',
+                    border: `2px solid ${isDarkMode ? '#e2e8f0' : '#475569'}`,
                     borderTop: '2px solid transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite'
                   }} />
                 ) : (
                   <>
-                    <MessageCircle size={20} />
-                    <span>카카오로 로그인</span>
+                    <Calendar size={20} strokeWidth={1.5} />
+                    <span>데모로 체험하기</span>
                   </>
                 )}
               </button>
-
-              {/* 데모 로그인 버튼 (개발/테스트용) */}
-              {import.meta.env.DEV && (
-                <button
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '14px 24px',
-                    background: isDarkMode 
-                      ? 'rgba(58, 58, 60, 0.8)'
-                      : 'rgba(242, 242, 247, 0.8)',
-                    border: isDarkMode 
-                      ? '1px solid rgba(255, 255, 255, 0.1)'
-                      : '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: '16px',
-                    color: isDarkMode ? '#FFFFFF' : '#1D1D1F',
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease',
-                    opacity: isLoading ? 0.7 : 1
-                  }}
-                  onMouseOver={(e) => {
-                    if (!isLoading) {
-                      e.currentTarget.style.background = isDarkMode 
-                        ? 'rgba(72, 72, 74, 0.8)'
-                        : 'rgba(229, 229, 234, 0.8)'
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (!isLoading) {
-                      e.currentTarget.style.background = isDarkMode 
-                        ? 'rgba(58, 58, 60, 0.8)'
-                        : 'rgba(242, 242, 247, 0.8)'
-                    }
-                  }}
-                >
-                  {isLoading ? (
-                    <div style={{
-                      width: '16px',
-                      height: '16px',
-                      border: `2px solid ${isDarkMode ? '#FFFFFF' : '#1D1D1F'}`,
-                      borderTop: '2px solid transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                  ) : (
-                    <>
-                      <Calendar size={18} />
-                      <span>데모 로그인</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* 하단 안내 */}
-            <div style={{ textAlign: 'center' }}>
-              <p style={{
-                margin: 0,
-                fontSize: '12px',
-                color: isDarkMode ? '#6D6D70' : '#8E8E93',
-                lineHeight: '1.4'
-              }}>
-                로그인하면 서비스 이용약관 및<br/>
-                개인정보처리방침에 동의한 것으로 간주됩니다
-              </p>
-            </div>
+            )}
           </div>
 
-          {/* Firebase 정보 카드 */}
+          {/* 하단 안내 */}
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <p style={{
+              margin: 0,
+              fontSize: '13px',
+              color: isDarkMode ? '#64748b' : '#94a3b8',
+              lineHeight: '1.5',
+              letterSpacing: '-0.005em'
+            }}>
+              계속 진행하면 <span style={{ fontWeight: '500' }}>서비스 이용약관</span> 및<br/>
+              <span style={{ fontWeight: '500' }}>개인정보처리방침</span>에 동의한 것으로 간주됩니다
+            </p>
+          </div>
+
+          {/* 하단 Firebase 정보 */}
           <div style={{
-            marginTop: '24px',
+            padding: '20px 24px',
+            borderRadius: '16px',
             background: isDarkMode 
-              ? 'rgba(44, 44, 46, 0.6)'
-              : 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '20px',
-            padding: '24px',
-            border: isDarkMode 
-              ? '1px solid rgba(255, 255, 255, 0.05)'
-              : '1px solid rgba(0, 0, 0, 0.03)',
+              ? 'linear-gradient(145deg, rgba(16, 185, 129, 0.05), rgba(6, 120, 86, 0.03))'
+              : 'linear-gradient(145deg, rgba(236, 253, 245, 0.8), rgba(209, 250, 229, 0.6))',
+            border: '1px solid rgba(16, 185, 129, 0.1)',
             textAlign: 'center'
           }}>
             <div style={{
@@ -483,48 +524,49 @@ function Login({ onLogin }) {
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                background: '#34C759',
-                animation: 'pulse 2s ease-in-out infinite'
+                background: 'linear-gradient(45deg, #10b981, #059669)',
+                animation: 'pulse-dot 2s ease-in-out infinite'
               }} />
               <h4 style={{
                 margin: 0,
                 fontSize: '16px',
                 fontWeight: '600',
-                color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+                color: isDarkMode ? '#10b981' : '#047857'
               }}>
-                Firebase 기반 실제 서비스
+                Google Firebase 기반
               </h4>
             </div>
             <p style={{
               margin: 0,
               fontSize: '14px',
-              color: isDarkMode ? '#99999D' : '#6D6D70',
-              lineHeight: '1.5'
+              color: isDarkMode ? '#6ee7b7' : '#065f46',
+              lineHeight: '1.5',
+              letterSpacing: '-0.005em'
             }}>
-              Google Firebase를 사용한 실제 클라우드 서비스입니다.<br/>
-              카카오 OAuth로 안전하게 로그인하고 모든 데이터는<br/>
-              실시간으로 동기화됩니다.
+              엔터프라이즈급 보안과 실시간 동기화를 제공하는<br/>
+              Google의 클라우드 플랫폼을 사용합니다
             </p>
           </div>
         </div>
       </div>
 
-      {/* CSS 애니메이션 */}
+      {/* 고급 CSS 애니메이션 */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+        @keyframes breathe {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
         
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-10px); }
-          60% { transform: translateY(-5px); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-20px) rotate(1deg); }
+          50% { transform: translateY(-10px) rotate(-1deg); }
+          75% { transform: translateY(-30px) rotate(0.5deg); }
         }
         
         @keyframes shimmer {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.1); }
         }
         
         @keyframes spin {
@@ -532,9 +574,13 @@ function Login({ onLogin }) {
           100% { transform: rotate(360deg); }
         }
         
-        @keyframes pulse {
+        @keyframes pulse-dot {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.1); }
+          50% { opacity: 0.7; transform: scale(1.2); }
+        }
+        
+        .gradient-overlay:hover {
+          opacity: 0.05 !important;
         }
       `}</style>
     </div>
