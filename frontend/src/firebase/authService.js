@@ -40,7 +40,7 @@ export const signInWithKakaoSDK = async () => {
     
     // SDK v2에서는 authorize 사용 (현재 페이지에서 처리)
     window.Kakao.Auth.authorize({
-      redirectUri: window.location.origin + '/',
+      redirectUri: 'https://maumilgi-1a4cb.web.app/kakao-callback',
       scope: 'profile_nickname,profile_image,account_email',
       throughTalk: false // 카카오톡 사용 안함
     })
@@ -89,7 +89,7 @@ export const handleRedirectResult = async () => {
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           client_id: '240138285eefbcd9ab66f4a85efbfbb5',
-          redirect_uri: window.location.origin + '/',
+          redirect_uri: 'https://maumilgi-1a4cb.web.app/kakao-callback',
           code: code
         })
       })

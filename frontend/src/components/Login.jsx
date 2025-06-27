@@ -12,15 +12,8 @@ function Login({ onLogin }) {
   const { isDarkMode } = useContext(ThemeContext)
 
   useEffect(() => {
-    // 리다이렉트 결과 확인
-    const checkRedirect = async () => {
-      const result = await handleRedirectResult()
-      if (result.success) {
-        onLogin(result.user)
-        navigate('/')
-      }
-    }
-    checkRedirect()
+    // 로그인 페이지에서는 리다이렉트 처리 안함
+    // KakaoCallback 컴포넌트에서 처리
   }, [navigate, onLogin])
 
   // 카카오 SDK 로그인
