@@ -3,13 +3,22 @@
  * REST API를 사용한 카카오 OAuth 구현
  */
 
-const KAKAO_API_KEY = '240138285eefbcd9ab66f4a85efbfbb5'
+const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY
 const REDIRECT_URI = `${window.location.origin}/auth/kakao/callback`
+
+// 환경변수 체크
+if (!KAKAO_API_KEY) {
+  console.warn('⚠️ 카카오 API 키가 설정되지 않았습니다. .env.local 파일을 확인하세요.')
+}
 
 /**
  * 카카오 로그인 URL 생성
  */
 export const getKakaoLoginUrl = () => {
+  if (!KAKAO_API_KEY) {
+    throw new Error('카카오 API 키가 설정되지 않았습니다.')
+  }
+
   const params = new URLSearchParams({
     client_id: KAKAO_API_KEY,
     redirect_uri: REDIRECT_URI,
@@ -25,6 +34,10 @@ export const getKakaoLoginUrl = () => {
  */
 export const getKakaoToken = async (code) => {
   try {
+    if (!KAKAO_API_KEY) {
+      throw new Error('카카오 API 키가 설정되지 않았습니다.')
+    }
+
     const response = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
       headers: {
