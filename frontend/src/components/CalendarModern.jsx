@@ -307,16 +307,23 @@ export default function CalendarModern({ onLogout, user }) {
             <div style={{
               width: '40px',
               height: '40px',
-              background: 'linear-gradient(135deg, #FF9A5A 0%, #FF6B35 50%, #D74E2B 100%)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px',
-              boxShadow: '0 4px 12px rgba(255, 107, 53, 0.3)',
-              border: '2px solid rgba(255, 255, 255, 0.2)'
+              overflow: 'hidden',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(0, 0, 0, 0.1)'
             }}>
-              💝
+              <img 
+                src="/app-icon.png" 
+                alt="마음일기" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </div>
             <h1 style={{
               margin: 0,

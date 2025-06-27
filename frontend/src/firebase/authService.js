@@ -20,33 +20,53 @@ export const signInWithKakaoSDK = async () => {
       throw new Error('카카오 SDK가 로드되지 않았습니다')
     }
 
+    if (!window.Kakao.isInitialized()) {
+      throw new Error('카카오 SDK가 초기화되지 않았습니다')
+    }
+
     return new Promise((resolve, reject) => {
       window.Kakao.Auth.login({
         success: async (authObj) => {
+          console.log('카카오 로그인 성공:', authObj)
+          
           try {
             // 카카오 사용자 정보 가져오기
             window.Kakao.API.request({
               url: '/v2/user/me',
               success: async (res) => {
-                const userInfo = {
-                  id: res.id.toString(),
-                  name: res.properties?.nickname || '카카오 사용자',
-                  email: res.kakao_account?.email || '',
-                  profileImage: res.properties?.profile_image || '',
-                  loginType: 'kakao',
-                  loginAt: new Date().toISOString(),
-                  accessToken: authObj.access_token
-                }
-
-                // Firebase에 사용자 정보 저장 (Custom Token 없이 직접 저장)
-                await saveUserToFirestore(userInfo)
+                console.log('카카오 사용자 정보:', res)
                 
-                resolve({
-                  success: true,
-                  user: userInfo
-                })
+                try {
+                  const userInfo = {
+                    id: res.id.toString(),
+                    name: res.properties?.nickname || '카카오 사용자',
+                    email: res.kakao_account?.email || '',
+                    profileImage: res.properties?.profile_image || '',
+                    loginType: 'kakao',
+                    loginAt: new Date().toISOString(),
+                    accessToken: authObj.access_token
+                  }
+
+                  // Firebase에 사용자 정보 저장
+                  await saveUserToFirestore(userInfo)
+                  
+                  // 로컬스토리지에 토큰 저장
+                  localStorage.setItem('kakao_token', authObj.access_token)
+                  
+                  resolve({
+                    success: true,
+                    user: userInfo
+                  })
+                } catch (error) {
+                  console.error('사용자 정보 처리 오류:', error)
+                  reject({
+                    success: false,
+                    error: '사용자 정보 처리 중 오류가 발생했습니다'
+                  })
+                }
               },
               fail: (error) => {
+                console.error('카카오 API 요청 실패:', error)
                 reject({
                   success: false,
                   error: error.msg || '사용자 정보 조회 실패'
@@ -54,13 +74,15 @@ export const signInWithKakaoSDK = async () => {
               }
             })
           } catch (error) {
+            console.error('카카오 API 요청 오류:', error)
             reject({
               success: false,
-              error: error.message || '로그인 처리 중 오류 발생'
+              error: '사용자 정보 요청 중 오류가 발생했습니다'
             })
           }
         },
         fail: (error) => {
+          console.error('카카오 로그인 실패:', error)
           reject({
             success: false,
             error: error.error_description || '카카오 로그인 실패'
@@ -81,7 +103,6 @@ export const signInWithKakaoSDK = async () => {
  * 카카오 팝업 로그인 (Legacy - SDK 방식으로 대체)
  */
 export const signInWithKakaoPopup = async () => {
-  // SDK 방식으로 대체
   return await signInWithKakaoSDK()
 }
 
@@ -102,6 +123,7 @@ export const signOutUser = async () => {
       try {
         await new Promise((resolve) => {
           window.Kakao.Auth.logout(() => {
+            console.log('카카오 로그아웃 완료')
             resolve()
           })
         })
@@ -189,6 +211,7 @@ const saveUserToFirestore = async (userInfo) => {
     }
     
     await setDoc(userRef, userData, { merge: true })
+    console.log('Firestore에 사용자 정보 저장 완료')
     
     // 로컬스토리지에도 저장 (기존 코드 호환성)
     localStorage.setItem('user', JSON.stringify(userInfo))
@@ -245,5 +268,10 @@ export const getUserFromFirestore = async (uid) => {
  * 카카오 SDK 상태 확인
  */
 export const checkKakaoSDK = () => {
-  return !!(window.Kakao && window.Kakao.isInitialized())
+  const isLoaded = !!(window.Kakao)
+  const isInitialized = !!(window.Kakao && window.Kakao.isInitialized())
+  
+  console.log('카카오 SDK 상태:', { isLoaded, isInitialized })
+  
+  return isLoaded && isInitialized
 } 
