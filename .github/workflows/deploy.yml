@@ -45,7 +45,7 @@ jobs:
         VITE_FIREBASE_APP_ID: "1:43173390015:web:c93ba810fcb0972616880a"
         VITE_FIREBASE_MEASUREMENT_ID: "G-3KXTHTNKPC"
     
-    # 5. Firebase에 배포 (main 브랜치만)
+    # 5. Firebase에 배포 (main 브랜치만) - 프로젝트 루트에서 실행
     - name: 🚀 Firebase에 배포
       if: github.ref == 'refs/heads/main'
       uses: FirebaseExtended/action-hosting-deploy@v0
@@ -54,7 +54,7 @@ jobs:
         firebaseServiceAccount: ${{ secrets.FIREBASESECRET }}
         projectId: "maumilgi-1a4cb"
         channelId: live
-        entryPoint: ./frontend
+        entryPoint: .
       env:
         FIREBASE_CLI_EXPERIMENTS: webframeworks
 
