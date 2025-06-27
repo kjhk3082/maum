@@ -36,27 +36,27 @@ export const signInWithKakaoSDK = async () => {
     }
     
     return new Promise((resolve) => {
-      window.Kakao.Auth.login({
-        success: async (authObj) => {
-          console.log('카카오 로그인 성공:', authObj)
+      // 팝업 방식으로 로그인
+      window.Kakao.Auth.loginForm({
+        success: function() {
+          console.log('카카오 로그인 성공')
           
-          try {
-            // 사용자 정보 가져오기
-            window.Kakao.API.request({
-              url: '/v2/user/me',
-              success: async (userData) => {
-                console.log('사용자 정보 조회 성공:', userData)
-                
-                const userInfo = {
-                  id: userData.id.toString(),
-                  uid: userData.id.toString(),
-                  name: userData.properties?.nickname || '카카오 사용자',
-                  email: userData.kakao_account?.email || '',
-                  profileImage: userData.properties?.profile_image || '',
-                  loginType: 'kakao',
-                  accessToken: authObj.access_token
-                }
+          // 사용자 정보 가져오기
+          window.Kakao.API.request({
+            url: '/v2/user/me',
+            success: async (userData) => {
+              console.log('사용자 정보 조회 성공:', userData)
+              
+              const userInfo = {
+                id: userData.id.toString(),
+                uid: userData.id.toString(),
+                name: userData.properties?.nickname || '카카오 사용자',
+                email: userData.kakao_account?.email || '',
+                profileImage: userData.properties?.profile_image || '',
+                loginType: 'kakao'
+              }
 
+              try {
                 // Firebase에 저장
                 await saveUserToFirestore(userInfo)
                 
@@ -65,28 +65,28 @@ export const signInWithKakaoSDK = async () => {
                   user: userInfo,
                   message: '로그인 성공!'
                 })
-              },
-              fail: (error) => {
-                console.error('사용자 정보 조회 실패:', error)
+              } catch (error) {
+                console.error('Firebase 저장 오류:', error)
                 resolve({
                   success: false,
-                  error: '사용자 정보를 가져올 수 없습니다.'
+                  error: '로그인 정보 저장 중 오류가 발생했습니다.'
                 })
               }
-            })
-          } catch (error) {
-            console.error('사용자 정보 처리 오류:', error)
-            resolve({
-              success: false,
-              error: '로그인 처리 중 오류가 발생했습니다.'
-            })
-          }
+            },
+            fail: (error) => {
+              console.error('사용자 정보 조회 실패:', error)
+              resolve({
+                success: false,
+                error: '사용자 정보를 가져올 수 없습니다.'
+              })
+            }
+          })
         },
-        fail: (error) => {
+        fail: function(error) {
           console.error('카카오 로그인 실패:', error)
           resolve({
             success: false,
-            error: error.error_description || '카카오 로그인에 실패했습니다.'
+            error: '카카오 로그인에 실패했습니다.'
           })
         }
       })
