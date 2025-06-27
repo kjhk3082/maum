@@ -63,7 +63,8 @@ export const createDiary = async (diaryData) => {
 export const getDiaryByDate = async (date) => {
   try {
     const user = getCurrentUser()
-    if (!user) {
+    if (!user || !user.uid) {
+      console.warn('사용자 정보가 없습니다:', user)
       throw new Error('로그인이 필요합니다')
     }
 
@@ -148,8 +149,14 @@ export const getDiaryById = async (diaryId) => {
 export const getAllDiaries = async (limitCount = 50) => {
   try {
     const user = getCurrentUser()
-    if (!user) {
-      throw new Error('로그인이 필요합니다')
+    if (!user || !user.uid) {
+      console.warn('사용자 정보가 없습니다, 로컬스토리지 모드로 전환:', user)
+      // Firebase 연결 실패 시 로컬스토리지에서 일기 조회
+      const localDiaries = JSON.parse(localStorage.getItem('local_diaries') || '[]')
+      return {
+        success: true,
+        diaries: localDiaries.slice(0, limitCount)
+      }
     }
 
     const q = query(
@@ -294,8 +301,23 @@ export const deleteDiary = async (diaryId) => {
 export const getDiariesByMonth = async (year, month) => {
   try {
     const user = getCurrentUser()
-    if (!user) {
-      throw new Error('로그인이 필요합니다')
+    if (!user || !user.uid) {
+      console.warn('월별 일기 조회 - 로컬스토리지 모드로 전환:', user)
+      // 로컬스토리지에서 해당 월의 일기 필터링
+      const localDiaries = JSON.parse(localStorage.getItem('local_diaries') || '[]')
+      const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
+      const nextMonth = month === 12 ? 1 : month + 1
+      const nextYear = month === 12 ? year + 1 : year
+      const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`
+      
+      const monthlyDiaries = localDiaries.filter(diary => 
+        diary.date >= startDate && diary.date < endDate
+      )
+      
+      return {
+        success: true,
+        diaries: monthlyDiaries
+      }
     }
 
     // 날짜 범위 계산
@@ -391,7 +413,10 @@ export const getStreakDays = async () => {
     const { success, diaries } = await getAllDiaries(365)
     
     if (!success) {
-      throw new Error('연속 작성일 계산 중 오류가 발생했습니다')
+      console.warn('연속 작성일 계산 - 로컬스토리지 모드로 전환')
+      // 로컬스토리지 기반 연속 작성일 계산
+      const localDiaries = JSON.parse(localStorage.getItem('local_diaries') || '[]')
+      return calculateStreakFromLocalDiaries(localDiaries)
     }
 
     if (diaries.length === 0) {
@@ -431,6 +456,52 @@ export const getStreakDays = async () => {
     return {
       success: false,
       error: error.message
+    }
+  }
+}
+
+/**
+ * 로컬스토리지 기반 연속 작성일 계산
+ */
+const calculateStreakFromLocalDiaries = (diaries) => {
+  try {
+    if (diaries.length === 0) {
+      return { success: true, streakDays: 0 }
+    }
+
+    // 날짜별로 정렬 (최신순)
+    const sortedDiaries = diaries.sort((a, b) => new Date(b.date) - new Date(a.date))
+    
+    let streakDays = 0
+    let currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0)
+
+    for (const diary of sortedDiaries) {
+      const diaryDate = new Date(diary.date + 'T00:00:00')
+      const diffTime = currentDate - diaryDate
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+      if (diffDays === streakDays) {
+        streakDays++
+        currentDate.setDate(currentDate.getDate() - 1)
+      } else if (diffDays === streakDays + 1 && streakDays === 0) {
+        // 어제 작성한 경우도 연속으로 인정
+        streakDays++
+        currentDate.setDate(currentDate.getDate() - 1)
+      } else {
+        break
+      }
+    }
+
+    return {
+      success: true,
+      streakDays
+    }
+  } catch (error) {
+    console.error('로컬 연속 작성일 계산 오류:', error)
+    return {
+      success: true,
+      streakDays: 0
     }
   }
 } 

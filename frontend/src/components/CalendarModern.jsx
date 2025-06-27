@@ -194,7 +194,11 @@ export default function CalendarModern({ onLogout, user }) {
   }
 
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0]
+    // 로컬 시간대 기준으로 날짜 포맷팅 (UTC 변환 없이)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const hasEntry = (date) => {
@@ -672,31 +676,43 @@ export default function CalendarModern({ onLogout, user }) {
             <button
               onClick={prevMonth}
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)',
                 border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(23, 162, 184, 0.3)'}`,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                boxShadow: isDarkMode 
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                  : '0 4px 12px rgba(23, 162, 184, 0.15)'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.25)' : 'rgba(23, 162, 184, 0.25)'
-                e.currentTarget.style.transform = 'scale(1.05)'
+                e.currentTarget.style.transform = 'scale(1.1)'
+                e.currentTarget.style.boxShadow = isDarkMode 
+                  ? '0 6px 16px rgba(0, 0, 0, 0.4)' 
+                  : '0 6px 16px rgba(23, 162, 184, 0.25)'
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)'
                 e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = isDarkMode 
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                  : '0 4px 12px rgba(23, 162, 184, 0.15)'
               }}
             >
               <ChevronLeft 
-                size={28} 
+                size={36} 
                 color={isDarkMode ? '#FFFFFF' : '#17A2B8'} 
-                strokeWidth={3}
-                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
+                strokeWidth={4}
+                style={{ 
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  fontWeight: 'bold'
+                }}
               />
             </button>
 
@@ -771,31 +787,43 @@ export default function CalendarModern({ onLogout, user }) {
             <button
               onClick={nextMonth}
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)',
                 border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(23, 162, 184, 0.3)'}`,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                boxShadow: isDarkMode 
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                  : '0 4px 12px rgba(23, 162, 184, 0.15)'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.25)' : 'rgba(23, 162, 184, 0.25)'
-                e.currentTarget.style.transform = 'scale(1.05)'
+                e.currentTarget.style.transform = 'scale(1.1)'
+                e.currentTarget.style.boxShadow = isDarkMode 
+                  ? '0 6px 16px rgba(0, 0, 0, 0.4)' 
+                  : '0 6px 16px rgba(23, 162, 184, 0.25)'
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(23, 162, 184, 0.15)'
                 e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = isDarkMode 
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                  : '0 4px 12px rgba(23, 162, 184, 0.15)'
               }}
             >
               <ChevronRight 
-                size={28} 
+                size={36} 
                 color={isDarkMode ? '#FFFFFF' : '#17A2B8'} 
-                strokeWidth={3}
-                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
+                strokeWidth={4}
+                style={{ 
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  fontWeight: 'bold'
+                }}
               />
             </button>
           </div>

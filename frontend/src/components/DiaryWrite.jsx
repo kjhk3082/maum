@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, ArrowLeft, Sparkles, Image, Loader, Calendar as CalendarIcon, Upload, X } from 'lucide-react'
+import { Save, ArrowLeft, Sparkles, Image, Loader, Calendar as CalendarIcon, Upload, X, CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { useTheme } from '../App'
 import { openaiService } from '../services/openaiService'
 import { imageService } from '../services/imageService'
@@ -103,8 +103,33 @@ const DiaryWrite = ({ user }) => {
   const [saveStatus, setSaveStatus] = useState('')
   const [existingDiaryId, setExistingDiaryId] = useState(null)
   
+  // 화면 내 알림 시스템 상태
+  const [notification, setNotification] = useState({
+    show: false,
+    type: 'info', // 'success', 'error', 'info', 'warning'
+    title: '',
+    message: '',
+    details: ''
+  })
+  
   // 일기 작성 가능 시간은 useEffect에서 후에 체크
   const [isTimeToWrite, setIsTimeToWrite] = useState(true) // 데모 모드로 항상 true
+
+  // 화면 내 알림 표시 함수
+  const showNotification = (type, title, message = '', details = '', duration = 5000) => {
+    setNotification({
+      show: true,
+      type,
+      title,
+      message,
+      details
+    })
+    
+    // 자동으로 알림 숨기기
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }))
+    }, duration)
+  }
 
   // 연속 작성일 계산 함수 (간단한 로컬 계산)
   const calculateStreakDays = () => {
@@ -160,12 +185,12 @@ const DiaryWrite = ({ user }) => {
       try {
         const isWritable = await diaryAPI.checkWritableTime(date)
         if (!isWritable && !isEditing) {
-          alert('일기 작성이 허용되지 않은 시간입니다.')
+          showNotification('warning', '시간 제한', '일기 작성이 허용되지 않은 시간입니다.')
           navigate('/')
         }
       } catch (error) {
         console.error('시간 체크 오류:', error)
-        alert('서버 연결에 문제가 있습니다.')
+        showNotification('error', '서버 오류', '서버 연결에 문제가 있습니다.')
         navigate('/')
       }
     }
@@ -180,8 +205,8 @@ const DiaryWrite = ({ user }) => {
     const diaryDate = new Date(date)
     
     if (diaryDate > today && !isEditing) {
-      alert('미래 날짜의 일기는 작성할 수 없습니다.')
-      navigate('/')
+      showNotification('warning', '날짜 오류', '미래 날짜의 일기는 작성할 수 없습니다.')
+      setTimeout(() => navigate('/'), 2000)
     }
   }, [date, isEditing, navigate])
 
@@ -199,49 +224,105 @@ const DiaryWrite = ({ user }) => {
     return () => document.removeEventListener('mouseup', handleTextSelection)
   }, [])
 
-  // AI 텍스트 확장 기능
+  // AI 텍스트 확장 기능 (개선된 버전)
   const handleAIHelp = async () => {
-    // 선택된 텍스트가 있는지 확인
-    if (!selectedText || selectedText.trim() === '') {
-      alert('텍스트를 선택한 후 AI 도움받기를 클릭해주세요.\n예: "신라면, 18시, 맛있음"을 드래그하면 자동으로 문장을 만들어줍니다.')
-      return
-    }
+    console.log('🤖 AI 도움받기 시작...')
+    console.log('선택된 텍스트:', selectedText)
+    console.log('제목:', title)
+    console.log('내용:', content)
+    console.log('감정:', emotion)
     
     setLoading(true)
     
     try {
+      let textToExpand = ''
+      
+      // 1. 선택된 텍스트가 있으면 우선 사용
+      if (selectedText && selectedText.trim() !== '') {
+        textToExpand = selectedText.trim()
+        console.log('✅ 선택된 텍스트 사용:', textToExpand)
+      }
+      // 2. 선택된 텍스트가 없으면 제목이나 내용에서 키워드 추출
+      else if (title.trim() !== '' || content.trim() !== '') {
+        // 제목에서 키워드 추출 시도
+        if (title.trim() !== '') {
+          textToExpand = title.trim()
+          console.log('✅ 제목 사용:', textToExpand)
+        }
+        // 내용의 마지막 문장이나 키워드 추출
+        else {
+          const sentences = content.trim().split(/[.!?。！？]/).filter(s => s.trim())
+          if (sentences.length > 0) {
+            textToExpand = sentences[sentences.length - 1].trim()
+            console.log('✅ 마지막 문장 사용:', textToExpand)
+          } else {
+            textToExpand = content.trim().slice(0, 50) // 처음 50자
+            console.log('✅ 내용 일부 사용:', textToExpand)
+          }
+        }
+      }
+      // 3. 아무것도 없으면 감정을 기반으로 생성
+      else {
+        textToExpand = emotion ? `${emotion}_기반_일기` : '오늘_하루'
+        console.log('✅ 감정 기반 키워드 생성:', textToExpand)
+      }
+      
+      if (!textToExpand) {
+        showNotification('info', 'AI 문장 만들기', 
+          '텍스트를 선택하거나 제목/내용을 입력한 후 사용해주세요.', 
+          '예: "신라면, 18시, 맛있음"을 드래그하면 자동으로 문장을 만들어줍니다.')
+        setLoading(false)
+        return
+      }
+      
       // 선택된 텍스트를 자연스러운 일기 문장으로 확장하는 요청
       const expandContext = {
-        selectedText: selectedText.trim(),
-        emotion: emotion,
+        selectedText: textToExpand,
+        emotion: emotion || 'PEACEFUL',
+        title: title,
+        content: content,
         expandMode: true
       }
       
+      console.log('🚀 OpenAI 서비스 호출...', expandContext)
       const result = await openaiService.expandTextToDiary(expandContext)
+      console.log('📨 OpenAI 응답:', result)
       
       if (result.success) {
-        // 원래 텍스트를 확장된 텍스트로 교체
-        const currentContent = content
         const expandedText = result.expandedText
         
-        // 선택된 텍스트를 확장된 텍스트로 교체
-        const newContent = currentContent.replace(selectedText, expandedText)
-        setContent(newContent)
+        // 확장된 텍스트 적용
+        if (selectedText && selectedText.trim() !== '') {
+          // 선택된 텍스트를 확장된 텍스트로 교체
+          const newContent = content.replace(selectedText, expandedText)
+          setContent(newContent)
+          console.log('✅ 선택된 텍스트 교체 완료')
+        } else {
+          // 내용 끝에 확장된 텍스트 추가
+          const separator = content.trim() ? '\n\n' : ''
+          setContent(prev => prev + separator + expandedText)
+          console.log('✅ 내용 끝에 추가 완료')
+        }
         
         // 선택 상태 초기화
         setSelectedText('')
         
         // 성공 메시지
-        if (result.isDemo) {
-          alert(`✨ AI가 텍스트를 확장했습니다!\n"${selectedText}" → "${expandedText}"`)
-        }
+        showNotification('success', '✨ AI 문장 생성 완료!', 
+          `"${textToExpand}" → "${expandedText}"`,
+          result.isDemo ? 'AI API 연동 준비 중이에요. 현재는 데모 모드로 동작합니다.' : 'GPT-4o로 생성되었습니다.')
         
       } else {
-        alert('AI 텍스트 확장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        console.error('❌ AI 텍스트 확장 실패')
+        showNotification('error', 'AI 오류', 
+          'AI 텍스트 확장에 실패했습니다.', 
+          '잠시 후 다시 시도해주세요.')
       }
     } catch (error) {
-      console.error('AI 텍스트 확장 오류:', error)
-      alert('AI 서비스에 일시적인 문제가 발생했습니다.')
+      console.error('❌ AI 텍스트 확장 오류:', error)
+      showNotification('error', 'AI 서비스 오류', 
+        'AI 서비스에 일시적인 문제가 발생했습니다.',
+        '네트워크 연결을 확인하고 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }
@@ -274,7 +355,7 @@ const DiaryWrite = ({ user }) => {
           })
         } else {
           console.error('이미지 업로드 실패:', error)
-          alert(`이미지 업로드 실패: ${error}`)
+          showNotification('error', '이미지 업로드 실패', error)
         }
       }
       
@@ -282,7 +363,7 @@ const DiaryWrite = ({ user }) => {
       
     } catch (error) {
       console.error('이미지 업로드 오류:', error)
-      alert('이미지 업로드 중 오류가 발생했습니다.')
+      showNotification('error', '이미지 업로드 오류', '이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setImageUploading(false)
     }
@@ -301,12 +382,12 @@ const DiaryWrite = ({ user }) => {
           setUploadedImages(newUploadedImages)
         } else {
           console.error('이미지 삭제 실패')
-          alert('이미지 삭제에 실패했습니다.')
+          showNotification('error', '이미지 삭제 실패', '이미지 삭제에 실패했습니다.')
         }
       }
     } catch (error) {
       console.error('이미지 삭제 오류:', error)
-      alert('이미지 삭제 중 오류가 발생했습니다.')
+      showNotification('error', '이미지 삭제 오류', '이미지 삭제 중 오류가 발생했습니다.')
     }
   }
 
@@ -326,7 +407,7 @@ const DiaryWrite = ({ user }) => {
     e.preventDefault()
     
     if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 모두 작성해주세요.')
+      showNotification('warning', '입력 확인', '제목과 내용을 모두 작성해주세요.')
       return
     }
 
@@ -348,6 +429,7 @@ const DiaryWrite = ({ user }) => {
         
         if (success) {
           setSaveStatus('일기가 성공적으로 수정되었습니다!')
+          showNotification('success', '수정 완료', '일기가 성공적으로 수정되었습니다!')
           
           // 알림 표시
           notificationService.showNotification('일기 수정 완료', {
@@ -372,6 +454,9 @@ const DiaryWrite = ({ user }) => {
             notificationService.showStreakNotification(streakDays)
           }
           
+          showNotification('success', '저장 완료', '일기가 성공적으로 저장되었습니다!', 
+            '잠시 후 캘린더로 이동합니다.')
+          
           // 일기 저장 알림
           notificationService.showNotification('일기 저장 완료', {
             body: `${new Date(date).toLocaleDateString()} 일기가 저장되었습니다.`,
@@ -390,6 +475,7 @@ const DiaryWrite = ({ user }) => {
     } catch (error) {
       console.error('일기 저장 오류:', error)
       setSaveStatus('저장 중 오류가 발생했습니다. 다시 시도해주세요.')
+      showNotification('error', '저장 실패', '저장 중 오류가 발생했습니다.', '다시 시도해주세요.')
     } finally {
       setIsSaving(false)
       setTimeout(() => setSaveStatus(''), 3000)
@@ -953,6 +1039,112 @@ const DiaryWrite = ({ user }) => {
           </div>
         </div>
       </div>
+
+      {/* 화면 내 알림 */}
+      {notification.show && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 1100,
+          maxWidth: '400px',
+          background: isDarkMode 
+            ? 'rgba(28, 28, 30, 0.95)' 
+            : 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: isDarkMode 
+            ? '0 8px 32px rgba(0, 0, 0, 0.4)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.15)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          transform: notification.show ? 'translateX(0)' : 'translateX(100%)',
+          opacity: notification.show ? 1 : 0,
+          transition: 'all 0.3s ease-out'
+        }}>
+          
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+            {/* 아이콘 */}
+            <div style={{
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              background: notification.type === 'success' ? '#34C759' :
+                         notification.type === 'error' ? '#FF3B30' :
+                         notification.type === 'warning' ? '#FF9500' : '#17A2B8',
+              marginTop: '2px'
+            }}>
+              {notification.type === 'success' && <CheckCircle size={16} color="white" />}
+              {notification.type === 'error' && <AlertCircle size={16} color="white" />}
+              {notification.type === 'warning' && <AlertCircle size={16} color="white" />}
+              {notification.type === 'info' && <Info size={16} color="white" />}
+            </div>
+            
+            {/* 내용 */}
+            <div style={{ flex: 1 }}>
+              <h4 style={{
+                margin: '0 0 4px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+              }}>
+                {notification.title}
+              </h4>
+              
+              {notification.message && (
+                <p style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '14px',
+                  color: isDarkMode ? '#E5E5E7' : '#424245',
+                  lineHeight: '1.4'
+                }}>
+                  {notification.message}
+                </p>
+              )}
+              
+              {notification.details && (
+                <p style={{
+                  margin: '0',
+                  fontSize: '12px',
+                  color: isDarkMode ? '#8E8E93' : '#6D6D70',
+                  lineHeight: '1.3'
+                }}>
+                  {notification.details}
+                </p>
+              )}
+            </div>
+            
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setNotification(prev => ({ ...prev, show: false }))}
+              style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isDarkMode ? '#8E8E93' : '#6D6D70',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 이미지 첨부 모달 */}
       {imageModalOpen && (

@@ -48,6 +48,7 @@ export const signInWithKakaoSDK = async () => {
 
       const userInfo = {
         id: userResponse.id.toString(),
+        uid: userResponse.id.toString(),
         name: userResponse.properties?.nickname || '카카오 사용자',
         email: userResponse.kakao_account?.email || '',
         profileImage: userResponse.properties?.profile_image || '',
@@ -84,6 +85,7 @@ export const signInWithKakaoSDK = async () => {
 
         const userInfo = {
           id: userResponse.id.toString(),
+          uid: userResponse.id.toString(),
           name: userResponse.properties?.nickname || '카카오 사용자',
           email: userResponse.kakao_account?.email || '',
           profileImage: userResponse.properties?.profile_image || '',
@@ -155,6 +157,7 @@ export const signInWithKakaoPopup = async () => {
                 
                 const userInfo = {
                   id: userResponse.id.toString(),
+                  uid: userResponse.id.toString(),
                   name: userResponse.properties?.nickname || '카카오 사용자',
                   email: userResponse.kakao_account?.email || '',
                   profileImage: userResponse.properties?.profile_image || '',
@@ -207,6 +210,7 @@ const createDemoUser = async () => {
   
   const demoUser = {
     id: 'demo_' + Date.now(),
+    uid: 'demo_' + Date.now(), // uid 필드 추가
     name: '데모 사용자 (카카오 연동 준비중)',
     email: 'demo@maumilgi.app',
     profileImage: '/app-icon.png',
@@ -282,6 +286,7 @@ export const handleRedirectResult = async () => {
         
         const userInfo = {
           id: userResponse.id.toString(),
+          uid: userResponse.id.toString(),
           name: userResponse.properties?.nickname || '카카오 사용자',
           email: userResponse.kakao_account?.email || '',
           profileImage: userResponse.properties?.profile_image || '',
@@ -421,6 +426,12 @@ const saveUserToFirestore = async (userInfo) => {
       loginType: userInfo.loginType || 'kakao'
     }
     
+    // 로컬스토리지 저장용 사용자 정보 (uid 필드 추가)
+    const localUserInfo = {
+      ...userInfo,
+      uid: userInfo.id // uid 필드 추가
+    }
+    
     if (!userSnap.exists()) {
       // 새 사용자 - 생성일 추가
       userData.createdAt = serverTimestamp()
@@ -429,14 +440,18 @@ const saveUserToFirestore = async (userInfo) => {
     await setDoc(userRef, userData, { merge: true })
     console.log('Firestore에 사용자 정보 저장 완료')
     
-    // 로컬스토리지에도 저장 (기존 코드 호환성)
-    localStorage.setItem('user', JSON.stringify(userInfo))
+    // 로컬스토리지에도 저장 (uid 필드 포함)
+    localStorage.setItem('user', JSON.stringify(localUserInfo))
     
-  } catch (error) {
-    console.error('사용자 정보 저장 오류:', error)
-    // Firestore 저장 실패해도 로컬에는 저장
-    localStorage.setItem('user', JSON.stringify(userInfo))
-  }
+      } catch (error) {
+      console.error('사용자 정보 저장 오류:', error)
+      // Firestore 저장 실패해도 로컬에는 저장 (uid 필드 포함)
+      const localUserInfo = {
+        ...userInfo,
+        uid: userInfo.id
+      }
+      localStorage.setItem('user', JSON.stringify(localUserInfo))
+    }
 }
 
 /**
