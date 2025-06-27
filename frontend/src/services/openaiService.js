@@ -274,12 +274,19 @@ export const openaiService = {
   // 데모 텍스트 확장 함수
   getDemoExpansion(selectedText, emotion) {
     // 입력값 검증
-    if (!selectedText || typeof selectedText !== 'string') {
-      console.error('getDemoExpansion: selectedText가 유효하지 않음:', selectedText)
+    if (!selectedText) {
+      console.error('getDemoExpansion: selectedText가 없음:', selectedText)
       return '키워드를 입력해주세요.'
     }
     
-    const text = selectedText.trim()
+    // selectedText를 문자열로 변환
+    const textStr = String(selectedText)
+    if (!textStr || textStr.trim().length === 0) {
+      console.error('getDemoExpansion: 빈 텍스트:', textStr)
+      return '키워드를 입력해주세요.'
+    }
+    
+    const text = textStr.trim()
     
     // 이미 완성된 문장인지 키워드인지 판단
     const isCompleteSentence = text.includes('다') || text.includes('요') || text.includes('었') || text.includes('였') || text.includes('했')

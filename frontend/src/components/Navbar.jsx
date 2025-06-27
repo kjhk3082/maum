@@ -75,7 +75,7 @@ function Navbar() {
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
-                <Home className="w-4 h-4" />
+                <Home className="w-6 h-6" />
                 <span>홈</span>
               </Link>
               
@@ -91,7 +91,7 @@ function Navbar() {
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-6 h-6" />
                 <span>검색</span>
               </Link>
 
@@ -107,7 +107,7 @@ function Navbar() {
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                 }`}
               >
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 className="w-6 h-6" />
                 <span>통계</span>
               </Link>
             </div>
@@ -126,7 +126,7 @@ function Navbar() {
                     />
                   ) : (
                     <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+                      <User className="w-6 h-6 text-white" />
                     </div>
                   )}
                   <span className={`font-medium ${
@@ -148,7 +148,7 @@ function Navbar() {
                       : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
                   }`}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-6 h-6" />
                   <span>로그아웃</span>
                 </button>
               </div>

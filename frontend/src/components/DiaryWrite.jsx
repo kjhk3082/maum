@@ -1174,60 +1174,265 @@ const DiaryWrite = ({ user }) => {
                 </div>
               </div>
               
-              {/* 하이라이트 기능 안내 */}
-              {selectedTextInfo && (
+              {/* 드래그된 텍스트 정보 실시간 표시 */}
+              <div style={{
+                marginBottom: '16px',
+                padding: '20px',
+                background: isDarkMode 
+                  ? 'linear-gradient(135deg, rgba(44, 44, 46, 0.8), rgba(28, 28, 30, 0.9))' 
+                  : 'linear-gradient(135deg, rgba(248, 250, 252, 0.9), rgba(241, 245, 249, 0.8))',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                borderRadius: '20px',
+                boxShadow: isDarkMode 
+                  ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+                  : '0 8px 24px rgba(0, 0, 0, 0.06)'
+              }}>
                 <div style={{
-                  background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
-                  border: '1px solid rgba(255, 215, 0, 0.3)',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  marginBottom: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '12px'
+                  marginBottom: '16px'
                 }}>
-                  <div style={{ flex: 1 }}>
+                  <h4 style={{
+                    margin: '0',
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: isDarkMode ? '#FFFFFF' : '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    🎯 드래그 선택 정보
+                  </h4>
+                  <div style={{
+                    fontSize: '12px',
+                    color: isDarkMode ? '#94a3b8' : '#64748b',
+                    fontWeight: '500',
+                    padding: '4px 8px',
+                    background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    borderRadius: '6px'
+                  }}>
+                    실시간 업데이트
+                  </div>
+                </div>
+                
+                {selectedTextInfo ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}>
+                    {/* 선택된 텍스트 표시 */}
                     <div style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: isDarkMode ? '#FFD60A' : '#B8860B',
-                      marginBottom: '4px'
+                      padding: '16px 20px',
+                      background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                      border: '2px solid rgba(255, 215, 0, 0.4)',
+                      borderRadius: '16px',
+                      position: 'relative'
                     }}>
-                      ✨ 텍스트가 선택되었습니다!
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: isDarkMode ? '#FFD60A' : '#B8860B',
+                        marginBottom: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        📝 선택된 텍스트
+                      </div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        color: isDarkMode ? '#FFFFFF' : '#1e293b',
+                        marginBottom: '12px',
+                        lineHeight: '1.4',
+                        wordBreak: 'break-word',
+                        background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                        padding: '12px 16px',
+                        borderRadius: '12px',
+                        border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                        fontFamily: 'inherit'
+                      }}>
+                        "{selectedTextInfo.text}"
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '20px',
+                        fontSize: '13px',
+                        color: isDarkMode ? '#94a3b8' : '#64748b'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                          borderRadius: '8px'
+                        }}>
+                          📊 <strong>{selectedTextInfo.text.length}자</strong>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                          borderRadius: '8px'
+                        }}>
+                          📍 위치: {selectedTextInfo.startOffset}-{selectedTextInfo.endOffset}
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* 액션 버튼들 */}
                     <div style={{
-                      fontSize: '12px',
-                      color: isDarkMode ? '#CCCCCC' : '#666'
+                      display: 'flex',
+                      gap: '12px',
+                      flexWrap: 'wrap'
                     }}>
-                      "{selectedTextInfo.text}"에 이미지를 연결하여 하이라이트를 만들 수 있어요.
+                      <button
+                        onClick={handleOpenHighlightModal}
+                        style={{
+                          padding: '12px 20px',
+                          background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 12px rgba(255, 149, 0, 0.3)'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(255, 149, 0, 0.4)'
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 149, 0, 0.3)'
+                        }}
+                      >
+                        🖼️ 이미지 연결하기
+                      </button>
+                      
+                      <button
+                        onClick={handleAIHelp}
+                        disabled={loading}
+                        style={{
+                          padding: '12px 20px',
+                          background: loading 
+                            ? 'rgba(156, 163, 175, 0.5)' 
+                            : 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          opacity: loading ? 0.6 : 1,
+                          boxShadow: loading ? 'none' : '0 4px 12px rgba(23, 162, 184, 0.3)'
+                        }}
+                        onMouseOver={(e) => {
+                          if (!loading) {
+                            e.currentTarget.style.transform = 'translateY(-2px)'
+                            e.currentTarget.style.boxShadow = '0 8px 20px rgba(23, 162, 184, 0.4)'
+                          }
+                        }}
+                        onMouseOut={(e) => {
+                          if (!loading) {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.3)'
+                          }
+                        }}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader size={16} className="animate-spin" />
+                            AI 처리중...
+                          </>
+                        ) : (
+                          <>
+                            ✨ AI로 확장하기
+                          </>
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setSelectedTextInfo(null)
+                          setSelectedText('')
+                          window.getSelection().removeAllRanges()
+                          removeTemporaryHighlight()
+                        }}
+                        style={{
+                          padding: '12px 20px',
+                          background: isDarkMode ? 'rgba(58, 58, 60, 0.6)' : 'rgba(156, 163, 175, 0.2)',
+                          color: isDarkMode ? '#FFFFFF' : '#374151',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = isDarkMode ? 'rgba(72, 72, 74, 0.8)' : 'rgba(156, 163, 175, 0.3)'
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = isDarkMode ? 'rgba(58, 58, 60, 0.6)' : 'rgba(156, 163, 175, 0.2)'
+                          e.currentTarget.style.transform = 'translateY(0)'
+                        }}
+                      >
+                        ❌ 선택 해제
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={handleOpenHighlightModal}
-                    style={{
-                      padding: '8px 16px',
-                      background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '32px 20px',
+                    color: isDarkMode ? '#8E8E93' : '#6D6D70'
+                  }}>
+                    <div style={{
+                      fontSize: '48px',
+                      marginBottom: '16px',
+                      opacity: 0.7
+                    }}>
+                      👆
+                    </div>
+                    <div style={{
+                      fontSize: '16px',
                       fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      whiteSpace: 'nowrap'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.05)'
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)'
-                    }}
-                  >
-                    이미지 연결
-                  </button>
-                </div>
-              )}
+                      marginBottom: '8px',
+                      color: isDarkMode ? '#FFFFFF' : '#1e293b'
+                    }}>
+                      내용 칸에서 텍스트를 드래그해보세요!
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      opacity: 0.8,
+                      lineHeight: '1.4'
+                    }}>
+                      드래그한 텍스트로 AI 확장이나 이미지 연결이 가능합니다<br />
+                      선택된 텍스트 정보가 여기에 실시간으로 표시됩니다
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <textarea
                 id="diary-content-textarea"
