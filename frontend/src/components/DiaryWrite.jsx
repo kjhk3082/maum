@@ -57,6 +57,9 @@ const DiaryWrite = ({ user }) => {
   const [selectedTextInfo, setSelectedTextInfo] = useState(null) // 현재 선택된 텍스트 정보
   const [showHighlightModal, setShowHighlightModal] = useState(false) // 하이라이트 모달
   const [highlightImages, setHighlightImages] = useState([]) // 하이라이트용 업로드된 이미지들
+  const [showImageViewer, setShowImageViewer] = useState(false) // 이미지 뷰어 모달
+  const [viewerImages, setViewerImages] = useState([]) // 뷰어에서 보여줄 이미지들
+  const [currentImageIndex, setCurrentImageIndex] = useState(0) // 현재 보고 있는 이미지 인덱스
   
   // 시간 제한 관련 상태
   const [showTimeModal, setShowTimeModal] = useState(false) // 시간 제한 모달
@@ -230,6 +233,9 @@ const DiaryWrite = ({ user }) => {
         })
         
         setSelectedText(selectedText)
+        
+        // 선택된 텍스트를 노란색으로 하이라이트
+        highlightSelectedText(range)
         return
       }
     }
@@ -237,6 +243,45 @@ const DiaryWrite = ({ user }) => {
     // 내용 칸 밖의 선택이거나 선택이 해제된 경우
     setSelectedTextInfo(null)
     setSelectedText('')
+  }
+
+  // 선택된 텍스트 하이라이트 함수
+  const highlightSelectedText = (range) => {
+    try {
+      // 기존 하이라이트 제거
+      removeTemporaryHighlight()
+      
+      // 새로운 하이라이트 적용
+      const span = document.createElement('span')
+      span.className = 'temp-highlight'
+      span.style.backgroundColor = 'rgba(255, 255, 0, 0.6)'
+      span.style.borderRadius = '3px'
+      span.style.padding = '1px 2px'
+      
+      try {
+        range.surroundContents(span)
+      } catch (e) {
+        // 복잡한 선택의 경우 다른 방법 사용
+        const contents = range.extractContents()
+        span.appendChild(contents)
+        range.insertNode(span)
+      }
+    } catch (error) {
+      console.log('하이라이트 적용 실패:', error)
+    }
+  }
+
+  // 임시 하이라이트 제거 함수
+  const removeTemporaryHighlight = () => {
+    const highlights = document.querySelectorAll('.temp-highlight')
+    highlights.forEach(highlight => {
+      const parent = highlight.parentNode
+      if (parent) {
+        parent.insertBefore(document.createTextNode(highlight.textContent), highlight)
+        parent.removeChild(highlight)
+        parent.normalize()
+      }
+    })
   }
 
   // 하이라이트에 이미지 추가
@@ -396,6 +441,24 @@ const DiaryWrite = ({ user }) => {
     window.getSelection().removeAllRanges()
   }
 
+  // 하이라이트된 텍스트 클릭 시 이미지 뷰어 열기
+  const handleHighlightClick = (highlight) => {
+    if (highlight.images && highlight.images.length > 0) {
+      setViewerImages(highlight.images)
+      setCurrentImageIndex(0)
+      setShowImageViewer(true)
+    }
+  }
+
+  // 이미지 뷰어에서 다음/이전 이미지
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % viewerImages.length)
+  }
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + viewerImages.length) % viewerImages.length)
+  }
+
   // 텍스트에서 하이라이트 적용하여 렌더링
   const renderContentWithHighlights = (content) => {
     if (!highlightedTexts || highlightedTexts.length === 0) {
@@ -426,22 +489,36 @@ const DiaryWrite = ({ user }) => {
         return (
           <span
             key={partIndex}
+            onClick={() => handleHighlightClick(highlight)}
             style={{
               backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 215, 0, 0.5)',
-              padding: '2px 4px',
-              borderRadius: '4px',
+              padding: '3px 6px',
+              borderRadius: '6px',
               border: '1px solid rgba(255, 215, 0, 0.6)',
               position: 'relative',
-              cursor: 'help'
+              cursor: highlight.images && highlight.images.length > 0 ? 'pointer' : 'help',
+              transition: 'all 0.2s',
+              display: 'inline-block'
             }}
-            title={`이미지 ${highlight.images?.length || 0}개 연결됨`}
+            title={`이미지 ${highlight.images?.length || 0}개 연결됨 - 클릭하여 보기`}
+            onMouseOver={(e) => {
+              if (highlight.images && highlight.images.length > 0) {
+                e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 215, 0, 0.4)' : 'rgba(255, 215, 0, 0.6)'
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 215, 0, 0.5)'
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
           >
             {highlight.text}
             {highlight.images && highlight.images.length > 0 && (
               <span style={{ 
-                marginLeft: '4px', 
+                marginLeft: '6px', 
                 fontSize: '12px',
-                color: '#FF8C00'
+                color: '#FF8C00',
+                fontWeight: '600'
               }}>
                 📷{highlight.images.length}
               </span>
@@ -465,39 +542,91 @@ const DiaryWrite = ({ user }) => {
     setLoading(true)
 
     try {
-      let textToExpand = ''
+      let expandedText = ''
       
-      // 1. 선택된 텍스트가 있으면 우선 사용
+      // 1. 선택된 텍스트가 있으면 해당 텍스트를 확장
       if (selectedText && selectedText.trim() !== '') {
-        textToExpand = selectedText.trim()
-        console.log('✅ 선택된 텍스트 사용:', textToExpand)
+        const textToExpand = selectedText.trim()
+        console.log('✅ 선택된 텍스트 확장:', textToExpand)
+        
+        expandedText = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        
+        if (expandedText) {
+          // 선택된 텍스트를 확장된 텍스트로 교체
+          const newContent = content.replace(selectedText, expandedText)
+          setContent(newContent)
+          
+          // 임시 하이라이트 제거
+          removeTemporaryHighlight()
+          
+          showNotification('success', 'AI 텍스트 확장 완료!', 
+            `"${textToExpand.slice(0, 20)}..."가 자연스러운 일기 문장으로 확장되었습니다.`)
+        }
       }
-      // 2. 선택된 텍스트가 없으면 제목이나 내용에서 키워드 추출
+      // 2. 감정이 선택되어 있고 내용이 있으면 전체 내용을 해당 감정으로 다듬기
+      else if (emotion && content.trim() !== '') {
+        console.log('✅ 전체 내용을 감정 기반으로 다듬기:', emotion)
+        
+        const emotionLabels = {
+          'HAPPY': '기쁜',
+          'SAD': '슬픈', 
+          'ANGRY': '화난',
+          'PEACEFUL': '평온한',
+          'ANXIOUS': '불안한'
+        }
+        
+        const emotionLabel = emotionLabels[emotion] || '기쁜'
+        expandedText = await openaiService.expandTextToDiary(content, emotion, `전체 내용을 ${emotionLabel} 감정으로 다듬어주세요.`)
+        
+        if (expandedText) {
+          setContent(expandedText)
+          showNotification('success', `${emotionLabel} 감정으로 다듬기 완료!`, 
+            `일기 전체가 ${emotionLabel} 감정에 맞게 자연스럽게 다듬어졌습니다.`)
+        }
+      }
+      // 3. 제목이나 내용에서 키워드 추출하여 확장
       else if (title.trim() !== '' || content.trim() !== '') {
-        // 제목에서 키워드 추출 시도
+        let textToExpand = ''
+        
         if (title.trim() !== '') {
           textToExpand = title.trim()
           console.log('✅ 제목 사용:', textToExpand)
-        }
-        // 내용의 마지막 문장이나 키워드 추출
-        else {
+        } else {
           const sentences = content.trim().split(/[.!?。！？]/).filter(s => s.trim())
           if (sentences.length > 0) {
             textToExpand = sentences[sentences.length - 1].trim()
             console.log('✅ 마지막 문장 사용:', textToExpand)
           } else {
-            textToExpand = content.trim().slice(0, 50) // 처음 50자
+            textToExpand = content.trim().slice(0, 50)
             console.log('✅ 내용 일부 사용:', textToExpand)
           }
         }
+        
+        expandedText = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        
+        if (expandedText) {
+          // 기존 내용에 추가
+          const newContent = content ? content + '\n\n' + expandedText : expandedText
+          setContent(newContent)
+          showNotification('success', 'AI 일기 작성 완료!', 
+            '키워드가 자연스러운 일기 문장으로 확장되어 추가되었습니다.')
+        }
       }
-      // 3. 아무것도 없으면 감정을 기반으로 생성
+      // 4. 아무것도 없으면 감정 기반으로 생성
       else {
-        textToExpand = emotion ? `${emotion}_기반_일기` : '오늘_하루'
-        console.log('✅ 감정 기반 키워드 생성:', textToExpand)
+        const emotionPrompt = emotion ? `${emotion}_기반_일기` : '오늘_하루'
+        console.log('✅ 감정 기반 키워드 생성:', emotionPrompt)
+        
+        expandedText = await openaiService.expandTextToDiary(emotionPrompt, emotion || 'HAPPY')
+        
+        if (expandedText) {
+          setContent(expandedText)
+          showNotification('success', 'AI 일기 생성 완료!', 
+            '선택한 감정을 바탕으로 일기가 생성되었습니다.')
+        }
       }
       
-      if (!textToExpand) {
+      if (!expandedText) {
         showNotification('info', 'AI 문장 만들기', 
           '감정을 선택하거나 텍스트를 입력한 후 사용해주세요.', 
           '💡 팁: 감정만 선택해도 AI가 자동으로 일기를 작성해드립니다!')
@@ -865,51 +994,51 @@ const DiaryWrite = ({ user }) => {
               <button
                 onClick={() => navigate('/')}
                 style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '56px',
+                  height: '56px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '16px',
+                  borderRadius: '18px',
                   background: isDarkMode 
                     ? 'rgba(58, 58, 60, 0.7)' 
                     : 'rgba(255, 255, 255, 0.7)',
                   border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)'}`,
                   boxShadow: isDarkMode 
-                    ? '0 4px 12px rgba(0, 0, 0, 0.2)' 
-                    : '0 4px 12px rgba(0, 0, 0, 0.06)',
+                    ? '0 6px 16px rgba(0, 0, 0, 0.25)' 
+                    : '0 6px 16px rgba(0, 0, 0, 0.08)',
                   color: isDarkMode ? '#FFFFFF' : '#454545',
                   transition: 'all 0.3s',
                   cursor: 'pointer'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.transform = 'translateY(-4px)';
                   e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 6px 16px rgba(0, 0, 0, 0.3)' 
-                    : '0 6px 16px rgba(0, 0, 0, 0.1)';
+                    ? '0 8px 20px rgba(0, 0, 0, 0.35)' 
+                    : '0 8px 20px rgba(0, 0, 0, 0.12)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 4px 12px rgba(0, 0, 0, 0.2)' 
-                    : '0 4px 12px rgba(0, 0, 0, 0.06)';
+                    ? '0 6px 16px rgba(0, 0, 0, 0.25)' 
+                    : '0 6px 16px rgba(0, 0, 0, 0.08)';
                 }}
               >
-                <ArrowLeft style={{ width: '20px', height: '20px' }} />
+                <ArrowLeft style={{ width: '26px', height: '26px' }} />
               </button>
               <div style={{
-                width: '56px',
-                height: '56px',
+                width: '64px',
+                height: '64px',
                 background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-                borderRadius: '18px',
+                borderRadius: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(23, 162, 184, 0.3)',
+                boxShadow: '0 10px 24px rgba(23, 162, 184, 0.35)',
                 transform: 'rotate(3deg)',
-                margin: '0 5px'
+                margin: '0 8px'
               }}>
-                <CalendarIcon style={{ width: '26px', height: '26px', color: 'white' }} />
+                <CalendarIcon style={{ width: '32px', height: '32px', color: 'white' }} />
               </div>
               <div>
                 <h1 style={{ 
@@ -1432,13 +1561,14 @@ const DiaryWrite = ({ user }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '12px',
-                    padding: '14px 24px',
-                    borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                    gap: '16px',
+                    padding: '20px 28px',
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
                     color: 'white',
                     fontWeight: '600',
-                  boxShadow: '0 8px 16px rgba(23, 162, 184, 0.25)',
+                    fontSize: '16px',
+                    boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)',
                     border: 'none',
                     transition: 'all 0.3s',
                     cursor: loading ? 'not-allowed' : 'pointer',
@@ -1446,32 +1576,32 @@ const DiaryWrite = ({ user }) => {
                   }}
                   onMouseOver={(e) => {
                     if (!loading) {
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 12px 20px rgba(23, 162, 184, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.4)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (!loading) {
                       e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.25)';
+                      e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.3)';
                     }
                   }}
                 >
                   {loading ? (
                     <>
-                    <Loader style={{ width: '20px', height: '20px' }} />
-                    <span>AI 생각 중...</span>
+                      <Loader style={{ width: '28px', height: '28px' }} className="animate-spin" />
+                      <span>AI 생각 중...</span>
                     </>
                   ) : (
                     <>
-                    <Sparkles style={{ width: '20px', height: '20px' }} />
-                    <span>{selectedText ? 'AI 텍스트 확장' : emotion ? `${
-                      emotion === 'HAPPY' ? '기쁜' :
-                      emotion === 'SAD' ? '슬픈' :
-                      emotion === 'ANGRY' ? '화나는' :
-                      emotion === 'PEACEFUL' ? '평온한' :
-                      emotion === 'ANXIOUS' ? '불안한' : ''
-                    } 감정으로 AI 일기 작성` : 'AI 문장 만들기'}</span>
+                      <Sparkles style={{ width: '28px', height: '28px' }} />
+                      <span>{selectedText ? 'AI 텍스트 확장' : emotion ? `${
+                        emotion === 'HAPPY' ? '기쁜' :
+                        emotion === 'SAD' ? '슬픈' :
+                        emotion === 'ANGRY' ? '화나는' :
+                        emotion === 'PEACEFUL' ? '평온한' :
+                        emotion === 'ANXIOUS' ? '불안한' : ''
+                      } 감정으로 AI 일기 작성` : 'AI 문장 만들기'}</span>
                     </>
                   )}
                 </button>
@@ -1483,35 +1613,36 @@ const DiaryWrite = ({ user }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '12px',
-                  padding: '14px 24px',
-                  borderRadius: '16px',
+                  gap: '16px',
+                  padding: '20px 28px',
+                  borderRadius: '20px',
                   background: isDarkMode 
                     ? 'rgba(58, 58, 60, 0.8)' 
                     : 'rgba(255, 255, 255, 0.8)',
                   color: isDarkMode ? '#FFFFFF' : '#333',
                   fontWeight: '600',
+                  fontSize: '16px',
                   boxShadow: isDarkMode 
-                    ? '0 8px 16px rgba(0, 0, 0, 0.2)' 
-                    : '0 8px 16px rgba(0, 0, 0, 0.06)',
+                    ? '0 12px 24px rgba(0, 0, 0, 0.25)' 
+                    : '0 12px 24px rgba(0, 0, 0, 0.08)',
                   border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)'}`,
                   transition: 'all 0.3s',
                   cursor: 'pointer'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.transform = 'translateY(-4px)';
                   e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 12px 20px rgba(0, 0, 0, 0.3)' 
-                    : '0 12px 20px rgba(0, 0, 0, 0.1)';
+                    ? '0 16px 32px rgba(0, 0, 0, 0.35)' 
+                    : '0 16px 32px rgba(0, 0, 0, 0.12)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 8px 16px rgba(0, 0, 0, 0.2)' 
-                    : '0 8px 16px rgba(0, 0, 0, 0.06)';
+                    ? '0 12px 24px rgba(0, 0, 0, 0.25)' 
+                    : '0 12px 24px rgba(0, 0, 0, 0.08)';
                 }}
               >
-                <Image style={{ width: '20px', height: '20px' }} />
+                <Image style={{ width: '28px', height: '28px' }} />
                 <span>이미지 첨부</span>
               </button>
             </div>
@@ -1524,18 +1655,18 @@ const DiaryWrite = ({ user }) => {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '14px',
-                  padding: '16px 32px',
-                  borderRadius: '16px',
+                  gap: '18px',
+                  padding: '20px 40px',
+                  borderRadius: '20px',
                   background: isTimeToWrite 
                     ? 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)'
                     : '#9CA3AF',
                   color: 'white',
                   fontWeight: '600',
-                  fontSize: '16px',
+                  fontSize: '18px',
                   boxShadow: isTimeToWrite 
-                    ? '0 10px 20px rgba(23, 162, 184, 0.25)'
-                    : '0 10px 20px rgba(156, 163, 175, 0.25)',
+                    ? '0 12px 28px rgba(23, 162, 184, 0.3)'
+                    : '0 12px 28px rgba(156, 163, 175, 0.25)',
                   border: 'none',
                   transition: 'all 0.3s',
                   cursor: (loading || !title || !content || !emotion) 
@@ -1545,18 +1676,18 @@ const DiaryWrite = ({ user }) => {
                 }}
                 onMouseOver={(e) => {
                   if (!(loading || !title || !content || !emotion) && isTimeToWrite) {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 14px 24px rgba(23, 162, 184, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.4)';
                   }
                 }}
                 onMouseOut={(e) => {
                   if (!(loading || !title || !content || !emotion) && isTimeToWrite) {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 10px 20px rgba(23, 162, 184, 0.25)';
+                    e.currentTarget.style.boxShadow = '0 12px 28px rgba(23, 162, 184, 0.3)';
                   }
                 }}
               >
-                <Save style={{ width: '20px', height: '20px' }} />
+                <Save style={{ width: '26px', height: '26px' }} />
                 <span>{isEditing ? '수정 완료' : '일기 저장하기'}</span>
               </button>
             </div>
@@ -1719,14 +1850,24 @@ const DiaryWrite = ({ user }) => {
             </div>
 
             <div 
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+                if (files.length > 0) {
+                  handleHighlightImageUpload(files)
+                }
+              }}
               style={{
-                border: `2px dashed ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'}`,
+                border: `2px dashed ${isDarkMode ? 'rgba(255, 215, 0, 0.4)' : 'rgba(255, 215, 0, 0.5)'}`,
                 borderRadius: '16px',
                 padding: '40px 20px',
                 textAlign: 'center',
-                background: isDarkMode ? 'rgba(58, 58, 60, 0.3)' : 'rgba(248, 250, 252, 0.5)',
+                background: isDarkMode ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.08)',
                 marginBottom: '20px',
                 transition: 'all 0.2s'
               }}
@@ -1734,40 +1875,40 @@ const DiaryWrite = ({ user }) => {
               <Upload style={{ 
                 width: '48px', 
                 height: '48px', 
-                color: isDarkMode ? '#8E8E93' : '#9CA3AF',
+                color: isDarkMode ? '#FFD60A' : '#B8860B',
                 margin: '0 auto 16px'
               }} />
               <p style={{
                 margin: '0 0 12px 0',
                 fontSize: '16px',
                 fontWeight: '600',
-                color: isDarkMode ? '#FFFFFF' : '#374151'
+                color: isDarkMode ? '#FFD60A' : '#B8860B'
               }}>
-                이미지를 드래그하거나 클릭해서 업로드
+                하이라이트용 이미지 업로드
               </p>
               <p style={{
                 margin: '0',
                 fontSize: '14px',
-                color: isDarkMode ? '#8E8E93' : '#6B7280'
+                color: isDarkMode ? '#CCCCCC' : '#666'
               }}>
-                JPG, PNG, GIF 파일 지원 (최대 5MB)
+                선택한 텍스트와 관련된 이미지를 업로드하세요
               </p>
               
               <input
                 type="file"
                 multiple
                 accept="image/*"
-                onChange={(e) => handleImageUpload(e.target.files)}
+                onChange={(e) => handleHighlightImageUpload(e.target.files)}
                 style={{ display: 'none' }}
-                id="imageUpload"
+                id="highlightImageUpload"
               />
               <label 
-                htmlFor="imageUpload"
+                htmlFor="highlightImageUpload"
                 style={{
                   display: 'inline-block',
                   marginTop: '16px',
                   padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                  background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
                   color: 'white',
                   borderRadius: '12px',
                   cursor: 'pointer',
@@ -1776,14 +1917,14 @@ const DiaryWrite = ({ user }) => {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.3)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 149, 0, 0.3)'
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                파일 선택
+                📷 이미지 선택
               </label>
             </div>
             
@@ -2509,6 +2650,242 @@ const DiaryWrite = ({ user }) => {
               >
                 확인
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 하이라이트 이미지 뷰어 모달 */}
+      {showImageViewer && viewerImages.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1200,
+          padding: '20px'
+        }}>
+          <div style={{
+            position: 'relative',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            background: isDarkMode 
+              ? 'rgba(28, 28, 30, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+          }}>
+            {/* 헤더 */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <h3 style={{
+                  margin: '0',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+                }}>
+                  📷 하이라이트 이미지
+                </h3>
+                <p style={{
+                  margin: '4px 0 0 0',
+                  fontSize: '14px',
+                  color: isDarkMode ? '#8E8E93' : '#6D6D70'
+                }}>
+                  {currentImageIndex + 1} / {viewerImages.length}
+                </p>
+              </div>
+              
+              <button
+                onClick={() => setShowImageViewer(false)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(0, 0, 0, 0.1)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isDarkMode ? '#FFFFFF' : '#000000',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = isDarkMode ? 'rgba(72, 72, 74, 0.9)' : 'rgba(0, 0, 0, 0.2)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {/* 이미지 영역 */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              maxHeight: '70vh',
+              background: isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(248, 250, 252, 0.5)'
+            }}>
+              <img 
+                src={viewerImages[currentImageIndex]?.url}
+                alt={`하이라이트 이미지 ${currentImageIndex + 1}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '8px'
+                }}
+              />
+              
+              {/* 이전/다음 버튼 */}
+              {viewerImages.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    style={{
+                      position: 'absolute',
+                      left: '16px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      fontSize: '20px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)'
+                      e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'
+                      e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+                    }}
+                  >
+                    ‹
+                  </button>
+                  
+                  <button
+                    onClick={handleNextImage}
+                    style={{
+                      position: 'absolute',
+                      right: '16px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      fontSize: '20px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)'
+                      e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'
+                      e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+                    }}
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+            </div>
+            
+            {/* 하단 정보 */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+              background: isDarkMode ? 'rgba(28, 28, 30, 0.8)' : 'rgba(248, 250, 252, 0.8)'
+            }}>
+              <div style={{
+                fontSize: '14px',
+                color: isDarkMode ? '#8E8E93' : '#6D6D70',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                  {viewerImages[currentImageIndex]?.filename || `이미지 ${currentImageIndex + 1}`}
+                </div>
+                {viewerImages[currentImageIndex]?.size && (
+                  <div style={{ fontSize: '12px' }}>
+                    {imageService.formatFileSize(viewerImages[currentImageIndex].size)}
+                  </div>
+                )}
+              </div>
+              
+              {/* 썸네일 네비게이션 */}
+              {viewerImages.length > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '12px',
+                  flexWrap: 'wrap'
+                }}>
+                  {viewerImages.map((image, index) => (
+                    <button
+                      key={image.id}
+                      onClick={() => setCurrentImageIndex(index)}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        border: index === currentImageIndex 
+                          ? '2px solid #FFD60A' 
+                          : '2px solid transparent',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        background: 'none',
+                        padding: '0'
+                      }}
+                    >
+                      <img 
+                        src={image.url}
+                        alt={`썸네일 ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
