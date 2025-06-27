@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle, Edit3, LogOut } from 'lucide-react'
+import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle, Edit3, LogOut, User } from 'lucide-react'
 import { useTheme } from '../App'
 import { notificationService } from '../services/notificationService'
 import { getDiariesByMonth, getStreakDays } from '../firebase/diaryService'
@@ -411,6 +411,7 @@ export default function CalendarModern({ onLogout, user }) {
               { icon: BarChart3, label: '통계', path: '/stats' },
               { icon: HelpCircle, label: 'FAQ', path: '/faq' },
               { icon: Bell, label: '알림', action: handleNotificationToggle },
+              { icon: User, label: '마이페이지', path: '/mypage' },
               { icon: LogOut, label: '로그아웃', action: handleFirebaseLogout }
             ].map((item, index) => (
               <button

@@ -7,19 +7,39 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  serverTimestamp,
+  collection,
+  query,
+  where,
+  getDocs
+} from 'firebase/firestore'
 import { auth, db } from './config'
 
 /**
- * 앱 시작 시 Firebase 초기화 (데모 사용자 제거)
+ * 앱 시작 시 Firebase 초기화 (데모 사용자만 제거)
  */
 export const initializeAuth = async () => {
   try {
-    // 기존 Firebase 사용자 로그아웃
-    await signOut(auth)
-    console.log('Firebase 초기화 완료 - 모든 사용자 로그아웃')
+    const currentUser = auth.currentUser
+    if (currentUser) {
+      // Firestore에서 사용자 정보 확인
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+      const userData = userDoc.data()
+      
+      // 카카오 로그인 사용자가 아닌 경우에만 로그아웃
+      if (!userData || !userData.kakaoId || userData.loginType !== 'kakao') {
+        await signOut(auth)
+        console.log('Firebase 초기화 - 데모 사용자 로그아웃')
+      } else {
+        console.log('Firebase 초기화 - 카카오 사용자 유지:', userData.kakaoId)
+      }
+    }
   } catch (error) {
-    console.log('Firebase 초기화:', error.message)
+    console.log('Firebase 초기화 오류:', error.message)
   }
 }
 
@@ -168,11 +188,38 @@ export const signOutUser = async () => {
  */
 const saveUserToFirestore = async (userInfo) => {
   try {
-    console.log('Firebase 로그인 시도...')
-    const authResult = await signInAnonymously(auth)
-    console.log('Firebase 로그인 성공:', authResult.user.uid)
+    let firebaseUid
     
-    const firebaseUid = authResult.user.uid
+    // 기존 Firebase 사용자 확인
+    if (auth.currentUser) {
+      // 이미 로그인된 사용자가 있으면 해당 UID 사용
+      firebaseUid = auth.currentUser.uid
+      console.log('기존 Firebase UID 재사용:', firebaseUid)
+    } else {
+      // 카카오 ID로 기존 사용자 조회
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('kakaoId', '==', userInfo.id))
+      const querySnapshot = await getDocs(q)
+      
+      if (!querySnapshot.empty) {
+        // 기존 카카오 사용자가 있으면 해당 UID로 재로그인
+        const existingUser = querySnapshot.docs[0]
+        firebaseUid = existingUser.id
+        console.log('기존 카카오 사용자 발견, UID 재사용:', firebaseUid)
+        
+        // 해당 UID로 다시 로그인 시도 (익명 로그인)
+        await signInAnonymously(auth)
+        // 주의: 익명 로그인은 매번 새로운 UID를 생성하므로, 
+        // 실제로는 커스텀 토큰이나 다른 방법이 필요함
+      } else {
+        // 새로운 사용자인 경우
+        console.log('새로운 카카오 사용자, Firebase 계정 생성...')
+        const authResult = await signInAnonymously(auth)
+        firebaseUid = authResult.user.uid
+        console.log('새 Firebase UID 생성:', firebaseUid)
+      }
+    }
+    
     const userRef = doc(db, 'users', firebaseUid)
     const userSnap = await getDoc(userRef)
     
@@ -192,6 +239,9 @@ const saveUserToFirestore = async (userInfo) => {
     
     await setDoc(userRef, userData, { merge: true })
     console.log('Firestore 저장 완료')
+    
+    // 로컬에 카카오ID-FirebaseUID 매핑 저장 (임시 해결책)
+    localStorage.setItem(`kakao_uid_${userInfo.id}`, firebaseUid)
     
   } catch (error) {
     console.error('Firebase 저장 오류:', error)

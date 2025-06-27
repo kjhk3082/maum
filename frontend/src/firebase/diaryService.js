@@ -504,4 +504,22 @@ const calculateStreakFromLocalDiaries = (diaries) => {
       streakDays: 0
     }
   }
+}
+
+/**
+ * 사용자의 일기 개수 조회
+ */
+export const getDiaryCount = async (userId) => {
+  try {
+    const q = query(
+      collection(db, DIARIES_COLLECTION),
+      where('userId', '==', userId)
+    )
+    
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.size
+  } catch (error) {
+    console.error('일기 개수 조회 오류:', error)
+    return 0
+  }
 } 

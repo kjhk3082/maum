@@ -7,6 +7,7 @@ import DiarySearch from './components/DiarySearch'
 import StatsPage from './components/StatsPage'
 import FAQ from './components/FAQ'
 import Login from './components/Login'
+import MyPage from './components/MyPage'
 import AdminDashboard from './components/AdminDashboard'
 import { onAuthStateChange, getCurrentUser, initializeAuth, handleRedirectResult } from './firebase/authService'
 import './App.css'
@@ -155,6 +156,9 @@ function App() {
             } />
             <Route path="/stats" element={
               isLoggedIn ? <StatsPage user={user} /> : <Login onLogin={handleLogin} />
+            } />
+            <Route path="/mypage" element={
+              isLoggedIn ? <MyPage user={user} onLogout={handleLogout} /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/faq" element={<FAQ />} />
