@@ -71,8 +71,9 @@ jobs:
       - name: ✅ 배포 완료 알림
         if: success()
         run: |
-          echo "🎉 배포가 성공적으로 완료되었습니다!"
+          echo "🎉 완전한 배포가 성공적으로 완료되었습니다!"
           echo "🌐 사이트 URL: https://maumilgi-1a4cb.web.app"
+          echo "🔒 보안 규칙도 성공적으로 배포되었습니다!"
           
       - name: ❌ 배포 실패 알림  
         if: failure()
