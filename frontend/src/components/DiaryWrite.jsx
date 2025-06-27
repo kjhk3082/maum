@@ -200,35 +200,43 @@ const DiaryWrite = ({ user }) => {
     }
   }, [date, isEditing])
 
-  // 텍스트 선택 감지 함수 (개선된 버전)
+  // 텍스트 선택 감지 함수 (내용 칸에서만)
   const handleTextSelection = () => {
     const selection = window.getSelection()
     const selectedText = selection.toString().trim()
     
+    // 내용 칸에서만 텍스트 선택 허용
     if (selectedText && selectedText.length > 0) {
-      console.log('📝 텍스트 선택됨:', selectedText)
-      
-      // 선택된 텍스트의 위치 정보 저장
       const range = selection.getRangeAt(0)
-      const rect = range.getBoundingClientRect()
+      const contentTextarea = document.querySelector('#diary-content-textarea')
       
-      setSelectedTextInfo({
-        text: selectedText,
-        startOffset: range.startOffset,
-        endOffset: range.endOffset,
-        position: {
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height
-        }
-      })
-      
-      setSelectedText(selectedText)
-    } else {
-      setSelectedTextInfo(null)
-      setSelectedText('')
+      // 선택된 텍스트가 내용 칸 안에 있는지 확인
+      if (contentTextarea && contentTextarea.contains(range.commonAncestorContainer)) {
+        console.log('📝 텍스트 선택됨 (내용 칸):', selectedText)
+        
+        // 선택된 텍스트의 위치 정보 저장
+        const rect = range.getBoundingClientRect()
+        
+        setSelectedTextInfo({
+          text: selectedText,
+          startOffset: range.startOffset,
+          endOffset: range.endOffset,
+          position: {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          }
+        })
+        
+        setSelectedText(selectedText)
+        return
+      }
     }
+    
+    // 내용 칸 밖의 선택이거나 선택이 해제된 경우
+    setSelectedTextInfo(null)
+    setSelectedText('')
   }
 
   // 하이라이트에 이미지 추가
@@ -491,8 +499,8 @@ const DiaryWrite = ({ user }) => {
       
       if (!textToExpand) {
         showNotification('info', 'AI 문장 만들기', 
-          '텍스트를 선택하거나 제목/내용을 입력한 후 사용해주세요.', 
-          '예: "신라면, 18시, 맛있음"을 드래그하면 자동으로 문장을 만들어줍니다.')
+          '감정을 선택하거나 텍스트를 입력한 후 사용해주세요.', 
+          '💡 팁: 감정만 선택해도 AI가 자동으로 일기를 작성해드립니다!')
         setLoading(false)
         return
       }
@@ -1139,11 +1147,12 @@ const DiaryWrite = ({ user }) => {
               )}
               
               <textarea
+                id="diary-content-textarea"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onMouseUp={handleTextSelection}
                 onKeyUp={handleTextSelection}
-                placeholder="오늘 하루에 있었던 일들을 적어보세요. 특정 텍스트를 드래그한 후 '이미지 연결' 버튼을 누르면 해당 텍스트에 이미지를 연결할 수 있어요."
+                placeholder="오늘 하루에 있었던 일들을 적어보세요. 💡 팁: 이 칸에서 텍스트를 드래그하면 AI 확장 또는 이미지 연결이 가능합니다!"
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
@@ -1455,8 +1464,14 @@ const DiaryWrite = ({ user }) => {
                   </>
                 ) : (
                   <>
-                                         <Sparkles style={{ width: '20px', height: '20px' }} />
-                    <span>AI 문장 만들기</span>
+                    <Sparkles style={{ width: '20px', height: '20px' }} />
+                    <span>{selectedText ? 'AI 텍스트 확장' : emotion ? `${
+                      emotion === 'HAPPY' ? '기쁜' :
+                      emotion === 'SAD' ? '슬픈' :
+                      emotion === 'ANGRY' ? '화나는' :
+                      emotion === 'PEACEFUL' ? '평온한' :
+                      emotion === 'ANXIOUS' ? '불안한' : ''
+                    } 감정으로 AI 일기 작성` : 'AI 문장 만들기'}</span>
                   </>
                 )}
               </button>
@@ -2305,7 +2320,10 @@ const DiaryWrite = ({ user }) => {
               </button>
               
               <button
-                onClick={() => setShowTimeModal(false)}
+                onClick={() => {
+                  setShowTimeModal(false)
+                  navigate('/')
+                }}
                 style={{
                   padding: '12px 24px',
                   background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',

@@ -273,6 +273,12 @@ export const openaiService = {
 
   // 데모 텍스트 확장 함수
   getDemoExpansion(selectedText, emotion) {
+    // 입력값 검증
+    if (!selectedText || typeof selectedText !== 'string') {
+      console.error('getDemoExpansion: selectedText가 유효하지 않음:', selectedText)
+      return '키워드를 입력해주세요.'
+    }
+    
     const text = selectedText.trim()
     
     // 이미 완성된 문장인지 키워드인지 판단
@@ -456,85 +462,6 @@ export const openaiService = {
     }
     
     return timeMap[timeStr] || timeStr
-  },
-
-  // 키워드를 자연스러운 일기 문장으로 확장
-  expandTextToDiary: async (text, emotion) => {
-    if (!text.trim()) {
-      return '내용을 입력해주세요.'
-    }
-
-    // 데모 모드: API 키가 없거나 설정되지 않은 경우
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your-api-key-here') {
-      console.log('🤖 OpenAI API 키가 설정되지 않음, 데모 모드로 실행')
-      return openaiService.getDemoExpansion(text, emotion)
-    }
-
-    try {
-      console.log('🤖 OpenAI API 호출:', { text, emotion })
-      
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `당신은 일기 작성을 도와주는 따뜻하고 친근한 AI 어시스턴트입니다. 사용자가 입력한 키워드나 간단한 메모를 자연스럽고 감정이 담긴 일기 문장으로 확장해주세요.
-
-규칙:
-1. 한국어로 자연스럽게 작성
-2. 감정에 맞는 톤과 어조 사용
-3. 구체적이고 감각적인 표현 사용
-4. "기분 좋았다", "힘들었다" 같은 뻔한 표현 지양
-5. 키워드가 불완전한 문장이면 완전한 문장으로, 이미 완전한 문장이면 더 풍부하게 확장
-6. 1-3문장으로 간결하게 작성
-7. 시간, 장소, 활동 키워드는 자연스럽게 연결
-
-감정별 톤:
-- 기쁨: 밝고 활기찬 톤
-- 슬픔: 차분하고 성찰적인 톤  
-- 화남: 강하지만 절제된 표현
-- 평온: 따뜻하고 차분한 톤
-- 불안: 솔직하지만 희망적인 톤`
-            },
-            {
-              role: 'user',
-              content: `감정: ${emotion}
-입력: ${text}
-
-위 내용을 자연스러운 일기 문장으로 확장해주세요.`
-            }
-          ],
-          max_tokens: 200,
-          temperature: 0.8
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`API 요청 실패: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const expandedText = data.choices[0]?.message?.content?.trim()
-
-      if (!expandedText) {
-        throw new Error('AI 응답이 비어있습니다')
-      }
-
-      console.log('✅ OpenAI API 응답 성공:', expandedText)
-      return expandedText
-
-    } catch (error) {
-      console.error('❌ OpenAI API 오류:', error)
-      
-      // API 오류시 데모 모드로 폴백
-      return openaiService.getDemoExpansion(text, emotion)
-    }
   },
 
   // AI 분석 리포트 생성
