@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17A2B8" />
+    <meta name="description" content="감정을 기록하고 마음을 돌보는 일기 앱" />
+    
+    <!-- PWA 메타 태그 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="마음일기" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Open Graph 메타 태그 -->
+    <meta property="og:title" content="마음일기" />
+    <meta property="og:description" content="Firebase 기반 캘린더 일기장 웹 서비스" />
+    <meta property="og:image" content="/icon-512x512.png" />
+    <meta property="og:type" content="website" />
+    
+    <!-- Twitter Card 메타 태그 -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="마음일기" />
+    <meta name="twitter:description" content="감정을 기록하고 마음을 돌보는 일기 앱" />
+    <meta name="twitter:image" content="/icon-512x512.png" />
+    
+    <title>마음일기</title>
+    <!-- 카카오 JavaScript SDK -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // 카카오 SDK 초기화
+      if (window.Kakao) {
+        window.Kakao.init('240138285eefbcd9ab66f4a85efbfbb5')
+      }
+    </script>
+  </body>
+</html>
