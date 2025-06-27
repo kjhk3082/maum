@@ -42,7 +42,10 @@ export const signInWithKakaoSDK = async () => {
       return await signInWithKakaoPopup()
     } catch (authError) {
       console.error('팝업 로그인 실패:', authError)
-      return await createDemoUser()
+      return {
+        success: false,
+        error: authError.message || '로그인에 실패했습니다.'
+      }
     }
 
   } catch (error) {
@@ -54,10 +57,22 @@ export const signInWithKakaoSDK = async () => {
   }
 }
 
+// 팝업 상태 관리
+let kakaoPopup = null
+let isPopupInProgress = false
+
 /**
  * 카카오 팝업 로그인 (모바일 최적화)
  */
 export const signInWithKakaoPopup = async () => {
+  // 중복 팝업 방지
+  if (isPopupInProgress) {
+    console.log('이미 로그인 진행 중입니다.')
+    return {
+      success: false,
+      error: '이미 로그인이 진행 중입니다.'
+    }
+  }
   try {
     console.log('팝업 로그인 방식 시도...')
     
@@ -77,6 +92,8 @@ export const signInWithKakaoPopup = async () => {
       // 모바일에서는 현재 창에서 리디렉션
       console.log('모바일 환경 - 현재 창에서 로그인')
       
+      isPopupInProgress = true
+      
       // 현재 URL을 세션에 저장
       sessionStorage.setItem('login_return_url', window.location.href)
       
@@ -88,7 +105,8 @@ export const signInWithKakaoPopup = async () => {
       // 데스크톱에서는 팝업 창 사용
       console.log('데스크톱 환경 - 팝업 창 로그인')
       
-      const popup = window.open(
+      isPopupInProgress = true
+      kakaoPopup = window.open(
         loginUrl.toString(), 
         'kakao_login', 
         'width=500,height=600,scrollbars=yes,resizable=yes'
@@ -96,8 +114,9 @@ export const signInWithKakaoPopup = async () => {
       
       return new Promise((resolve) => {
         const checkClosed = setInterval(() => {
-          if (popup.closed) {
+          if (kakaoPopup.closed) {
             clearInterval(checkClosed)
+            isPopupInProgress = false
             console.log('팝업 창이 닫혔습니다.')
             
             // 팝업이 닫혔을 때 로그인 상태 확인
@@ -131,8 +150,11 @@ export const signInWithKakaoPopup = async () => {
                     user: userInfo
                   })
                 } else {
-                  console.log('팝업 로그인 실패, 데모 모드로 전환')
-                  resolve(await createDemoUser())
+                  console.log('팝업 로그인 실패')
+                  resolve({
+                    success: false,
+                    error: '로그인이 취소되었습니다.'
+                  })
                 }
               } catch (error) {
                 console.error('팝업 후 사용자 정보 조회 실패:', error)
@@ -144,19 +166,27 @@ export const signInWithKakaoPopup = async () => {
         
         // 30초 후 자동 타임아웃
         setTimeout(() => {
-          if (!popup.closed) {
-            popup.close()
+          if (!kakaoPopup.closed) {
+            kakaoPopup.close()
           }
           clearInterval(checkClosed)
-          console.log('팝업 로그인 타임아웃, 데모 모드로 전환')
-          resolve(createDemoUser())
+          isPopupInProgress = false
+          console.log('팝업 로그인 타임아웃')
+          resolve({
+            success: false,
+            error: '로그인 시간이 초과되었습니다.'
+          })
         }, 30000)
       })
     }
     
   } catch (error) {
     console.error('팝업 로그인 오류:', error)
-    return await createDemoUser()
+    isPopupInProgress = false
+    return {
+      success: false,
+      error: '로그인 중 오류가 발생했습니다.'
+    }
   }
 }
 
@@ -347,7 +377,8 @@ export const signOutUser = async () => {
           }
         }
       } catch (error) {
-        console.warn('카카오 로그아웃 오류:', error)
+        // 카카오 로그아웃 오류는 무시 (401 Unauthorized는 정상적인 경우)
+        console.log('카카오 로그아웃 오류 (무시됨):', error)
       }
     }
 
