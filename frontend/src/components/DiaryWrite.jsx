@@ -205,22 +205,28 @@ const DiaryWrite = ({ user }) => {
 
   // 텍스트 선택 감지 함수 (내용 칸에서만)
   const handleTextSelection = () => {
+    console.log('🎯 handleTextSelection 호출됨')
     const selection = window.getSelection()
     const selectedText = selection.toString().trim()
+    console.log('📝 선택된 텍스트:', selectedText, '길이:', selectedText.length)
     
     // 내용 칸에서만 텍스트 선택 허용
     if (selectedText && selectedText.length > 0) {
+      console.log('✅ 텍스트가 선택됨, 범위 확인 중...')
       const range = selection.getRangeAt(0)
       const contentTextarea = document.querySelector('#diary-content-textarea')
       
+      console.log('📍 contentTextarea 찾음:', !!contentTextarea)
+      console.log('📍 range.commonAncestorContainer:', range.commonAncestorContainer)
+      
       // 선택된 텍스트가 내용 칸 안에 있는지 확인
       if (contentTextarea && contentTextarea.contains(range.commonAncestorContainer)) {
-        console.log('📝 텍스트 선택됨 (내용 칸):', selectedText)
+        console.log('✅ 텍스트 선택됨 (내용 칸):', selectedText)
         
         // 선택된 텍스트의 위치 정보 저장
         const rect = range.getBoundingClientRect()
         
-        setSelectedTextInfo({
+        const textInfo = {
           text: selectedText,
           startOffset: range.startOffset,
           endOffset: range.endOffset,
@@ -230,17 +236,24 @@ const DiaryWrite = ({ user }) => {
             width: rect.width,
             height: rect.height
           }
-        })
+        }
         
+        console.log('📊 selectedTextInfo 설정:', textInfo)
+        setSelectedTextInfo(textInfo)
         setSelectedText(selectedText)
         
         // 선택된 텍스트를 노란색으로 하이라이트
         highlightSelectedText(range)
         return
+      } else {
+        console.log('❌ 텍스트가 내용 칸 밖에서 선택됨')
       }
+    } else {
+      console.log('ℹ️ 선택된 텍스트가 없음')
     }
     
     // 내용 칸 밖의 선택이거나 선택이 해제된 경우
+    console.log('🔄 selectedTextInfo 초기화')
     setSelectedTextInfo(null)
     setSelectedText('')
   }
@@ -549,7 +562,8 @@ const DiaryWrite = ({ user }) => {
         const textToExpand = selectedText.trim()
         console.log('✅ 선택된 텍스트 확장:', textToExpand)
         
-        expandedText = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        const result = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        expandedText = result.expandedText
         
         if (expandedText) {
           // 선택된 텍스트를 확장된 텍스트로 교체
@@ -576,7 +590,8 @@ const DiaryWrite = ({ user }) => {
         }
         
         const emotionLabel = emotionLabels[emotion] || '기쁜'
-        expandedText = await openaiService.expandTextToDiary(content, emotion, `전체 내용을 ${emotionLabel} 감정으로 다듬어주세요.`)
+        const result = await openaiService.expandTextToDiary(content, emotion, `전체 내용을 ${emotionLabel} 감정으로 다듬어주세요.`)
+        expandedText = result.expandedText
         
         if (expandedText) {
           setContent(expandedText)
@@ -602,7 +617,8 @@ const DiaryWrite = ({ user }) => {
           }
         }
         
-        expandedText = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        const result = await openaiService.expandTextToDiary(textToExpand, emotion || 'HAPPY')
+        expandedText = result.expandedText
         
         if (expandedText) {
           // 기존 내용에 추가
@@ -617,7 +633,8 @@ const DiaryWrite = ({ user }) => {
         const emotionPrompt = emotion ? `${emotion}_기반_일기` : '오늘_하루'
         console.log('✅ 감정 기반 키워드 생성:', emotionPrompt)
         
-        expandedText = await openaiService.expandTextToDiary(emotionPrompt, emotion || 'HAPPY')
+        const result = await openaiService.expandTextToDiary(emotionPrompt, emotion || 'HAPPY')
+        expandedText = result.expandedText
         
         if (expandedText) {
           setContent(expandedText)

@@ -176,9 +176,9 @@ export const openaiService = {
   },
 
   // 텍스트 확장 기능 (키워드를 문장으로 확장)
-  async expandTextToDiary(context) {
+  async expandTextToDiary(textToExpand, emotion, customPrompt = null) {
     try {
-      const { selectedText, emotion } = context
+      console.log('🤖 expandTextToDiary 호출:', { textToExpand, emotion, customPrompt })
       
       // OpenAI API가 설정되어 있는 경우 실제 API 호출
       if (OPENAI_API_KEY && OPENAI_API_KEY !== 'demo-mode') {
@@ -216,9 +216,11 @@ export const openaiService = {
 - 문체: 반말 일기체, 때로는 의성어나 의태어 활용
 
 현재 감정 상태: ${emotion}
-선택된 텍스트: "${selectedText}"
+선택된 텍스트: "${textToExpand}"
 
 위 텍스트를 바탕으로 개성 있고 진솔한 일기 문장으로 변환해주세요. 단순한 감정 형용사 남발은 피하고, 구체적이고 생생한 표현을 사용해주세요.`
+
+        const userPrompt = customPrompt || `키워드: "${textToExpand}"`
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -230,7 +232,7 @@ export const openaiService = {
             model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: systemPrompt },
-              { role: 'user', content: `키워드: "${selectedText}"` }
+              { role: 'user', content: userPrompt }
             ],
             max_tokens: 150,
             temperature: 0.7
@@ -251,7 +253,7 @@ export const openaiService = {
         }
       } else {
         // 데모 모드 - API 키가 없는 경우
-        const demoExpansion = this.getDemoExpansion(selectedText, emotion)
+        const demoExpansion = this.getDemoExpansion(textToExpand, emotion)
         return {
           success: true,
           expandedText: demoExpansion,
@@ -262,7 +264,7 @@ export const openaiService = {
       console.error('텍스트 확장 오류:', error)
       
       // 오류 시 데모 응답 제공
-      const demoExpansion = this.getDemoExpansion(context.selectedText, context.emotion)
+      const demoExpansion = this.getDemoExpansion(textToExpand, emotion)
       return {
         success: true,
         expandedText: demoExpansion,

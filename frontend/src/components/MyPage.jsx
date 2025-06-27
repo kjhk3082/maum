@@ -76,9 +76,9 @@ function MyPage({ user, onLogout }) {
               <button
                 onClick={() => navigate('/')}
                 style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '16px',
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '20px',
                   background: isDarkMode 
                     ? 'rgba(255, 255, 255, 0.05)' 
                     : 'rgba(0, 0, 0, 0.05)',
@@ -102,7 +102,7 @@ function MyPage({ user, onLogout }) {
                   e.currentTarget.style.transform = 'scale(1)'
                 }}
               >
-                <ArrowLeft size={28} color={isDarkMode ? '#ffffff' : '#1e293b'} />
+                <ArrowLeft size={36} color={isDarkMode ? '#ffffff' : '#1e293b'} />
               </button>
               <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 마이페이지
@@ -113,9 +113,9 @@ function MyPage({ user, onLogout }) {
             <button
               onClick={toggleTheme}
               style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '16px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '20px',
                 background: isDarkMode 
                   ? 'rgba(255, 255, 255, 0.05)' 
                   : 'rgba(0, 0, 0, 0.05)',
@@ -140,9 +140,9 @@ function MyPage({ user, onLogout }) {
               }}
             >
               {isDarkMode ? (
-                <Sun size={28} color="#fbbf24" />
+                <Sun size={36} color="#fbbf24" />
               ) : (
-                <Moon size={28} color="#64748b" />
+                <Moon size={36} color="#64748b" />
               )}
             </button>
           </div>
@@ -188,13 +188,13 @@ function MyPage({ user, onLogout }) {
               <button 
                 className="absolute -bottom-2 -right-2 transition-all duration-200"
                 style={{
-                  width: '48px',
-                  height: '48px',
+                  width: '60px',
+                  height: '60px',
                   borderRadius: '50%',
                   background: 'linear-gradient(145deg, #17A2B8, #138496)',
                   color: 'white',
-                  border: '3px solid white',
-                  boxShadow: '0 8px 16px rgba(23, 162, 184, 0.3)',
+                  border: '4px solid white',
+                  boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -202,14 +202,14 @@ function MyPage({ user, onLogout }) {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'scale(1.1)'
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
+                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)'
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'scale(1)'
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.3)'
+                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
                 }}
               >
-                <Camera size={24} />
+                <Camera size={32} />
               </button>
             </div>
             
@@ -245,9 +245,9 @@ function MyPage({ user, onLogout }) {
                       onClick={handleUpdateProfile}
                       disabled={loading}
                       style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '12px',
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '16px',
                         background: 'linear-gradient(145deg, #22c55e, #16a34a)',
                         color: 'white',
                         border: 'none',
@@ -256,10 +256,10 @@ function MyPage({ user, onLogout }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.2s',
-                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
+                        boxShadow: '0 8px 20px rgba(34, 197, 94, 0.4)'
                       }}
                     >
-                      <Check size={24} />
+                      <Check size={32} />
                     </button>
                     <button
                       onClick={() => {
@@ -267,9 +267,9 @@ function MyPage({ user, onLogout }) {
                         setDisplayName(user?.name || '')
                       }}
                       style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '12px',
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '16px',
                         background: 'linear-gradient(145deg, #ef4444, #dc2626)',
                         color: 'white',
                         border: 'none',
@@ -278,10 +278,10 @@ function MyPage({ user, onLogout }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.2s',
-                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                        boxShadow: '0 8px 20px rgba(239, 68, 68, 0.4)'
                       }}
                     >
-                      <X size={24} />
+                      <X size={32} />
                     </button>
                   </div>
                 </div>
@@ -305,9 +305,9 @@ function MyPage({ user, onLogout }) {
                     <button
                       onClick={() => setIsEditing(true)}
                       style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '16px',
                         background: isDarkMode 
                           ? 'rgba(255, 255, 255, 0.1)' 
                           : 'rgba(0, 0, 0, 0.05)',
@@ -331,21 +331,21 @@ function MyPage({ user, onLogout }) {
                         e.currentTarget.style.transform = 'scale(1)'
                       }}
                     >
-                      <Edit3 size={20} color={isDarkMode ? '#94a3b8' : '#64748b'} />
+                      <Edit3 size={28} color={isDarkMode ? '#94a3b8' : '#64748b'} />
                     </button>
                   </div>
                   <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
                     {user?.loginType === 'google' ? (
                       <>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                         </svg>
                         <span style={{
-                          fontSize: '16px',
-                          fontWeight: '500',
+                          fontSize: '18px',
+                          fontWeight: '600',
                           color: isDarkMode ? '#94a3b8' : '#64748b'
                         }}>
                           Google 로그인 사용자
@@ -356,11 +356,11 @@ function MyPage({ user, onLogout }) {
                         <img 
                           src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+" 
                           alt="Kakao" 
-                          style={{ width: '24px', height: '24px' }}
+                          style={{ width: '32px', height: '32px' }}
                         />
                         <span style={{
-                          fontSize: '16px',
-                          fontWeight: '500',
+                          fontSize: '18px',
+                          fontWeight: '600',
                           color: isDarkMode ? '#94a3b8' : '#64748b'
                         }}>
                           카카오 로그인 사용자
@@ -412,16 +412,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4 mb-3">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #17A2B8, #138496)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)'
+                boxShadow: '0 8px 20px rgba(23, 162, 184, 0.4)'
               }}>
-                <Mail size={24} color="white" />
+                <Mail size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '16px',
@@ -470,16 +470,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4 mb-3">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #8b5cf6, #7c3aed)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                boxShadow: '0 8px 20px rgba(139, 92, 246, 0.4)'
               }}>
-                <Calendar size={24} color="white" />
+                <Calendar size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '16px',
@@ -527,16 +527,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4 mb-3">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #06d6a0, #048c73)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(6, 214, 160, 0.3)'
+                boxShadow: '0 8px 20px rgba(6, 214, 160, 0.4)'
               }}>
-                <BookOpen size={24} color="white" />
+                <BookOpen size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '16px',
@@ -588,16 +588,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4 mb-3">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #f59e0b, #d97706)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+                boxShadow: '0 8px 20px rgba(245, 158, 11, 0.4)'
               }}>
-                <User size={24} color="white" />
+                <User size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '16px',
@@ -702,16 +702,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #a855f7, #9333ea)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)'
+                boxShadow: '0 8px 20px rgba(168, 85, 247, 0.4)'
               }}>
-                <Palette size={24} color="white" />
+                <Palette size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '18px',
@@ -723,9 +723,9 @@ function MyPage({ user, onLogout }) {
             </div>
             <div className="flex items-center gap-3">
               <div style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
                 background: isDarkMode 
                   ? 'linear-gradient(145deg, #374151, #1f2937)' 
                   : 'linear-gradient(145deg, #fbbf24, #f59e0b)',
@@ -733,13 +733,13 @@ function MyPage({ user, onLogout }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: isDarkMode 
-                  ? '0 4px 12px rgba(55, 65, 81, 0.3)'
-                  : '0 4px 12px rgba(251, 191, 36, 0.3)'
+                  ? '0 8px 20px rgba(55, 65, 81, 0.4)'
+                  : '0 8px 20px rgba(251, 191, 36, 0.4)'
               }}>
                 {isDarkMode ? (
-                  <Moon size={20} color="#94a3b8" />
+                  <Moon size={28} color="#94a3b8" />
                 ) : (
-                  <Sun size={20} color="white" />
+                  <Sun size={28} color="white" />
                 )}
               </div>
               <span style={{
@@ -783,16 +783,16 @@ function MyPage({ user, onLogout }) {
           >
             <div className="flex items-center gap-4">
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '16px',
                 background: 'linear-gradient(145deg, #ef4444, #dc2626)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                boxShadow: '0 8px 20px rgba(239, 68, 68, 0.4)'
               }}>
-                <LogOut size={24} color="white" />
+                <LogOut size={32} color="white" />
               </div>
               <span style={{
                 fontSize: '18px',
