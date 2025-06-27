@@ -36,43 +36,53 @@ export const signInWithKakaoSDK = async () => {
       return await signInWithKakaoPopup()
     }
 
-    // 데스크톱에서는 기존 방식 시도
+    // 데스크톱에서는 카카오 SDK 표준 로그인 사용
     try {
-      console.log('데스크톱 환경 - 표준 로그인 시도...')
+      console.log('데스크톱 환경 - 카카오 SDK 로그인 시도...')
       
-      const authResponse = await window.Kakao.Auth.authorize({
-        redirectUri: window.location.origin + '/kakao-callback',
-        scope: 'profile_nickname,profile_image,account_email'
-      })
-      
-      console.log('카카오 인증 성공:', authResponse)
-      
-      const userResponse = await window.Kakao.API.request({
-        url: '/v2/user/me'
-      })
-      
-      console.log('카카오 사용자 정보 성공:', userResponse)
+      return new Promise((resolve) => {
+        window.Kakao.Auth.login({
+          success: async (authObj) => {
+            console.log('카카오 인증 성공:', authObj)
+            
+            try {
+              const userResponse = await window.Kakao.API.request({
+                url: '/v2/user/me'
+              })
+              
+              console.log('카카오 사용자 정보 성공:', userResponse)
 
-      const userInfo = {
-        id: userResponse.id.toString(),
-        uid: userResponse.id.toString(),
-        name: userResponse.properties?.nickname || '카카오 사용자',
-        email: userResponse.kakao_account?.email || '',
-        profileImage: userResponse.properties?.profile_image || '',
-        loginType: 'kakao',
-        loginAt: new Date().toISOString(),
-        accessToken: authResponse.access_token || 'authorized'
-      }
+              const userInfo = {
+                id: userResponse.id.toString(),
+                uid: userResponse.id.toString(),
+                name: userResponse.properties?.nickname || '카카오 사용자',
+                email: userResponse.kakao_account?.email || '',
+                profileImage: userResponse.properties?.profile_image || '',
+                loginType: 'kakao',
+                loginAt: new Date().toISOString(),
+                accessToken: authObj.access_token
+              }
 
-      await saveUserToFirestore(userInfo)
-      
-      return {
-        success: true,
-        user: userInfo
-      }
+              await saveUserToFirestore(userInfo)
+              
+              resolve({
+                success: true,
+                user: userInfo
+              })
+            } catch (apiError) {
+              console.error('사용자 정보 조회 실패:', apiError)
+              resolve(await createDemoUser())
+            }
+          },
+          fail: (error) => {
+            console.error('카카오 로그인 실패:', error)
+            resolve(createDemoUser())
+          }
+        })
+      })
 
     } catch (authError) {
-      console.error('표준 인증 실패, 팝업 방식으로 전환:', authError)
+      console.error('카카오 SDK 로그인 실패, 팝업 방식으로 전환:', authError)
       return await signInWithKakaoPopup()
     }
 
