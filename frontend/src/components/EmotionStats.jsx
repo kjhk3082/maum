@@ -125,15 +125,24 @@ function EmotionStats({ user }) {
       setIsLoading(true)
       try {
         console.log('📊 통계: 데이터 로드 시작')
+        console.log('👤 사용자 정보:', user ? '로그인됨' : '로그인 안됨', user?.email || user?.uid || 'no user info')
         
-        // Firebase 데이터 우선 로드 시도
-        if (user) {
+        // Firebase 데이터 우선 로드 시도 (사용자가 있을 때)
+        if (user && (user.uid || user.email)) {
           try {
+            console.log('🔥 Firebase 데이터 로드 시도 중...')
             const [emotionResult, streakResult, diariesResult] = await Promise.all([
               getEmotionStats(),
               getStreakDays(),
               getAllDiaries(365)
             ])
+
+            console.log('📈 Firebase 응답:', {
+              emotion: emotionResult.success,
+              streak: streakResult.success,
+              diaries: diariesResult.success,
+              totalDiaries: emotionResult.stats?.totalDiaries || 0
+            })
 
             // Firebase 데이터가 있으면 우선 사용
             if (emotionResult.success && emotionResult.stats.totalDiaries > 0) {
@@ -154,6 +163,7 @@ function EmotionStats({ user }) {
               }
 
               setStatsData(firebaseStatsData)
+              console.log('✅ Firebase 통계 설정 완료')
             } else {
               console.log('📱 Firebase 데이터 없음, 로컬 데이터 사용')
               // Firebase 데이터가 없으면 로컬 데이터 사용
@@ -169,7 +179,7 @@ function EmotionStats({ user }) {
               setStatsData(localStatsData)
             }
           } catch (firebaseError) {
-            console.warn('Firebase 로드 실패, 로컬 데이터 사용:', firebaseError)
+            console.warn('⚠️ Firebase 로드 실패, 로컬 데이터 사용:', firebaseError)
             // Firebase 오류 시 로컬 데이터 사용
             const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
             const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
@@ -198,7 +208,7 @@ function EmotionStats({ user }) {
         }
 
       } catch (error) {
-        console.error('감정 통계 로드 오류:', error)
+        console.error('❌ 감정 통계 로드 오류:', error)
         
         // 오류 시에도 기본값 설정
         setStatsData({

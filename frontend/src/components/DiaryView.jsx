@@ -32,19 +32,26 @@ function DiaryView() {
         const { success, diary } = await getDiaryByDate(date)
         if (success && diary) {
           console.log('📖 Firebase 일기 데이터:', diary)
+          console.log('✨ 하이라이트 데이터:', diary.highlightedTexts || '없음')
           setEntry(diary)
           
           // 하이라이트된 텍스트 정보가 있으면 로드
-          if (diary.highlightedTexts) {
+          if (diary.highlightedTexts && Array.isArray(diary.highlightedTexts)) {
             setHighlightedTexts(diary.highlightedTexts)
+            console.log('🎯 하이라이트 텍스트 로드됨:', diary.highlightedTexts.length, '개')
+          } else {
+            setHighlightedTexts([])
+            console.log('❌ 하이라이트 텍스트 없음')
           }
         } else {
           // Firebase 실패 시 로컬스토리지에서 조회
+          console.log('📱 Firebase 실패, 로컬스토리지 조회')
           const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
           const localDiary = localDiaries[date]
           
           if (localDiary) {
             console.log('📱 로컬 일기 데이터:', localDiary)
+            console.log('✨ 로컬 하이라이트 데이터:', localDiary.highlightedTexts || '없음')
             setEntry({
               ...localDiary,
               id: date,
@@ -53,15 +60,20 @@ function DiaryView() {
               updatedAt: localDiary.updatedAt || localDiary.createdAt || new Date().toISOString()
             })
             
-            if (localDiary.highlightedTexts) {
+            if (localDiary.highlightedTexts && Array.isArray(localDiary.highlightedTexts)) {
               setHighlightedTexts(localDiary.highlightedTexts)
+              console.log('🎯 로컬 하이라이트 텍스트 로드됨:', localDiary.highlightedTexts.length, '개')
+            } else {
+              setHighlightedTexts([])
+              console.log('❌ 로컬 하이라이트 텍스트 없음')
             }
           } else {
             setEntry(null)
+            setHighlightedTexts([])
           }
         }
       } catch (error) {
-        console.error('일기 로드 오류:', error)
+        console.error('❌ 일기 로드 오류:', error)
         
         // 오류 시에도 로컬스토리지 시도
         const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
@@ -76,11 +88,14 @@ function DiaryView() {
             updatedAt: localDiary.updatedAt || localDiary.createdAt || new Date().toISOString()
           })
           
-          if (localDiary.highlightedTexts) {
+          if (localDiary.highlightedTexts && Array.isArray(localDiary.highlightedTexts)) {
             setHighlightedTexts(localDiary.highlightedTexts)
+          } else {
+            setHighlightedTexts([])
           }
         } else {
           setEntry(null)
+          setHighlightedTexts([])
         }
       } finally {
         setLoading(false)

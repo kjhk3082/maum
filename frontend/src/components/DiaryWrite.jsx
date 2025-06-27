@@ -200,18 +200,23 @@ const DiaryWrite = ({ user }) => {
   }
 
   // 하이라이트에 이미지 추가
-  const addImageToHighlight = (images) => {
-    if (!selectedTextInfo || !images || images.length === 0) return
+  const addImageToHighlight = (images, textInfo) => {
+    if (!textInfo || !images || images.length === 0) {
+      console.error('❌ addImageToHighlight: textInfo 또는 images가 없음', { textInfo, images })
+      return
+    }
+
+    console.log('✨ 하이라이트 생성:', { text: textInfo.text, imageCount: images.length })
 
     const newHighlight = {
       id: Date.now(),
-      text: selectedTextInfo.text,
+      text: textInfo.text,
       images: images,
       createdAt: new Date().toISOString()
     }
 
     // 기존 하이라이트 중 같은 텍스트가 있는지 확인
-    const existingIndex = highlightedTexts.findIndex(h => h.text === selectedTextInfo.text)
+    const existingIndex = highlightedTexts.findIndex(h => h.text === textInfo.text)
     
     if (existingIndex >= 0) {
       // 기존 하이라이트에 이미지 추가
@@ -222,21 +227,18 @@ const DiaryWrite = ({ user }) => {
         updatedAt: new Date().toISOString()
       }
       setHighlightedTexts(updatedHighlights)
+      console.log('📝 기존 하이라이트에 이미지 추가:', updatedHighlights[existingIndex])
     } else {
       // 새 하이라이트 추가
-      setHighlightedTexts(prev => [...prev, newHighlight])
+      setHighlightedTexts(prev => {
+        const newHighlights = [...prev, newHighlight]
+        console.log('✨ 새 하이라이트 생성:', newHighlights)
+        return newHighlights
+      })
     }
 
-    // 선택 상태 초기화
-    setSelectedTextInfo(null)
-    setSelectedText('')
-    setShowHighlightModal(false)
-    
-    // 텍스트 선택 해제
-    window.getSelection().removeAllRanges()
-
     showNotification('success', '하이라이트 생성 완료!', 
-      `"${selectedTextInfo.text}"에 이미지 ${images.length}개가 연결되었습니다.`,
+      `"${textInfo.text}"에 이미지 ${images.length}개가 연결되었습니다.`,
       '일기 내용에서 해당 텍스트가 하이라이트로 표시됩니다.')
   }
 
@@ -254,10 +256,18 @@ const DiaryWrite = ({ user }) => {
   const handleHighlightImageUpload = async (files) => {
     if (!files || files.length === 0) return
 
+    if (!selectedTextInfo) {
+      showNotification('error', '텍스트 선택 필요', '먼저 텍스트를 선택해주세요.')
+      return
+    }
+
     setImageUploading(true)
     const newImages = []
+    const currentTextInfo = selectedTextInfo // 상태 변경 전에 미리 저장
 
     try {
+      console.log('🔄 하이라이트 이미지 업로드 시작:', currentTextInfo.text)
+      
       for (const file of Array.from(files)) {
         const { success, data, error } = await uploadCompressedImage(file, 'diary-images', 1200, 0.8)
         
@@ -270,18 +280,28 @@ const DiaryWrite = ({ user }) => {
             size: data.size,
             uploadedAt: new Date().toISOString()
           })
+          console.log('✅ 이미지 업로드 성공:', data.filename)
         } else {
-          console.error('이미지 업로드 실패:', error)
+          console.error('❌ 이미지 업로드 실패:', error)
           showNotification('error', '이미지 업로드 실패', error)
         }
       }
       
       if (newImages.length > 0) {
-        addImageToHighlight(newImages)
+        console.log('🎯 하이라이트에 이미지 추가 시도:', { textInfo: currentTextInfo, images: newImages })
+        addImageToHighlight(newImages, currentTextInfo)
+        
+        // 상태 초기화
+        setSelectedTextInfo(null)
+        setSelectedText('')
+        setShowHighlightModal(false)
+        
+        // 텍스트 선택 해제
+        window.getSelection().removeAllRanges()
       }
       
     } catch (error) {
-      console.error('이미지 업로드 오류:', error)
+      console.error('❌ 이미지 업로드 오류:', error)
       showNotification('error', '이미지 업로드 오류', '이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setImageUploading(false)
@@ -461,30 +481,44 @@ const DiaryWrite = ({ user }) => {
 
     setImageUploading(true)
     const newUploadedImages = [...uploadedImages]
+    let successCount = 0
 
     try {
+      console.log('📤 일반 이미지 업로드 시작:', files.length, '개')
+      
       for (const file of Array.from(files)) {
         const { success, data, error } = await uploadCompressedImage(file, 'diary-images', 1200, 0.8)
         
         if (success) {
-          newUploadedImages.push({
+          const imageData = {
             id: data.filename,
             url: data.url,
             filename: data.filename,
             path: data.path,
             size: data.size,
             uploadedAt: new Date().toISOString()
-          })
+          }
+          newUploadedImages.push(imageData)
+          successCount++
+          console.log('✅ 일반 이미지 업로드 성공:', data.filename)
         } else {
-          console.error('이미지 업로드 실패:', error)
+          console.error('❌ 일반 이미지 업로드 실패:', error)
           showNotification('error', '이미지 업로드 실패', error)
         }
       }
       
-      setUploadedImages(newUploadedImages)
+      if (successCount > 0) {
+        setUploadedImages(newUploadedImages)
+        console.log('📸 업로드된 이미지 상태 업데이트:', newUploadedImages.length, '개')
+        showNotification('success', '이미지 업로드 완료!', 
+          `${successCount}개의 이미지가 성공적으로 업로드되었습니다.`)
+        
+        // 모달 닫기
+        setImageModalOpen(false)
+      }
       
     } catch (error) {
-      console.error('이미지 업로드 오류:', error)
+      console.error('❌ 이미지 업로드 오류:', error)
       showNotification('error', '이미지 업로드 오류', '이미지 업로드 중 오류가 발생했습니다.')
     } finally {
       setImageUploading(false)
