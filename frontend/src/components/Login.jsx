@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MessageCircle, Star, Heart, Sparkles, Shield, Zap, Layers, CheckCircle, Loader, XCircle } from 'lucide-react'
-import { signInWithKakaoSDK, handleRedirectResult, checkKakaoSDK } from '../firebase/authService'
+import { signInWithKakaoSDK, checkKakaoSDK } from '../firebase/authService'
 import { ThemeContext } from '../App'
 
 function Login({ onLogin }) {
@@ -12,8 +12,7 @@ function Login({ onLogin }) {
   const { isDarkMode } = useContext(ThemeContext)
 
   useEffect(() => {
-    // 로그인 페이지에서는 리다이렉트 처리 안함
-    // KakaoCallback 컴포넌트에서 처리
+    // SDK 방식에서는 리다이렉트 처리가 App.jsx에서 됨
   }, [navigate, onLogin])
 
   // 카카오 SDK 로그인
