@@ -201,26 +201,82 @@ const DiaryWrite = ({ user }) => {
       setIsTimeToWrite(true)
       setShowTimeModal(false)
     }
+    
+    // 텍스트 선택 이벤트 리스너 추가
+    const handleDocumentSelectionChange = () => {
+      console.log('📋 document selectionchange 이벤트 발생')
+      setTimeout(handleTextSelection, 10) // 약간의 지연을 두어 정확한 선택 상태 확인
+    }
+    
+    document.addEventListener('selectionchange', handleDocumentSelectionChange)
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleDocumentSelectionChange)
+    }
   }, [date, isEditing])
 
   // 텍스트 선택 감지 함수 (내용 칸에서만)
   const handleTextSelection = () => {
     console.log('🎯 handleTextSelection 호출됨')
+    const contentTextarea = document.querySelector('#diary-content-textarea')
+    
+    // textarea에서 직접 선택 정보 가져오기
+    if (contentTextarea && document.activeElement === contentTextarea) {
+      const start = contentTextarea.selectionStart
+      const end = contentTextarea.selectionEnd
+      const selectedText = contentTextarea.value.substring(start, end).trim()
+      
+      console.log('📝 textarea 선택된 텍스트:', selectedText, '길이:', selectedText.length)
+      console.log('📍 선택 범위:', start, '-', end)
+      
+      if (selectedText && selectedText.length > 0) {
+        console.log('✅ textarea에서 텍스트 선택됨:', selectedText)
+        
+        const textInfo = {
+          text: selectedText,
+          startOffset: start,
+          endOffset: end,
+          position: {
+            top: 0,
+            left: 0,
+            width: 0,
+            height: 0
+          }
+        }
+        
+        console.log('📊 selectedTextInfo 설정:', textInfo)
+        setSelectedTextInfo(textInfo)
+        setSelectedText(selectedText)
+        return
+      }
+    }
+    
+    // 기존 window.getSelection() 방법도 유지 (백업용)
     const selection = window.getSelection()
     const selectedText = selection.toString().trim()
-    console.log('📝 선택된 텍스트:', selectedText, '길이:', selectedText.length)
+    console.log('📝 window 선택된 텍스트:', selectedText, '길이:', selectedText.length)
     
     // 내용 칸에서만 텍스트 선택 허용
     if (selectedText && selectedText.length > 0) {
       console.log('✅ 텍스트가 선택됨, 범위 확인 중...')
       const range = selection.getRangeAt(0)
-      const contentTextarea = document.querySelector('#diary-content-textarea')
       
       console.log('📍 contentTextarea 찾음:', !!contentTextarea)
       console.log('📍 range.commonAncestorContainer:', range.commonAncestorContainer)
       
-      // 선택된 텍스트가 내용 칸 안에 있는지 확인
-      if (contentTextarea && contentTextarea.contains(range.commonAncestorContainer)) {
+      // 선택된 텍스트가 내용 칸 안에 있는지 확인 (더 정확한 방법)
+      const isInTextarea = contentTextarea && (
+        contentTextarea.contains(range.commonAncestorContainer) ||
+        contentTextarea === range.commonAncestorContainer ||
+        contentTextarea.contains(range.startContainer) ||
+        contentTextarea.contains(range.endContainer)
+      )
+      
+      console.log('📍 isInTextarea:', isInTextarea)
+      console.log('📍 startContainer:', range.startContainer)
+      console.log('📍 endContainer:', range.endContainer)
+      
+      if (isInTextarea) {
         console.log('✅ 텍스트 선택됨 (내용 칸):', selectedText)
         
         // 선택된 텍스트의 위치 정보 저장
@@ -1457,6 +1513,8 @@ const DiaryWrite = ({ user }) => {
                 onChange={(e) => setContent(e.target.value)}
                 onMouseUp={handleTextSelection}
                 onKeyUp={handleTextSelection}
+                onSelect={handleTextSelection}
+                onSelectionChange={handleTextSelection}
                 placeholder="오늘 하루에 있었던 일들을 적어보세요. 💡 팁: 이 칸에서 텍스트를 드래그하면 AI 확장 또는 이미지 연결이 가능합니다!"
                 style={{
                   width: '100%',
