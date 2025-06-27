@@ -4,7 +4,21 @@
  */
 
 const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY
-const REDIRECT_URI = `${window.location.origin}/auth/kakao/callback`
+
+// 배포 환경에 따른 Redirect URI 설정
+const getRedirectUri = () => {
+  const origin = window.location.origin
+  
+  // Firebase Hosting 도메인 체크
+  if (origin.includes('maumilgi-1a4cb.web.app')) {
+    return 'https://maumilgi-1a4cb.web.app/auth/kakao/callback'
+  }
+  
+  // 로컬 개발 환경
+  return `${origin}/auth/kakao/callback`
+}
+
+const REDIRECT_URI = getRedirectUri()
 
 // 환경변수 체크
 if (!KAKAO_API_KEY) {
