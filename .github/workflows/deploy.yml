@@ -28,20 +28,22 @@ jobs:
       working-directory: ./frontend
       run: npm ci
     
-    # 4. 환경변수 주입하여 빌드 (여기가 핵심!)
+    # 4. 환경변수 주입하여 빌드 (현재 시크릿 이름 사용)
     - name: 🔨 프로젝트 빌드 (환경변수 주입)
       working-directory: ./frontend
       run: npm run build
       env:
-        # GitHub Secrets에서 환경변수 가져오기
-        VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
-        VITE_KAKAO_API_KEY: ${{ secrets.VITE_KAKAO_API_KEY }}
-        VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-        VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-        VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-        VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-        VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-        VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+        # 현재 설정된 GitHub Secrets 사용
+        VITE_OPENAI_API_KEY: ${{ secrets.API2 }}
+        VITE_KAKAO_API_KEY: "240138285eefbcd9ab66f4a85efbfbb5"
+        # Firebase 설정 (FIREBASE 시크릿에서 개별 값으로 추출 필요)
+        VITE_FIREBASE_API_KEY: "AIzaSyB9vHmOfRRe_deSWKMEIQEtDbXoUaDnJmQ"
+        VITE_FIREBASE_AUTH_DOMAIN: "maumilgi-1a4cb.firebaseapp.com"
+        VITE_FIREBASE_PROJECT_ID: "maumilgi-1a4cb"
+        VITE_FIREBASE_STORAGE_BUCKET: "maumilgi-1a4cb.firebasestorage.app"
+        VITE_FIREBASE_MESSAGING_SENDER_ID: "43173390015"
+        VITE_FIREBASE_APP_ID: "1:43173390015:web:c93ba810fcb0972616880a"
+        VITE_FIREBASE_MEASUREMENT_ID: "G-3KXTHTNKPC"
     
     # 5. Firebase에 배포 (main 브랜치만)
     - name: 🚀 Firebase에 배포
@@ -49,8 +51,8 @@ jobs:
       uses: FirebaseExtended/action-hosting-deploy@v0
       with:
         repoToken: ${{ secrets.GITHUB_TOKEN }}
-        firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        projectId: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+        firebaseServiceAccount: ${{ secrets.FIREBASESECRET }}
+        projectId: "maumilgi-1a4cb"
         channelId: live
         entryPoint: ./frontend
       env:
@@ -61,7 +63,7 @@ jobs:
       if: success()
       run: |
         echo "🎉 배포가 성공적으로 완료되었습니다!"
-        echo "🌐 사이트 URL: https://${{ secrets.VITE_FIREBASE_PROJECT_ID }}.web.app"
+        echo "🌐 사이트 URL: https://maumilgi-1a4cb.web.app"
         
     - name: ❌ 배포 실패 알림  
       if: failure()
