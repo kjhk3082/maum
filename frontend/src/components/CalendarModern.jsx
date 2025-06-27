@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle, Edit3 } from 'lucide-react'
+import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle, Edit3, LogOut } from 'lucide-react'
 import { useTheme } from '../App'
 import { notificationService } from '../services/notificationService'
 import { getDiariesByMonth, getStreakDays } from '../firebase/diaryService'
@@ -49,13 +49,14 @@ export default function CalendarModern({ onLogout, user }) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Firebase에서 월별 일기 데이터 로드
+  // Firebase에서 월별 일기 데이터 로드 (실제 웹용)
   useEffect(() => {
     const loadMonthlyDiaries = async () => {
       if (!user) return
 
       setIsLoading(true)
       try {
+        console.log('🔥 Firebase에서 일기 데이터 로드 중...')
         const { success, diaries } = await getDiariesByMonth(currentDate.getFullYear(), currentDate.getMonth() + 1)
         
         if (success) {
@@ -68,14 +69,16 @@ export default function CalendarModern({ onLogout, user }) {
           
           // 통계 계산
           calculateStats(diaries)
+          console.log('✅ Firebase 일기 로드 완료:', diaries.length, '개')
         } else {
-          console.error('월별 일기 로드 실패')
-          // 로드 실패 시 빈 객체로 초기화
+          console.log('📭 Firebase에 일기 데이터 없음')
           setDiaries({})
+          calculateStats([])
         }
       } catch (error) {
-        console.error('월별 일기 로드 오류:', error)
+        console.error('❌ Firebase 일기 로드 오류:', error)
         setDiaries({})
+        calculateStats([])
       } finally {
         setIsLoading(false)
       }
@@ -333,35 +336,28 @@ export default function CalendarModern({ onLogout, user }) {
             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
             onClick={() => window.location.reload()}
           >
-            <div style={{
-              width: isMobile ? '32px' : '40px',
-              height: isMobile ? '32px' : '40px',
-              background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)',
-              transition: 'transform 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'scale(1)'
-            }}
-            >
-              <Calendar style={{ 
-                width: isMobile ? '18px' : '22px', 
-                height: isMobile ? '18px' : '22px', 
-                color: 'white' 
-              }} />
-            </div>
+            <img 
+              src="/icon-192x192.png"
+              alt="마음일기"
+              style={{
+                width: isMobile ? '32px' : '40px',
+                height: isMobile ? '32px' : '40px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(255, 149, 0, 0.3)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            />
             <h1 style={{
               margin: 0,
               fontSize: isMobile ? '20px' : '24px',
               fontWeight: '700',
-              color: isDarkMode ? '#FFFFFF' : '#17A2B8',
+              color: isDarkMode ? '#FFFFFF' : '#FF9500',
               transition: 'color 0.2s'
             }}>
               마음일기
@@ -374,12 +370,12 @@ export default function CalendarModern({ onLogout, user }) {
             alignItems: 'center', 
             gap: isMobile ? '8px' : '12px' // 모바일에서 간격 축소
           }}>
-            {/* 다크모드 토글 - 모바일에서 크기 조정 */}
+            {/* 다크모드 토글 - 아이콘 크기 확대 */}
             <button
               onClick={toggleTheme}
               style={{
-                width: isMobile ? '40px' : '44px',
-                height: isMobile ? '40px' : '44px',
+                width: isMobile ? '44px' : '48px', // 크기 확대
+                height: isMobile ? '44px' : '48px', // 크기 확대
                 background: isDarkMode 
                   ? 'rgba(255, 255, 255, 0.1)' 
                   : 'rgba(0, 0, 0, 0.05)',
@@ -404,27 +400,30 @@ export default function CalendarModern({ onLogout, user }) {
               }}
             >
               {isDarkMode ? 
-                <Sun style={{ width: '20px', height: '20px', color: '#FFD60A' }} /> : 
-                <Moon style={{ width: '20px', height: '20px', color: '#6B7280' }} />
+                <Sun style={{ width: isMobile ? '24px' : '28px', height: isMobile ? '24px' : '28px', color: '#FFD60A' }} /> : 
+                <Moon style={{ width: isMobile ? '24px' : '28px', height: isMobile ? '24px' : '28px', color: '#6B7280' }} />
               }
             </button>
 
-            {/* 네비게이션 버튼들 - 모바일에서 더 작게 */}
+            {/* 네비게이션 버튼들 - 아이콘 크기 확대 */}
             {[
               { icon: Search, label: '검색', path: '/search' },
               { icon: BarChart3, label: '통계', path: '/stats' },
               { icon: HelpCircle, label: 'FAQ', path: '/faq' },
-              { icon: Bell, label: '알림', action: handleNotificationToggle }
+              { icon: Bell, label: '알림', action: handleNotificationToggle },
+              { icon: LogOut, label: '로그아웃', action: handleFirebaseLogout }
             ].map((item, index) => (
               <button
                 key={index}
                 onClick={item.action || (() => navigate(item.path))}
                 style={{
-                  width: isMobile ? '40px' : '44px',
-                  height: isMobile ? '40px' : '44px',
+                  width: isMobile ? '44px' : '48px', // 크기 확대
+                  height: isMobile ? '44px' : '48px', // 크기 확대
                   background: (item.label === '알림' && notificationsEnabled) 
                     ? 'rgba(23, 162, 184, 0.2)' 
-                    : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'),
+                    : item.label === '로그아웃'
+                      ? 'rgba(239, 68, 68, 0.1)'
+                      : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'),
                   border: 'none',
                   borderRadius: '12px',
                   cursor: 'pointer',
@@ -436,22 +435,30 @@ export default function CalendarModern({ onLogout, user }) {
                   position: 'relative'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = isDarkMode 
-                    ? 'rgba(255, 255, 255, 0.15)' 
-                    : 'rgba(0, 0, 0, 0.1)'
+                  if (item.label === '로그아웃') {
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                  } else {
+                    e.currentTarget.style.backgroundColor = isDarkMode 
+                      ? 'rgba(255, 255, 255, 0.15)' 
+                      : 'rgba(0, 0, 0, 0.1)'
+                  }
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.backgroundColor = (item.label === '알림' && notificationsEnabled) 
                     ? 'rgba(23, 162, 184, 0.2)' 
-                    : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)')
+                    : item.label === '로그아웃'
+                      ? 'rgba(239, 68, 68, 0.1)'
+                      : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)')
                 }}
               >
                 <item.icon style={{ 
-                  width: '20px', 
-                  height: '20px', 
+                  width: isMobile ? '24px' : '28px', // 아이콘 크기 확대!
+                  height: isMobile ? '24px' : '28px', // 아이콘 크기 확대!
                   color: (item.label === '알림' && notificationsEnabled) 
                     ? '#17A2B8' 
-                    : (isDarkMode ? '#FFFFFF' : '#374151') 
+                    : item.label === '로그아웃'
+                      ? '#EF4444'
+                      : (isDarkMode ? '#FFFFFF' : '#374151') 
                 }} />
                 
                 {item.label === '알림' && notificationsEnabled && (
@@ -497,7 +504,7 @@ export default function CalendarModern({ onLogout, user }) {
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.3)'
               }}
             >
-              <Edit3 style={{ width: '18px', height: '18px' }} />
+              <Edit3 style={{ width: isMobile ? '20px' : '22px', height: isMobile ? '20px' : '22px' }} />
               {isMobile ? '일기' : '오늘 일기'}
             </button>
           </div>
