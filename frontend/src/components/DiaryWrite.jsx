@@ -52,6 +52,11 @@ const DiaryWrite = ({ user }) => {
   const [saveStatus, setSaveStatus] = useState('')
   const [existingDiaryId, setExistingDiaryId] = useState(null)
   
+  // 텍스트 하이라이트 + 이미지 연결 기능 상태
+  const [highlightedTexts, setHighlightedTexts] = useState([]) // 하이라이트된 텍스트들
+  const [selectedTextInfo, setSelectedTextInfo] = useState(null) // 현재 선택된 텍스트 정보
+  const [showHighlightModal, setShowHighlightModal] = useState(false) // 하이라이트 모달
+  
   // 화면 내 알림 시스템 상태
   const [notification, setNotification] = useState({
     show: false,
@@ -109,6 +114,7 @@ const DiaryWrite = ({ user }) => {
           setContent(diary.content || '')
           setEmotion(diary.emotion || 'HAPPY')
           setUploadedImages(diary.images || [])
+          setHighlightedTexts(diary.highlightedTexts || []) // 하이라이트 정보 로드
           setIsEditing(true)
           setExistingDiaryId(diary.id)
         }
@@ -121,6 +127,12 @@ const DiaryWrite = ({ user }) => {
 
     loadExistingDiary()
   }, [user, date])
+
+  // 텍스트 선택 감지
+  useEffect(() => {
+    document.addEventListener('mouseup', handleTextSelection)
+    return () => document.removeEventListener('mouseup', handleTextSelection)
+  }, [])
 
   // 시간 제한 확인 함수는 useEffect에서 직접 구현하여 사용
 
@@ -156,19 +168,183 @@ const DiaryWrite = ({ user }) => {
     }
   }, [date, isEditing, navigate])
 
-  // 텍스트 선택 감지 함수
+  // 텍스트 선택 감지 함수 (개선된 버전)
   const handleTextSelection = () => {
     const selection = window.getSelection()
-    if (selection.toString().trim()) {
-      setSelectedText(selection.toString().trim())
+    const selectedText = selection.toString().trim()
+    
+    if (selectedText && selectedText.length > 0) {
+      console.log('📝 텍스트 선택됨:', selectedText)
+      
+      // 선택된 텍스트의 위치 정보 저장
+      const range = selection.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+      
+      setSelectedTextInfo({
+        text: selectedText,
+        startOffset: range.startOffset,
+        endOffset: range.endOffset,
+        position: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height
+        }
+      })
+      
+      setSelectedText(selectedText)
+    } else {
+      setSelectedTextInfo(null)
+      setSelectedText('')
     }
   }
 
-  // 텍스트 선택 감지
-  useEffect(() => {
-    document.addEventListener('mouseup', handleTextSelection)
-    return () => document.removeEventListener('mouseup', handleTextSelection)
-  }, [])
+  // 하이라이트에 이미지 추가
+  const addImageToHighlight = (images) => {
+    if (!selectedTextInfo || !images || images.length === 0) return
+
+    const newHighlight = {
+      id: Date.now(),
+      text: selectedTextInfo.text,
+      images: images,
+      createdAt: new Date().toISOString()
+    }
+
+    // 기존 하이라이트 중 같은 텍스트가 있는지 확인
+    const existingIndex = highlightedTexts.findIndex(h => h.text === selectedTextInfo.text)
+    
+    if (existingIndex >= 0) {
+      // 기존 하이라이트에 이미지 추가
+      const updatedHighlights = [...highlightedTexts]
+      updatedHighlights[existingIndex] = {
+        ...updatedHighlights[existingIndex],
+        images: [...(updatedHighlights[existingIndex].images || []), ...images],
+        updatedAt: new Date().toISOString()
+      }
+      setHighlightedTexts(updatedHighlights)
+    } else {
+      // 새 하이라이트 추가
+      setHighlightedTexts(prev => [...prev, newHighlight])
+    }
+
+    // 선택 상태 초기화
+    setSelectedTextInfo(null)
+    setSelectedText('')
+    setShowHighlightModal(false)
+    
+    // 텍스트 선택 해제
+    window.getSelection().removeAllRanges()
+
+    showNotification('success', '하이라이트 생성 완료!', 
+      `"${selectedTextInfo.text}"에 이미지 ${images.length}개가 연결되었습니다.`,
+      '일기 내용에서 해당 텍스트가 하이라이트로 표시됩니다.')
+  }
+
+  // 하이라이트 모달 열기
+  const handleOpenHighlightModal = () => {
+    if (!selectedTextInfo) {
+      showNotification('info', '텍스트 선택 필요', 
+        '먼저 이미지를 연결할 텍스트를 드래그해서 선택해주세요.')
+      return
+    }
+    setShowHighlightModal(true)
+  }
+
+  // 하이라이트에 연결할 이미지 업로드
+  const handleHighlightImageUpload = async (files) => {
+    if (!files || files.length === 0) return
+
+    setImageUploading(true)
+    const newImages = []
+
+    try {
+      for (const file of Array.from(files)) {
+        const { success, data, error } = await uploadCompressedImage(file, 'diary-images', 1200, 0.8)
+        
+        if (success) {
+          newImages.push({
+            id: data.filename,
+            url: data.url,
+            filename: data.filename,
+            path: data.path,
+            size: data.size,
+            uploadedAt: new Date().toISOString()
+          })
+        } else {
+          console.error('이미지 업로드 실패:', error)
+          showNotification('error', '이미지 업로드 실패', error)
+        }
+      }
+      
+      if (newImages.length > 0) {
+        addImageToHighlight(newImages)
+      }
+      
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error)
+      showNotification('error', '이미지 업로드 오류', '이미지 업로드 중 오류가 발생했습니다.')
+    } finally {
+      setImageUploading(false)
+    }
+  }
+
+  // 텍스트에서 하이라이트 적용하여 렌더링
+  const renderContentWithHighlights = (content) => {
+    if (!highlightedTexts || highlightedTexts.length === 0) {
+      return content
+    }
+
+    let processedContent = content
+    const highlights = []
+
+    // 하이라이트된 텍스트들을 마커로 감싸기
+    highlightedTexts.forEach((highlight, index) => {
+      const marker = `__HIGHLIGHT_${index}__`
+      processedContent = processedContent.replace(
+        new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        marker
+      )
+      highlights.push({ marker, highlight, index })
+    })
+
+    // 마커를 실제 하이라이트 요소로 변환
+    const parts = processedContent.split(/(__HIGHLIGHT_\d+__)/g)
+    
+    return parts.map((part, partIndex) => {
+      const highlightMatch = highlights.find(h => h.marker === part)
+      
+      if (highlightMatch) {
+        const { highlight, index } = highlightMatch
+        return (
+          <span
+            key={partIndex}
+            style={{
+              backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 215, 0, 0.5)',
+              padding: '2px 4px',
+              borderRadius: '4px',
+              border: '1px solid rgba(255, 215, 0, 0.6)',
+              position: 'relative',
+              cursor: 'help'
+            }}
+            title={`이미지 ${highlight.images?.length || 0}개 연결됨`}
+          >
+            {highlight.text}
+            {highlight.images && highlight.images.length > 0 && (
+              <span style={{ 
+                marginLeft: '4px', 
+                fontSize: '12px',
+                color: '#FF8C00'
+              }}>
+                📷{highlight.images.length}
+              </span>
+            )}
+          </span>
+        )
+      }
+      
+      return part
+    })
+  }
 
   // AI 텍스트 확장 기능 (개선된 버전)
   const handleAIHelp = async () => {
@@ -348,7 +524,7 @@ const DiaryWrite = ({ user }) => {
     handleImageUpload(files)
   }
 
-  // Firebase에 일기 저장
+  // Firebase에 일기 저장 (하이라이트 정보 포함)
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -366,8 +542,11 @@ const DiaryWrite = ({ user }) => {
         title: title.trim(),
         content: content.trim(),
         emotion,
-        images: uploadedImages
+        images: uploadedImages,
+        highlightedTexts: highlightedTexts // 하이라이트 정보 추가
       }
+
+      console.log('💾 일기 저장 데이터:', diaryData)
 
       if (isEditing && existingDiaryId) {
         // 기존 일기 업데이트
@@ -726,15 +905,71 @@ const DiaryWrite = ({ user }) => {
                   💬 내용
                 </label>
                 <div style={{ fontSize: '14px', color: isDarkMode ? '#8E8E93' : '#667' }}>
-                  {selectedText && `선택된 키워드: "${selectedText}" (${selectedText.length} 글자)`}
+                  {selectedText && `선택된 텍스트: "${selectedText}" (${selectedText.length} 글자)`}
                 </div>
               </div>
+              
+              {/* 하이라이트 기능 안내 */}
+              {selectedTextInfo && (
+                <div style={{
+                  background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: isDarkMode ? '#FFD60A' : '#B8860B',
+                      marginBottom: '4px'
+                    }}>
+                      ✨ 텍스트가 선택되었습니다!
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: isDarkMode ? '#CCCCCC' : '#666'
+                    }}>
+                      "{selectedTextInfo.text}"에 이미지를 연결하여 하이라이트를 만들 수 있어요.
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleOpenHighlightModal}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                    }}
+                  >
+                    이미지 연결
+                  </button>
+                </div>
+              )}
+              
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onMouseUp={handleTextSelection}
                 onKeyUp={handleTextSelection}
-                placeholder="오늘 하루에 있었던 일들을 적어보세요. 키워드를 입력하고 드래그한 후 'AI 문장 만들기'를 클릭하면 자동으로 문장을 완성해줍니다."
+                placeholder="오늘 하루에 있었던 일들을 적어보세요. 특정 텍스트를 드래그한 후 '이미지 연결' 버튼을 누르면 해당 텍스트에 이미지를 연결할 수 있어요."
                 style={{
                   width: '100%',
                   height: '280px',
@@ -761,7 +996,160 @@ const DiaryWrite = ({ user }) => {
                 }}
                 maxLength={10000}
               ></textarea>
+              
+              {/* 내용 미리보기 (하이라이트 적용) */}
+              {content && highlightedTexts.length > 0 && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  background: isDarkMode ? 'rgba(28, 28, 30, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+                  borderRadius: '12px',
+                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                }}>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isDarkMode ? '#FFFFFF' : '#333',
+                    marginBottom: '12px'
+                  }}>
+                    📝 미리보기 (하이라이트 적용)
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    color: isDarkMode ? '#CCCCCC' : '#666',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {renderContentWithHighlights(content)}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* 하이라이트 관리 */}
+            {highlightedTexts.length > 0 && (
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  color: isDarkMode ? '#FFFFFF' : '#333',
+                  marginBottom: '12px'
+                }}>
+                  ✨ 하이라이트된 텍스트 ({highlightedTexts.length}개)
+                </label>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  padding: '16px',
+                  background: isDarkMode 
+                    ? 'rgba(58, 58, 60, 0.7)' 
+                    : 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '16px',
+                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)'}`
+                }}>
+                  {highlightedTexts.map((highlight, index) => (
+                    <div 
+                      key={highlight.id || index} 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 215, 0, 0.3)'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: isDarkMode ? '#FFD60A' : '#B8860B',
+                          marginBottom: '4px'
+                        }}>
+                          "{highlight.text}"
+                        </div>
+                        <div style={{
+                          fontSize: '12px',
+                          color: isDarkMode ? '#CCCCCC' : '#666'
+                        }}>
+                          이미지 {highlight.images?.length || 0}개 연결됨
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {highlight.images && highlight.images.slice(0, 3).map((image, imgIndex) => (
+                          <div
+                            key={imgIndex}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '6px',
+                              overflow: 'hidden',
+                              border: '1px solid rgba(255, 215, 0, 0.5)'
+                            }}
+                          >
+                            <img
+                              src={image.url}
+                              alt={`연결된 이미지 ${imgIndex + 1}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </div>
+                        ))}
+                        {highlight.images && highlight.images.length > 3 && (
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 215, 0, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: '#B8860B'
+                          }}>
+                            +{highlight.images.length - 3}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            const newHighlights = highlightedTexts.filter((_, i) => i !== index)
+                            setHighlightedTexts(newHighlights)
+                          }}
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: 'rgba(244, 67, 54, 0.2)',
+                            color: '#F44336',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'rgba(244, 67, 54, 0.3)'
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'rgba(244, 67, 54, 0.2)'
+                          }}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 업로드된 이미지 표시 */}
             {uploadedImages.length > 0 && (
@@ -1120,132 +1508,400 @@ const DiaryWrite = ({ user }) => {
             boxShadow: isDarkMode 
               ? '0 20px 40px rgba(0, 0, 0, 0.4)' 
               : '0 20px 40px rgba(0, 0, 0, 0.2)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)'}`
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
           }}>
-            <h3 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: isDarkMode ? '#FFFFFF' : '#333',
-              marginBottom: '24px',
-              textAlign: 'center'
-            }}>
-              🖼️ 이미지 첨부
-            </h3>
-            
-            <div
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h3 style={{
+                margin: '0 0 8px 0',
+                fontSize: '24px',
+                fontWeight: '700',
+                color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+              }}>
+                📷 이미지 첨부
+              </h3>
+              <p style={{
+                margin: '0',
+                fontSize: '16px',
+                color: isDarkMode ? '#8E8E93' : '#6D6D70'
+              }}>
+                일기에 첨부할 이미지를 선택해주세요
+              </p>
+            </div>
+
+            <div 
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               style={{
-                border: `2px dashed ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#ddd'}`,
+                border: `2px dashed ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'}`,
                 borderRadius: '16px',
                 padding: '40px 20px',
                 textAlign: 'center',
-                background: isDarkMode 
-                  ? 'linear-gradient(135deg, rgba(58, 58, 60, 0.8) 0%, rgba(44, 44, 46, 0.8) 100%)'
-                  : 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%)',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                marginBottom: '24px'
+                background: isDarkMode ? 'rgba(58, 58, 60, 0.3)' : 'rgba(248, 250, 252, 0.5)',
+                marginBottom: '20px',
+                transition: 'all 0.2s'
               }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = isDarkMode 
-                  ? 'rgba(23, 162, 184, 0.1)' 
-                  : 'rgba(23, 162, 184, 0.05)'
-                e.currentTarget.style.borderColor = '#17A2B8'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = isDarkMode 
-                  ? 'linear-gradient(135deg, rgba(58, 58, 60, 0.8) 0%, rgba(44, 44, 46, 0.8) 100%)'
-                  : 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%)'
-                e.currentTarget.style.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#ddd'
-              }}
-              onClick={() => document.getElementById('imageInput').click()}
             >
-              {imageUploading ? (
-                <div>
-                  <Loader style={{
-                    width: '48px',
-                    height: '48px',
-                    color: '#17A2B8',
-                    margin: '0 auto 16px'
-                  }} />
-                  <p style={{ color: '#17A2B8', fontWeight: '600' }}>업로드 중...</p>
-                </div>
-              ) : (
-                <div>
-                  <Upload style={{
-                    width: '48px',
-                    height: '48px',
-                    color: isDarkMode ? '#8E8E93' : '#999',
-                    margin: '0 auto 16px'
-                  }} />
-                  <p style={{
-                    color: isDarkMode ? '#FFFFFF' : '#666',
-                    fontWeight: '600',
-                    marginBottom: '8px'
-                  }}>
-                    이미지를 드래그하거나 클릭하여 업로드
-                  </p>
-                  <p style={{
-                    fontSize: '14px',
-                    color: isDarkMode ? '#8E8E93' : '#999'
-                  }}>
-                    JPG, PNG, GIF, WebP (최대 5MB)
-                  </p>
-                </div>
-              )}
+              <Upload style={{ 
+                width: '48px', 
+                height: '48px', 
+                color: isDarkMode ? '#8E8E93' : '#9CA3AF',
+                margin: '0 auto 16px'
+              }} />
+              <p style={{
+                margin: '0 0 12px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#FFFFFF' : '#374151'
+              }}>
+                이미지를 드래그하거나 클릭해서 업로드
+              </p>
+              <p style={{
+                margin: '0',
+                fontSize: '14px',
+                color: isDarkMode ? '#8E8E93' : '#6B7280'
+              }}>
+                JPG, PNG, GIF 파일 지원 (최대 5MB)
+              </p>
               
               <input
-                id="imageInput"
                 type="file"
                 multiple
                 accept="image/*"
-                style={{ display: 'none' }}
                 onChange={(e) => handleImageUpload(e.target.files)}
-                disabled={imageUploading}
+                style={{ display: 'none' }}
+                id="imageUpload"
               />
-            </div>
-            
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '16px'
-            }}>
-              <button
-                onClick={() => setImageModalOpen(false)}
-                disabled={imageUploading}
+              <label 
+                htmlFor="imageUpload"
                 style={{
+                  display: 'inline-block',
+                  marginTop: '16px',
                   padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#ddd'}`,
+                  background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                  color: 'white',
                   borderRadius: '12px',
-                  background: isDarkMode 
-                    ? 'rgba(58, 58, 60, 0.8)' 
-                    : 'rgba(255, 255, 255, 0.8)',
-                  color: isDarkMode ? '#FFFFFF' : '#666',
-                  cursor: imageUploading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s',
-                  opacity: imageUploading ? 0.5 : 1
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  if (!imageUploading) {
-                    e.currentTarget.style.backgroundColor = isDarkMode 
-                      ? 'rgba(58, 58, 60, 1)' 
-                      : 'rgba(255, 255, 255, 1)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.3)'
                 }}
                 onMouseOut={(e) => {
-                  if (!imageUploading) {
-                    e.currentTarget.style.backgroundColor = isDarkMode 
-                      ? 'rgba(58, 58, 60, 0.8)' 
-                      : 'rgba(255, 255, 255, 0.8)'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                파일 선택
+              </label>
+            </div>
+
+            {imageUploading && (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                background: isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+                borderRadius: '12px',
+                marginBottom: '20px'
+              }}>
+                <Loader style={{ 
+                  width: '24px', 
+                  height: '24px', 
+                  color: '#17A2B8',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '8px'
+                }} />
+                <p style={{
+                  margin: '0',
+                  fontSize: '14px',
+                  color: isDarkMode ? '#CCCCCC' : '#666'
+                }}>
+                  이미지를 업로드하고 하이라이트를 생성하는 중...
+                </p>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setImageModalOpen(false)}
+                style={{
+                  padding: '12px 24px',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)',
+                  color: isDarkMode ? '#FFFFFF' : '#374151',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(72, 72, 74, 0.9)' : 'rgba(156, 163, 175, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)'
+                }}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 하이라이트 이미지 연결 모달 */}
+      {showHighlightModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            padding: '32px',
+            maxWidth: '600px',
+            width: '100%',
+            boxShadow: isDarkMode 
+              ? '0 20px 40px rgba(0, 0, 0, 0.5)' 
+              : '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h3 style={{
+                margin: '0 0 8px 0',
+                fontSize: '24px',
+                fontWeight: '700',
+                color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+              }}>
+                ✨ 텍스트에 이미지 연결하기
+              </h3>
+              <p style={{
+                margin: '0 0 12px 0',
+                fontSize: '16px',
+                color: isDarkMode ? '#8E8E93' : '#6D6D70'
+              }}>
+                선택한 텍스트에 관련 이미지를 연결해보세요
+              </p>
+              
+              {/* 선택된 텍스트 표시 */}
+              {selectedTextInfo && (
+                <div style={{
+                  background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  display: 'inline-block',
+                  marginTop: '8px'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isDarkMode ? '#FFD60A' : '#B8860B'
+                  }}>
+                    "{selectedTextInfo.text}"
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div 
+              onDragOver={handleDragOver}
+              onDrop={handleHighlightImageUpload}
+              style={{
+                border: `2px dashed ${isDarkMode ? 'rgba(255, 215, 0, 0.5)' : 'rgba(255, 215, 0, 0.4)'}`,
+                borderRadius: '16px',
+                padding: '40px 20px',
+                textAlign: 'center',
+                background: isDarkMode ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.1)',
+                marginBottom: '20px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto'
+              }}>
+                <Upload style={{ width: '32px', height: '32px', color: 'white' }} />
+              </div>
+              
+              <p style={{
+                margin: '0 0 12px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#FFFFFF' : '#374151'
+              }}>
+                하이라이트에 연결할 이미지 업로드
+              </p>
+              <p style={{
+                margin: '0',
+                fontSize: '14px',
+                color: isDarkMode ? '#8E8E93' : '#6B7280'
+              }}>
+                이미지를 드래그하거나 클릭해서 업로드하세요
+              </p>
+              
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => handleHighlightImageUpload(e.target.files)}
+                style={{ display: 'none' }}
+                id="highlightImageUpload"
+              />
+              <label 
+                htmlFor="highlightImageUpload"
+                style={{
+                  display: 'inline-block',
+                  marginTop: '16px',
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 149, 0, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                이미지 선택
+              </label>
+            </div>
+
+            {imageUploading && (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                borderRadius: '12px',
+                marginBottom: '20px'
+              }}>
+                <Loader style={{ 
+                  width: '24px', 
+                  height: '24px', 
+                  color: '#FF9500',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '8px'
+                }} />
+                <p style={{
+                  margin: '0',
+                  fontSize: '14px',
+                  color: isDarkMode ? '#CCCCCC' : '#666'
+                }}>
+                  이미지를 업로드하고 하이라이트를 생성하는 중...
+                </p>
+              </div>
+            )}
+
+            <div style={{ 
+              padding: '16px',
+              background: isDarkMode ? 'rgba(58, 58, 60, 0.3)' : 'rgba(248, 250, 252, 0.8)',
+              borderRadius: '12px',
+              marginBottom: '20px'
+            }}>
+              <h4 style={{
+                margin: '0 0 8px 0',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: isDarkMode ? '#FFFFFF' : '#333'
+              }}>
+                💡 하이라이트 기능 안내
+              </h4>
+              <ul style={{
+                margin: '0',
+                padding: '0 0 0 16px',
+                fontSize: '13px',
+                color: isDarkMode ? '#CCCCCC' : '#666',
+                lineHeight: '1.4'
+              }}>
+                <li>선택한 텍스트에 관련된 이미지를 업로드하세요</li>
+                <li>하이라이트된 텍스트를 클릭하면 연결된 이미지를 볼 수 있어요</li>
+                <li>여러 개의 이미지를 한 번에 연결할 수 있습니다</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowHighlightModal(false)
+                  setSelectedTextInfo(null)
+                  setSelectedText('')
+                  // 텍스트 선택 해제
+                  window.getSelection().removeAllRanges()
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)',
+                  color: isDarkMode ? '#FFFFFF' : '#374151',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(72, 72, 74, 0.9)' : 'rgba(156, 163, 175, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)'
                 }}
               >
                 취소
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowHighlightModal(false)
+                  setSelectedTextInfo(null)
+                  setSelectedText('')
+                  // 텍스트 선택 해제
+                  window.getSelection().removeAllRanges()
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 149, 0, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                나중에 연결하기
               </button>
             </div>
           </div>

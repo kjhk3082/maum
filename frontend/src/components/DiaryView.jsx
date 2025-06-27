@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Edit3, Trash2, Calendar, Loader, Clock, Heart } from 'lucide-react'
+import { ArrowLeft, Edit3, Trash2, Calendar, Loader, Clock, Heart, Image as ImageIcon, X, ZoomIn } from 'lucide-react'
 import { getDiaryByDate, deleteDiary } from '../firebase/diaryService'
 import { useTheme } from '../App'
 
@@ -20,6 +20,8 @@ function DiaryView() {
   const [loading, setLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null)
+  const [highlightedTexts, setHighlightedTexts] = useState([])
 
   useEffect(() => {
     const loadDiary = async () => {
@@ -29,13 +31,20 @@ function DiaryView() {
         // Firebase에서 일기 조회 시도
         const { success, diary } = await getDiaryByDate(date)
         if (success && diary) {
+          console.log('📖 Firebase 일기 데이터:', diary)
           setEntry(diary)
+          
+          // 하이라이트된 텍스트 정보가 있으면 로드
+          if (diary.highlightedTexts) {
+            setHighlightedTexts(diary.highlightedTexts)
+          }
         } else {
           // Firebase 실패 시 로컬스토리지에서 조회
           const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
           const localDiary = localDiaries[date]
           
           if (localDiary) {
+            console.log('📱 로컬 일기 데이터:', localDiary)
             setEntry({
               ...localDiary,
               id: date,
@@ -43,6 +52,10 @@ function DiaryView() {
               createdAt: localDiary.createdAt || new Date().toISOString(),
               updatedAt: localDiary.updatedAt || localDiary.createdAt || new Date().toISOString()
             })
+            
+            if (localDiary.highlightedTexts) {
+              setHighlightedTexts(localDiary.highlightedTexts)
+            }
           } else {
             setEntry(null)
           }
@@ -62,6 +75,10 @@ function DiaryView() {
             createdAt: localDiary.createdAt || new Date().toISOString(),
             updatedAt: localDiary.updatedAt || localDiary.createdAt || new Date().toISOString()
           })
+          
+          if (localDiary.highlightedTexts) {
+            setHighlightedTexts(localDiary.highlightedTexts)
+          }
         } else {
           setEntry(null)
         }
@@ -122,6 +139,92 @@ function DiaryView() {
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  // 텍스트에서 하이라이트 적용
+  const renderContentWithHighlights = (content) => {
+    if (!highlightedTexts || highlightedTexts.length === 0) {
+      return content
+    }
+
+    let processedContent = content
+    const highlights = []
+
+    // 하이라이트된 텍스트들을 마커로 감싸기
+    highlightedTexts.forEach((highlight, index) => {
+      const marker = `__HIGHLIGHT_${index}__`
+      processedContent = processedContent.replace(
+        new RegExp(highlight.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        marker
+      )
+      highlights.push({ marker, highlight, index })
+    })
+
+    // 마커를 실제 하이라이트 요소로 변환
+    const parts = processedContent.split(/(__HIGHLIGHT_\d+__)/g)
+    
+    return parts.map((part, partIndex) => {
+      const highlightMatch = highlights.find(h => h.marker === part)
+      
+      if (highlightMatch) {
+        const { highlight, index } = highlightMatch
+        return (
+          <span
+            key={partIndex}
+            onClick={() => handleHighlightClick(highlight)}
+            style={{
+              backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 215, 0, 0.5)',
+              padding: '2px 4px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              border: '1px solid rgba(255, 215, 0, 0.6)',
+              transition: 'all 0.2s',
+              position: 'relative'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 215, 0, 0.5)' : 'rgba(255, 215, 0, 0.7)'
+              e.currentTarget.style.transform = 'scale(1.02)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255, 215, 0, 0.5)'
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
+            title={`클릭하여 관련 이미지 ${highlight.images?.length || 0}개 보기`}
+          >
+            {highlight.text}
+            {highlight.images && highlight.images.length > 0 && (
+              <ImageIcon 
+                size={12} 
+                style={{ 
+                  marginLeft: '4px', 
+                  color: '#FF8C00',
+                  display: 'inline-block'
+                }} 
+              />
+            )}
+          </span>
+        )
+      }
+      
+      return part
+    })
+  }
+
+  // 하이라이트 클릭 시 이미지 보기
+  const handleHighlightClick = (highlight) => {
+    if (highlight.images && highlight.images.length > 0) {
+      setSelectedImageIndex(0) // 첫 번째 이미지부터 보기
+      // 실제로는 해당 하이라이트의 이미지들만 보여줘야 함
+      setSelectedImages(highlight.images)
+    }
+  }
+
+  const [selectedImages, setSelectedImages] = useState([])
+
+  // 이미지 클릭 핸들러
+  const handleImageClick = (imageIndex) => {
+    setSelectedImageIndex(imageIndex)
+    setSelectedImages(entry.images || [])
   }
 
   if (loading) {
@@ -449,9 +552,146 @@ function DiaryView() {
               whiteSpace: 'pre-wrap',
               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif'
             }}>
-              {entry.content}
+              {renderContentWithHighlights(entry.content)}
             </div>
           </div>
+
+          {/* 첨부 이미지 섹션 */}
+          {entry.images && entry.images.length > 0 && (
+            <div style={{
+              background: isDarkMode ? 'rgba(58, 58, 60, 0.3)' : 'rgba(248, 250, 252, 0.5)',
+              borderRadius: '16px',
+              padding: '24px',
+              marginBottom: '24px',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'}`
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <ImageIcon size={20} color="white" />
+                </div>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '18px', 
+                  fontWeight: '700',
+                  color: isDarkMode ? '#FFFFFF' : '#333'
+                }}>
+                  첨부 이미지 ({entry.images.length}개)
+                </h3>
+              </div>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: '12px'
+              }}>
+                {entry.images.map((image, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleImageClick(index)}
+                    style={{
+                      position: 'relative',
+                      paddingBottom: '100%', // 1:1 비율 유지
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                      transition: 'all 0.3s',
+                      boxShadow: isDarkMode 
+                        ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                        : '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)'
+                      e.currentTarget.style.boxShadow = isDarkMode 
+                        ? '0 8px 24px rgba(0, 0, 0, 0.4)' 
+                        : '0 8px 24px rgba(0, 0, 0, 0.15)'
+                      e.currentTarget.style.borderColor = '#17A2B8'
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                      e.currentTarget.style.boxShadow = isDarkMode 
+                        ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                        : '0 4px 12px rgba(0, 0, 0, 0.1)'
+                      e.currentTarget.style.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    <img
+                      src={image.url}
+                      alt={`첨부 이미지 ${index + 1}`}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling.style.display = 'flex'
+                      }}
+                    />
+                    {/* 이미지 로드 실패 시 표시 */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                      display: 'none',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
+                      color: isDarkMode ? '#8E8E93' : '#666'
+                    }}>
+                      <ImageIcon size={24} />
+                      <span style={{ fontSize: '12px', marginTop: '4px' }}>이미지 로드 실패</span>
+                    </div>
+                    {/* 확대 아이콘 */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0.8
+                    }}>
+                      <ZoomIn size={14} color="white" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* 하이라이트된 텍스트와 연결된 이미지가 있는 경우 안내 */}
+              {highlightedTexts && highlightedTexts.some(h => h.images && h.images.length > 0) && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '12px 16px',
+                  background: isDarkMode ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
+                  fontSize: '14px',
+                  color: isDarkMode ? '#CCCCCC' : '#666'
+                }}>
+                  💡 <strong>팁:</strong> 일기 내용에서 <span style={{backgroundColor: 'rgba(255, 215, 0, 0.3)', padding: '2px 4px', borderRadius: '4px'}}>하이라이트된 텍스트</span>를 클릭하면 관련 이미지만 볼 수 있어요!
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 메타 정보 */}
           <div style={{
@@ -601,6 +841,164 @@ function DiaryView() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 이미지 풀스크린 모달 */}
+      {selectedImageIndex !== null && selectedImages && selectedImages.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          backdropFilter: 'blur(10px)'
+        }}>
+          {/* 닫기 버튼 */}
+          <button
+            onClick={() => setSelectedImageIndex(null)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '24px',
+              transition: 'all 0.2s',
+              zIndex: 101
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+              e.currentTarget.style.transform = 'scale(1.1)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
+          >
+            <X size={24} />
+          </button>
+
+          {/* 이미지 내비게이션 (이전) */}
+          {selectedImages.length > 1 && selectedImageIndex > 0 && (
+            <button
+              onClick={() => setSelectedImageIndex(selectedImageIndex - 1)}
+              style={{
+                position: 'absolute',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                fontSize: '24px',
+                transition: 'all 0.2s',
+                zIndex: 101
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              ‹
+            </button>
+          )}
+
+          {/* 이미지 내비게이션 (다음) */}
+          {selectedImages.length > 1 && selectedImageIndex < selectedImages.length - 1 && (
+            <button
+              onClick={() => setSelectedImageIndex(selectedImageIndex + 1)}
+              style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+                fontSize: '24px',
+                transition: 'all 0.2s',
+                zIndex: 101
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+              }}
+            >
+              ›
+            </button>
+          )}
+
+          {/* 현재 이미지 */}
+          <div style={{
+            maxWidth: '90%',
+            maxHeight: '90%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <img
+              src={selectedImages[selectedImageIndex]?.url}
+              alt={`이미지 ${selectedImageIndex + 1}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+              }}
+            />
+          </div>
+
+          {/* 이미지 카운터 */}
+          {selectedImages.length > 1 && (
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(0, 0, 0, 0.6)',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {selectedImageIndex + 1} / {selectedImages.length}
+            </div>
+          )}
         </div>
       )}
     </div>
