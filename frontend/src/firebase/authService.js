@@ -245,42 +245,79 @@ export const handleRedirectResult = async () => {
     console.log('카카오 인증 코드 발견:', code)
     
     try {
-      // 인증 코드가 있으면 SDK 초기화 후 사용자 정보 조회
-      await new Promise(resolve => setTimeout(resolve, 1000)) // SDK 로딩 대기
+      // 인증 코드로 액세스 토큰 교환
+      console.log('인증 코드를 액세스 토큰으로 교환 중...')
       
-      if (window.Kakao && window.Kakao.isInitialized()) {
-        // 액세스 토큰 설정 시도
-        try {
-          const userResponse = await window.Kakao.API.request({
-            url: '/v2/user/me'
-          })
-          
-          const userInfo = {
-            id: userResponse.id.toString(),
-            name: userResponse.properties?.nickname || '카카오 사용자',
-            email: userResponse.kakao_account?.email || '',
-            profileImage: userResponse.properties?.profile_image || '',
-            loginType: 'kakao',
-            loginAt: new Date().toISOString(),
-            accessToken: code
-          }
-
-          await saveUserToFirestore(userInfo)
-          
-          // URL에서 코드 제거
-          window.history.replaceState({}, document.title, window.location.pathname)
-          
-          return { 
-            success: true,
-            user: userInfo,
-            message: '리다이렉트 로그인 성공' 
-          }
-        } catch (apiError) {
-          console.error('리다이렉트 후 API 호출 실패:', apiError)
-        }
+      const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: '240138285eefbcd9ab66f4a85efbfbb5',
+          redirect_uri: window.location.origin,
+          code: code
+        })
+      })
+      
+      if (!tokenResponse.ok) {
+        throw new Error(`토큰 교환 실패: ${tokenResponse.status}`)
       }
+      
+      const tokenData = await tokenResponse.json()
+      console.log('토큰 교환 성공:', tokenData)
+      
+      // SDK에 액세스 토큰 설정
+      if (window.Kakao && window.Kakao.Auth && tokenData.access_token) {
+        window.Kakao.Auth.setAccessToken(tokenData.access_token)
+        console.log('SDK에 액세스 토큰 설정 완료')
+        
+        // 이제 사용자 정보 요청
+        const userResponse = await window.Kakao.API.request({
+          url: '/v2/user/me'
+        })
+        
+        console.log('토큰 교환 후 사용자 정보:', userResponse)
+        
+        const userInfo = {
+          id: userResponse.id.toString(),
+          name: userResponse.properties?.nickname || '카카오 사용자',
+          email: userResponse.kakao_account?.email || '',
+          profileImage: userResponse.properties?.profile_image || '',
+          loginType: 'kakao',
+          loginAt: new Date().toISOString(),
+          accessToken: tokenData.access_token
+        }
+
+        await saveUserToFirestore(userInfo)
+        
+        // URL에서 코드 제거
+        window.history.replaceState({}, document.title, window.location.pathname)
+        
+        return { 
+          success: true,
+          user: userInfo,
+          message: '카카오 로그인 성공!' 
+        }
+      } else {
+        throw new Error('SDK 토큰 설정 실패')
+      }
+      
     } catch (error) {
-      console.error('리다이렉트 로그인 처리 오류:', error)
+      console.error('토큰 교환 또는 API 호출 실패:', error)
+      
+      // 토큰 교환 실패 시 데모 모드로 폴백
+      console.log('토큰 교환 실패, 데모 모드로 전환')
+      
+      // URL에서 코드 제거
+      window.history.replaceState({}, document.title, window.location.pathname)
+      
+      const demoUser = await createDemoUser()
+      return {
+        ...demoUser,
+        message: '카카오 로그인 처리 중 문제가 발생했습니다. 데모 모드로 시작합니다.'
+      }
     }
   }
   
