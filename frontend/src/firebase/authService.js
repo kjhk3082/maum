@@ -5,6 +5,7 @@
 
 import { 
   signInWithCustomToken,
+  signInAnonymously,
   signOut, 
   onAuthStateChanged
 } from 'firebase/auth'
@@ -414,11 +415,19 @@ export const onAuthStateChange = (callback) => {
  */
 const saveUserToFirestore = async (userInfo) => {
   try {
-    const userRef = doc(db, 'users', userInfo.id)
+    // 1단계: Firebase Auth에 Anonymous 로그인 (인증 토큰 생성)
+    console.log('Firebase Auth Anonymous 로그인 시도...')
+    const authResult = await signInAnonymously(auth)
+    console.log('Firebase Auth 로그인 성공:', authResult.user.uid)
+    
+    // 2단계: 카카오 사용자 정보를 Firebase UID와 연결
+    const firebaseUid = authResult.user.uid
+    const userRef = doc(db, 'users', firebaseUid)
     const userSnap = await getDoc(userRef)
     
     const userData = {
-      uid: userInfo.id,
+      uid: firebaseUid,
+      kakaoId: userInfo.id, // 카카오 ID 별도 저장
       email: userInfo.email,
       displayName: userInfo.name,
       photoURL: userInfo.profileImage,
@@ -426,10 +435,12 @@ const saveUserToFirestore = async (userInfo) => {
       loginType: userInfo.loginType || 'kakao'
     }
     
-    // 로컬스토리지 저장용 사용자 정보 (uid 필드 추가)
+    // 로컬스토리지 저장용 사용자 정보 (Firebase UID 사용)
     const localUserInfo = {
       ...userInfo,
-      uid: userInfo.id // uid 필드 추가
+      uid: firebaseUid, // Firebase UID 사용
+      firebaseUid: firebaseUid,
+      kakaoId: userInfo.id
     }
     
     if (!userSnap.exists()) {
@@ -438,19 +449,22 @@ const saveUserToFirestore = async (userInfo) => {
     }
     
     await setDoc(userRef, userData, { merge: true })
-    console.log('Firestore에 사용자 정보 저장 완료')
+    console.log('Firebase Auth 로그인 및 Firestore 저장 완료')
     
-    // 로컬스토리지에도 저장 (uid 필드 포함)
+    // 로컬스토리지에도 저장 (Firebase UID 포함)
     localStorage.setItem('user', JSON.stringify(localUserInfo))
     
       } catch (error) {
-      console.error('사용자 정보 저장 오류:', error)
-      // Firestore 저장 실패해도 로컬에는 저장 (uid 필드 포함)
+      console.error('Firebase Auth 로그인 또는 사용자 정보 저장 오류:', error)
+      
+      // Firebase 로그인 실패 시에도 로컬에는 저장 (데모 모드)
       const localUserInfo = {
         ...userInfo,
-        uid: userInfo.id
+        uid: userInfo.id,
+        isDemo: true // 데모 모드 표시
       }
       localStorage.setItem('user', JSON.stringify(localUserInfo))
+      console.log('데모 모드로 로컬 저장 완료')
     }
 }
 
