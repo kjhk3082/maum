@@ -42,8 +42,7 @@ export const signInWithKakaoSDK = async () => {
     window.Kakao.Auth.authorize({
       redirectUri: window.location.origin + '/',
       scope: 'profile_nickname,profile_image,account_email',
-      throughTalk: false, // 카카오톡 사용 안함
-      prompts: 'login' // 항상 로그인 창 표시
+      throughTalk: false // 카카오톡 사용 안함
     })
     
     // authorize는 페이지를 이동시키므로 Promise 불필요
