@@ -451,7 +451,7 @@ const DiaryWrite = ({ user }) => {
           // 연속 작성일 확인 및 축하 알림
           const streakDays = calculateStreakDays()
           if (streakDays > 1) {
-            notificationService.showStreakNotification(streakDays)
+            notificationService.showStreakCelebration(streakDays)
           }
           
           showNotification('success', '저장 완료', '일기가 성공적으로 저장되었습니다!', 
