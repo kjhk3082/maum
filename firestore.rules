@@ -28,6 +28,11 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
     
+    // 사용자 컬렉션 쿼리 허용 (카카오 ID로 검색 시 필요)
+    match /users/{document=**} {
+      allow list: if request.auth != null;
+    }
+    
     // 일기 컬렉션 쿼리 허용 (where 조건으로 userId 필터링)
     match /diaries/{document=**} {
       allow list: if request.auth != null;

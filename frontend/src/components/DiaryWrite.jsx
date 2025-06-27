@@ -461,9 +461,9 @@ const DiaryWrite = ({ user }) => {
     console.log('제목:', title)
     console.log('내용:', content)
     console.log('감정:', emotion)
-    
+
     setLoading(true)
-    
+
     try {
       let textToExpand = ''
       
@@ -527,7 +527,7 @@ const DiaryWrite = ({ user }) => {
           const newContent = content.replace(selectedText, expandedText)
           setContent(newContent)
           console.log('✅ 선택된 텍스트 교체 완료')
-        } else {
+      } else {
           // 내용 끝에 확장된 텍스트 추가
           const separator = content.trim() ? '\n\n' : ''
           setContent(prev => prev + separator + expandedText)
@@ -1424,46 +1424,46 @@ const DiaryWrite = ({ user }) => {
 
             {/* AI 도움 및 이미지 첨부 버튼 */}
             <div style={{ marginBottom: '32px', display: 'flex', gap: '16px' }}>
-              <button
-                onClick={handleAIHelp}
-                disabled={loading}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  padding: '14px 24px',
-                  borderRadius: '16px',
+                <button
+                  onClick={handleAIHelp}
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    padding: '14px 24px',
+                    borderRadius: '16px',
                   background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-                  color: 'white',
-                  fontWeight: '600',
+                    color: 'white',
+                    fontWeight: '600',
                   boxShadow: '0 8px 16px rgba(23, 162, 184, 0.25)',
-                  border: 'none',
-                  transition: 'all 0.3s',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1
-                }}
-                onMouseOver={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    border: 'none',
+                    transition: 'all 0.3s',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.7 : 1
+                  }}
+                  onMouseOver={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
                     e.currentTarget.style.boxShadow = '0 12px 20px rgba(23, 162, 184, 0.3)';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = 'translateY(0)';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.25)';
-                  }
-                }}
-              >
-                {loading ? (
-                  <>
+                    }
+                  }}
+                >
+                  {loading ? (
+                    <>
                     <Loader style={{ width: '20px', height: '20px' }} />
                     <span>AI 생각 중...</span>
-                  </>
-                ) : (
-                  <>
+                    </>
+                  ) : (
+                    <>
                     <Sparkles style={{ width: '20px', height: '20px' }} />
                     <span>{selectedText ? 'AI 텍스트 확장' : emotion ? `${
                       emotion === 'HAPPY' ? '기쁜' :
@@ -1472,9 +1472,9 @@ const DiaryWrite = ({ user }) => {
                       emotion === 'PEACEFUL' ? '평온한' :
                       emotion === 'ANXIOUS' ? '불안한' : ''
                     } 감정으로 AI 일기 작성` : 'AI 문장 만들기'}</span>
-                  </>
-                )}
-              </button>
+                    </>
+                  )}
+                </button>
               
               <button
                 onClick={handleImageAttach}
@@ -1786,7 +1786,7 @@ const DiaryWrite = ({ user }) => {
                 파일 선택
               </label>
             </div>
-
+            
             {imageUploading && (
               <div style={{
                 textAlign: 'center',
@@ -1809,9 +1809,9 @@ const DiaryWrite = ({ user }) => {
                 }}>
                   이미지를 업로드하고 하이라이트를 생성하는 중...
                 </p>
-              </div>
+            </div>
             )}
-
+            
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setImageModalOpen(false)}

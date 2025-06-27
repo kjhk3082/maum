@@ -188,40 +188,38 @@ export const signOutUser = async () => {
  */
 const saveUserToFirestore = async (userInfo) => {
   try {
-    let firebaseUid
+    // 로컬스토리지에서 기존 UID 확인 (임시 해결책)
+    const existingUid = localStorage.getItem(`kakao_uid_${userInfo.id}`)
     
-    // 기존 Firebase 사용자 확인
-    if (auth.currentUser) {
-      // 이미 로그인된 사용자가 있으면 해당 UID 사용
-      firebaseUid = auth.currentUser.uid
-      console.log('기존 Firebase UID 재사용:', firebaseUid)
+    let firebaseUid
+    let authResult
+    
+    if (existingUid) {
+      // 기존 UID가 있으면 새로운 익명 로그인 후 해당 UID 사용
+      console.log('기존 카카오 사용자 UID 발견:', existingUid)
+      authResult = await signInAnonymously(auth)
+      firebaseUid = existingUid // 로컬에 저장된 UID 사용
     } else {
-      // 카카오 ID로 기존 사용자 조회
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where('kakaoId', '==', userInfo.id))
-      const querySnapshot = await getDocs(q)
+      // 새로운 사용자인 경우
+      console.log('새로운 카카오 사용자, Firebase 계정 생성...')
+      authResult = await signInAnonymously(auth)
+      firebaseUid = authResult.user.uid
+      console.log('새 Firebase UID 생성:', firebaseUid)
       
-      if (!querySnapshot.empty) {
-        // 기존 카카오 사용자가 있으면 해당 UID로 재로그인
-        const existingUser = querySnapshot.docs[0]
-        firebaseUid = existingUser.id
-        console.log('기존 카카오 사용자 발견, UID 재사용:', firebaseUid)
-        
-        // 해당 UID로 다시 로그인 시도 (익명 로그인)
-        await signInAnonymously(auth)
-        // 주의: 익명 로그인은 매번 새로운 UID를 생성하므로, 
-        // 실제로는 커스텀 토큰이나 다른 방법이 필요함
-      } else {
-        // 새로운 사용자인 경우
-        console.log('새로운 카카오 사용자, Firebase 계정 생성...')
-        const authResult = await signInAnonymously(auth)
-        firebaseUid = authResult.user.uid
-        console.log('새 Firebase UID 생성:', firebaseUid)
-      }
+      // 로컬에 매핑 저장
+      localStorage.setItem(`kakao_uid_${userInfo.id}`, firebaseUid)
     }
     
     const userRef = doc(db, 'users', firebaseUid)
-    const userSnap = await getDoc(userRef)
+    
+    // 기존 문서 확인 (권한 오류 방지)
+    let userSnap
+    try {
+      userSnap = await getDoc(userRef)
+    } catch (error) {
+      console.log('기존 문서 조회 실패, 새 문서로 생성')
+      userSnap = { exists: () => false }
+    }
     
     const userData = {
       uid: firebaseUid,
@@ -239,9 +237,6 @@ const saveUserToFirestore = async (userInfo) => {
     
     await setDoc(userRef, userData, { merge: true })
     console.log('Firestore 저장 완료')
-    
-    // 로컬에 카카오ID-FirebaseUID 매핑 저장 (임시 해결책)
-    localStorage.setItem(`kakao_uid_${userInfo.id}`, firebaseUid)
     
   } catch (error) {
     console.error('Firebase 저장 오류:', error)
