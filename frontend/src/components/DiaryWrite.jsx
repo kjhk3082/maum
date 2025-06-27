@@ -630,52 +630,6 @@ const DiaryWrite = ({ user }) => {
         showNotification('info', 'AI 문장 만들기', 
           '감정을 선택하거나 텍스트를 입력한 후 사용해주세요.', 
           '💡 팁: 감정만 선택해도 AI가 자동으로 일기를 작성해드립니다!')
-        setLoading(false)
-        return
-      }
-      
-      // 선택된 텍스트를 자연스러운 일기 문장으로 확장하는 요청
-      const expandContext = {
-        selectedText: textToExpand,
-        emotion: emotion || 'PEACEFUL',
-        title: title,
-        content: content,
-        expandMode: true
-      }
-      
-      console.log('🚀 OpenAI 서비스 호출...', expandContext)
-      const result = await openaiService.expandTextToDiary(expandContext)
-      console.log('📨 OpenAI 응답:', result)
-      
-      if (result.success) {
-        const expandedText = result.expandedText
-        
-        // 확장된 텍스트 적용
-        if (selectedText && selectedText.trim() !== '') {
-          // 선택된 텍스트를 확장된 텍스트로 교체
-          const newContent = content.replace(selectedText, expandedText)
-          setContent(newContent)
-          console.log('✅ 선택된 텍스트 교체 완료')
-      } else {
-          // 내용 끝에 확장된 텍스트 추가
-          const separator = content.trim() ? '\n\n' : ''
-          setContent(prev => prev + separator + expandedText)
-          console.log('✅ 내용 끝에 추가 완료')
-        }
-        
-        // 선택 상태 초기화
-        setSelectedText('')
-        
-        // 성공 메시지
-        showNotification('success', '✨ AI 문장 생성 완료!', 
-          `"${textToExpand}" → "${expandedText}"`,
-          result.isDemo ? 'AI API 연동 준비 중이에요. 현재는 데모 모드로 동작합니다.' : 'GPT-4o로 생성되었습니다.')
-        
-      } else {
-        console.error('❌ AI 텍스트 확장 실패')
-        showNotification('error', 'AI 오류', 
-          'AI 텍스트 확장에 실패했습니다.', 
-          '잠시 후 다시 시도해주세요.')
       }
     } catch (error) {
       console.error('❌ AI 텍스트 확장 오류:', error)

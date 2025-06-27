@@ -75,19 +75,34 @@ function MyPage({ user, onLogout }) {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate('/')}
-                className="p-2 rounded-xl transition-all duration-200"
                 style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '16px',
                   background: isDarkMode 
                     ? 'rgba(255, 255, 255, 0.05)' 
                     : 'rgba(0, 0, 0, 0.05)',
-                  ':hover': {
-                    background: isDarkMode 
-                      ? 'rgba(255, 255, 255, 0.1)' 
-                      : 'rgba(0, 0, 0, 0.1)'
-                  }
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = isDarkMode 
+                    ? 'rgba(255, 255, 255, 0.1)' 
+                    : 'rgba(0, 0, 0, 0.1)'
+                  e.currentTarget.style.transform = 'scale(1.05)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = isDarkMode 
+                    ? 'rgba(255, 255, 255, 0.05)' 
+                    : 'rgba(0, 0, 0, 0.05)'
+                  e.currentTarget.style.transform = 'scale(1)'
                 }}
               >
-                <ArrowLeft size={20} className={isDarkMode ? 'text-white' : 'text-gray-800'} />
+                <ArrowLeft size={28} color={isDarkMode ? '#ffffff' : '#1e293b'} />
               </button>
               <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 마이페이지
@@ -97,17 +112,37 @@ function MyPage({ user, onLogout }) {
             {/* 테마 토글 */}
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-xl transition-all duration-200"
               style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '16px',
                 background: isDarkMode 
                   ? 'rgba(255, 255, 255, 0.05)' 
+                  : 'rgba(0, 0, 0, 0.05)',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = isDarkMode 
+                  ? 'rgba(255, 255, 255, 0.1)' 
+                  : 'rgba(0, 0, 0, 0.1)'
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = isDarkMode 
+                  ? 'rgba(255, 255, 255, 0.05)' 
                   : 'rgba(0, 0, 0, 0.05)'
+                e.currentTarget.style.transform = 'scale(1)'
               }}
             >
               {isDarkMode ? (
-                <Sun size={20} className="text-yellow-400" />
+                <Sun size={28} color="#fbbf24" />
               ) : (
-                <Moon size={20} className="text-gray-600" />
+                <Moon size={28} color="#64748b" />
               )}
             </button>
           </div>
@@ -117,200 +152,663 @@ function MyPage({ user, onLogout }) {
       {/* 메인 컨텐츠 */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* 프로필 섹션 */}
-        <div className="mb-8 p-6 rounded-2xl backdrop-blur-sm" style={{
+        <div className="mb-8 p-8 rounded-3xl backdrop-blur-sm shadow-xl" style={{
           background: isDarkMode 
-            ? 'rgba(255, 255, 255, 0.05)' 
-            : 'rgba(255, 255, 255, 0.8)',
-          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+            ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.8), rgba(28, 28, 30, 0.9))' 
+            : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+          boxShadow: isDarkMode 
+            ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
+            : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative">
-              <img
-                src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name}&background=0891b2&color=fff`}
-                alt={user?.name}
-                className="w-24 h-24 rounded-full object-cover"
-              />
-              <button className="absolute bottom-0 right-0 p-2 rounded-full bg-teal-500 text-white shadow-lg">
-                <Camera size={16} />
+              <div style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
+              }}>
+                <img
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
+                  alt={user?.name}
+                  style={{
+                    width: '132px',
+                    height: '132px',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+              <button 
+                className="absolute -bottom-2 -right-2 transition-all duration-200"
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                  color: 'white',
+                  border: '3px solid white',
+                  boxShadow: '0 8px 16px rgba(23, 162, 184, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)'
+                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(23, 162, 184, 0.3)'
+                }}
+              >
+                <Camera size={24} />
               </button>
             </div>
             
-            <div className="flex-1">
+            <div className="flex-1 text-center md:text-left">
               {isEditing ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className={`px-3 py-1 rounded-lg border ${
-                      isDarkMode 
-                        ? 'bg-gray-800 border-gray-700 text-white' 
-                        : 'bg-white border-gray-300'
-                    }`}
-                  />
-                  <button
-                    onClick={handleUpdateProfile}
-                    disabled={loading}
-                    className="p-1 rounded-lg bg-green-500 text-white"
-                  >
-                    <Check size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditing(false)
-                      setDisplayName(user?.name || '')
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                      background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+                      color: isDarkMode ? '#ffffff' : '#1d1d1f',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      outline: 'none',
+                      transition: 'all 0.2s'
                     }}
-                    className="p-1 rounded-lg bg-red-500 text-white"
-                  >
-                    <X size={16} />
-                  </button>
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#17A2B8'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(23, 162, 184, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleUpdateProfile}
+                      disabled={loading}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(145deg, #22c55e, #16a34a)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
+                      }}
+                    >
+                      <Check size={24} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditing(false)
+                        setDisplayName(user?.name || '')
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(145deg, #ef4444, #dc2626)',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                      }}
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    {user?.name}
-                  </h2>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className={`p-1 rounded-lg ${
-                      isDarkMode 
-                        ? 'hover:bg-gray-700' 
-                        : 'hover:bg-gray-200'
-                    }`}
-                  >
-                    <Edit3 size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-                  </button>
+                <div>
+                  <div className="flex flex-col sm:flex-row items-center gap-4 mb-3">
+                    <h2 style={{
+                      fontSize: '32px',
+                      fontWeight: '700',
+                      margin: '0',
+                      color: isDarkMode ? '#ffffff' : '#1d1d1f',
+                      background: isDarkMode 
+                        ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
+                        : 'linear-gradient(135deg, #1e293b, #475569)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {user?.name || 'Unknown User'}
+                    </h2>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        background: isDarkMode 
+                          ? 'rgba(255, 255, 255, 0.1)' 
+                          : 'rgba(0, 0, 0, 0.05)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = isDarkMode 
+                          ? 'rgba(255, 255, 255, 0.15)' 
+                          : 'rgba(0, 0, 0, 0.1)'
+                        e.currentTarget.style.transform = 'scale(1.05)'
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = isDarkMode 
+                          ? 'rgba(255, 255, 255, 0.1)' 
+                          : 'rgba(0, 0, 0, 0.05)'
+                        e.currentTarget.style.transform = 'scale(1)'
+                      }}
+                    >
+                      <Edit3 size={20} color={isDarkMode ? '#94a3b8' : '#64748b'} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                    {user?.loginType === 'google' ? (
+                      <>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        <span style={{
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          color: isDarkMode ? '#94a3b8' : '#64748b'
+                        }}>
+                          Google 로그인 사용자
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <img 
+                          src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+" 
+                          alt="Kakao" 
+                          style={{ width: '24px', height: '24px' }}
+                        />
+                        <span style={{
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          color: isDarkMode ? '#94a3b8' : '#64748b'
+                        }}>
+                          카카오 로그인 사용자
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <p style={{
+                    fontSize: '14px',
+                    color: isDarkMode ? '#64748b' : '#94a3b8',
+                    margin: '0',
+                    fontWeight: '400'
+                  }}>
+                    {user?.email || '이메일 정보 없음'}
+                  </p>
                 </div>
               )}
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                카카오 로그인 사용자
-              </p>
             </div>
           </div>
         </div>
 
         {/* 정보 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* 이메일 */}
-          <div className="p-6 rounded-2xl backdrop-blur-sm" style={{
+          <div style={{
+            padding: '24px',
+            borderRadius: '20px',
             background: isDarkMode 
-              ? 'rgba(255, 255, 255, 0.05)' 
-              : 'rgba(255, 255, 255, 0.8)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
-          }}>
-            <div className="flex items-center gap-3 mb-2">
-              <Mail size={20} className="text-teal-500" />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            boxShadow: isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 12px 32px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)'
+          }}
+          >
+            <div className="flex items-center gap-4 mb-3">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)'
+              }}>
+                <Mail size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#e2e8f0' : '#475569'
+              }}>
                 이메일
               </span>
             </div>
-            <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <p style={{
+              fontSize: '18px',
+              fontWeight: '500',
+              color: isDarkMode ? '#ffffff' : '#1e293b',
+              margin: '0',
+              wordBreak: 'break-all'
+            }}>
               {user?.email || '이메일 정보 없음'}
             </p>
           </div>
 
           {/* 가입일 */}
-          <div className="p-6 rounded-2xl backdrop-blur-sm" style={{
+          <div style={{
+            padding: '24px',
+            borderRadius: '20px',
             background: isDarkMode 
-              ? 'rgba(255, 255, 255, 0.05)' 
-              : 'rgba(255, 255, 255, 0.8)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
-          }}>
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar size={20} className="text-teal-500" />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            boxShadow: isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 12px 32px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)'
+          }}
+          >
+            <div className="flex items-center gap-4 mb-3">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #8b5cf6, #7c3aed)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+              }}>
+                <Calendar size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#e2e8f0' : '#475569'
+              }}>
                 가입일
               </span>
             </div>
-            <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <p style={{
+              fontSize: '18px',
+              fontWeight: '500',
+              color: isDarkMode ? '#ffffff' : '#1e293b',
+              margin: '0'
+            }}>
               {formatDate(user?.createdAt)}
             </p>
           </div>
 
           {/* 일기 개수 */}
-          <div className="p-6 rounded-2xl backdrop-blur-sm" style={{
+          <div style={{
+            padding: '24px',
+            borderRadius: '20px',
             background: isDarkMode 
-              ? 'rgba(255, 255, 255, 0.05)' 
-              : 'rgba(255, 255, 255, 0.8)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
-          }}>
-            <div className="flex items-center gap-3 mb-2">
-              <BookOpen size={20} className="text-teal-500" />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            boxShadow: isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 12px 32px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)'
+          }}
+          >
+            <div className="flex items-center gap-4 mb-3">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #06d6a0, #048c73)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(6, 214, 160, 0.3)'
+              }}>
+                <BookOpen size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#e2e8f0' : '#475569'
+              }}>
                 작성한 일기
               </span>
             </div>
-            <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <p style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: isDarkMode ? '#ffffff' : '#1e293b',
+              margin: '0',
+              background: 'linear-gradient(135deg, #06d6a0, #048c73)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
               {diaryCount}개
             </p>
           </div>
 
           {/* 계정 타입 */}
-          <div className="p-6 rounded-2xl backdrop-blur-sm" style={{
+          <div style={{
+            padding: '24px',
+            borderRadius: '20px',
             background: isDarkMode 
-              ? 'rgba(255, 255, 255, 0.05)' 
-              : 'rgba(255, 255, 255, 0.8)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
-          }}>
-            <div className="flex items-center gap-3 mb-2">
-              <User size={20} className="text-teal-500" />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            boxShadow: isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 12px 32px rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = isDarkMode 
+              ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              : '0 8px 24px rgba(0, 0, 0, 0.06)'
+          }}
+          >
+            <div className="flex items-center gap-4 mb-3">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #f59e0b, #d97706)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+              }}>
+                <User size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: isDarkMode ? '#e2e8f0' : '#475569'
+              }}>
                 계정 타입
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <img 
-                src="https://developers.kakao.com/assets/img/about/logos/kakao/kakao_login_medium_narrow.png" 
-                alt="Kakao" 
-                className="h-5"
-              />
+            <div className="flex items-center gap-3">
+              {user?.loginType === 'google' ? (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#4285F4'
+                  }}>
+                    Google
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#FEE500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{ fontSize: '16px', fontWeight: '700', color: '#000' }}>K</span>
+                  </div>
+                  <span style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#FEE500'
+                  }}>
+                    Kakao
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* 설정 섹션 */}
-        <div className="space-y-4">
-          <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+        <div className="space-y-6">
+          <h3 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            marginBottom: '24px',
+            color: isDarkMode ? '#ffffff' : '#1e293b',
+            background: isDarkMode 
+              ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
+              : 'linear-gradient(135deg, #1e293b, #475569)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
             설정
           </h3>
 
           {/* 테마 설정 */}
           <button
             onClick={toggleTheme}
-            className="w-full p-4 rounded-2xl backdrop-blur-sm flex items-center justify-between transition-all duration-200"
             style={{
+              width: '100%',
+              padding: '20px 24px',
+              borderRadius: '20px',
               background: isDarkMode 
-                ? 'rgba(255, 255, 255, 0.05)' 
-                : 'rgba(255, 255, 255, 0.8)',
-              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+                ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+                : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+              boxShadow: isDarkMode 
+                ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+                : '0 8px 24px rgba(0, 0, 0, 0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = isDarkMode 
+                ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+                : '0 12px 32px rgba(0, 0, 0, 0.1)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = isDarkMode 
+                ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+                : '0 8px 24px rgba(0, 0, 0, 0.06)'
             }}
           >
-            <div className="flex items-center gap-3">
-              <Palette size={20} className="text-teal-500" />
-              <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+            <div className="flex items-center gap-4">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #a855f7, #9333ea)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)'
+              }}>
+                <Palette size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: isDarkMode ? '#ffffff' : '#1e293b'
+              }}>
                 테마 변경
               </span>
             </div>
-            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {isDarkMode ? '다크 모드' : '라이트 모드'}
-            </span>
+            <div className="flex items-center gap-3">
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: isDarkMode 
+                  ? 'linear-gradient(145deg, #374151, #1f2937)' 
+                  : 'linear-gradient(145deg, #fbbf24, #f59e0b)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: isDarkMode 
+                  ? '0 4px 12px rgba(55, 65, 81, 0.3)'
+                  : '0 4px 12px rgba(251, 191, 36, 0.3)'
+              }}>
+                {isDarkMode ? (
+                  <Moon size={20} color="#94a3b8" />
+                ) : (
+                  <Sun size={20} color="white" />
+                )}
+              </div>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '500',
+                color: isDarkMode ? '#94a3b8' : '#64748b'
+              }}>
+                {isDarkMode ? '다크 모드' : '라이트 모드'}
+              </span>
+            </div>
           </button>
 
           {/* 로그아웃 */}
           <button
             onClick={handleLogout}
-            className="w-full p-4 rounded-2xl backdrop-blur-sm flex items-center justify-between transition-all duration-200 group"
             style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)'
+              width: '100%',
+              padding: '20px 24px',
+              borderRadius: '20px',
+              background: 'linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))',
+              border: '2px solid rgba(239, 68, 68, 0.3)',
+              boxShadow: '0 8px 24px rgba(239, 68, 68, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.background = 'linear-gradient(145deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))'
+              e.currentTarget.style.boxShadow = '0 12px 32px rgba(239, 68, 68, 0.25)'
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.background = 'linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))'
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(239, 68, 68, 0.15)'
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'
             }}
           >
-            <div className="flex items-center gap-3">
-              <LogOut size={20} className="text-red-500" />
-              <span className="text-red-500 font-medium">
+            <div className="flex items-center gap-4">
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(145deg, #ef4444, #dc2626)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+              }}>
+                <LogOut size={24} color="white" />
+              </div>
+              <span style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#ef4444'
+              }}>
                 로그아웃
               </span>
             </div>
+            <div style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              background: '#ef4444',
+              animation: 'pulse 2s infinite'
+            }}></div>
           </button>
         </div>
       </div>
