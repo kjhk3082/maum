@@ -2,30 +2,83 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Calendar as CalendarIcon, Heart, Frown, Angry, Moon, Zap, X, Home, ArrowLeft } from 'lucide-react'
 import { useTheme } from '../App'
-// import { diaryAPI } from '../services/api' // 백엔드 연결 시 주석 해제
+import { getAllDiaries } from '../firebase/diaryService'
 
 const emotionConfig = {
   HAPPY: { emoji: '😊', label: '기쁨', icon: Heart, color: 'text-yellow-500 bg-yellow-50' },
   SAD: { emoji: '😢', label: '슬픔', icon: Frown, color: 'text-blue-500 bg-blue-50' },
   ANGRY: { emoji: '😠', label: '화남', icon: Angry, color: 'text-red-500 bg-red-50' },
-  PEACEFUL: { emoji: '😴', label: '평온', icon: Moon, color: 'text-green-500 bg-green-50' },
+  PEACEFUL: { emoji: '😌', label: '평온', icon: Moon, color: 'text-green-500 bg-green-50' },
   ANXIOUS: { emoji: '😰', label: '불안', icon: Zap, color: 'text-orange-500 bg-orange-50' }
 }
 
-function DiarySearch() {
+function DiarySearch({ user }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedEmotion, setSelectedEmotion] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const navigate = useNavigate()
-  const [allDiaries, setAllDiaries] = useState({})
+  const [allDiaries, setAllDiaries] = useState([])
+  const [dataLoading, setDataLoading] = useState(true)
   const { isDarkMode } = useTheme()
 
+  // Firebase에서 일기 데이터 로드
   useEffect(() => {
-    const savedDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
-    setAllDiaries(savedDiaries)
-  }, [])
+    const loadDiaries = async () => {
+      setDataLoading(true)
+      try {
+        console.log('🔍 검색: Firebase 데이터 로드 시작')
+        
+        // Firebase에서 데이터 가져오기 시도
+        if (user) {
+          const result = await getAllDiaries(365) // 최근 1년 데이터
+          
+          if (result.success && result.diaries && result.diaries.length > 0) {
+            console.log('🔥 Firebase 일기 데이터 로드 성공:', result.diaries.length, '개')
+            setAllDiaries(result.diaries)
+          } else {
+            console.log('📱 Firebase 데이터 없음, 로컬 데이터 사용')
+            // Firebase 데이터가 없으면 로컬 데이터 사용
+            const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+            const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+              ...diary,
+              date: date,
+              id: date,
+              diaryDate: date
+            }))
+            setAllDiaries(localDiariesArray)
+          }
+        } else {
+          // 로그인하지 않은 경우 로컬 데이터만 사용
+          console.log('👤 로그인 안함, 로컬 데이터만 사용')
+          const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+          const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+            ...diary,
+            date: date,
+            id: date,
+            diaryDate: date
+          }))
+          setAllDiaries(localDiariesArray)
+        }
+      } catch (error) {
+        console.error('검색 데이터 로드 오류:', error)
+        // 오류 시 로컬 데이터 사용
+        const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+        const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+          ...diary,
+          date: date,
+          id: date,
+          diaryDate: date
+        }))
+        setAllDiaries(localDiariesArray)
+      } finally {
+        setDataLoading(false)
+      }
+    }
+
+    loadDiaries()
+  }, [user])
 
   const handleSearch = async () => {
     if (!searchQuery.trim() && !selectedEmotion) {
@@ -36,28 +89,26 @@ function DiarySearch() {
     setLoading(true)
     setHasSearched(true)
     
-    // 로컬 스토리지 검색 (데모용)
+    console.log('🔍 검색 시작:', { searchQuery, selectedEmotion, allDiaries: allDiaries.length })
+    
+    // 검색 수행
     setTimeout(() => {
-      const results = Object.entries(allDiaries)
-        .filter(([date, diary]) => {
+      const results = allDiaries
+        .filter((diary) => {
           const matchesKeyword = !searchQuery || 
-            diary.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            diary.content.toLowerCase().includes(searchQuery.toLowerCase())
+            (diary.title && diary.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (diary.content && diary.content.toLowerCase().includes(searchQuery.toLowerCase()))
           
           const matchesEmotion = !selectedEmotion || diary.emotion === selectedEmotion
           
           return matchesKeyword && matchesEmotion
         })
-        .map(([date, diary]) => ({
-          id: date,
-          diaryDate: date,
-          ...diary
-        }))
-        .sort((a, b) => new Date(b.diaryDate) - new Date(a.diaryDate))
+        .sort((a, b) => new Date(b.date || b.diaryDate) - new Date(a.date || a.diaryDate))
       
+      console.log('🔍 검색 결과:', results.length, '개')
       setSearchResults(results)
       setLoading(false)
-    }, 500)
+    }, 300)
   }
 
   const handleKeyPress = (e) => {
@@ -415,11 +466,12 @@ function DiarySearch() {
                     'ANXIOUS': { bg: 'rgba(255, 152, 0, 0.1)', border: 'rgba(255, 152, 0, 0.3)', text: '#F57C00' }
                   }
                   const emotionColor = emotionColors[diary.emotion] || { bg: 'rgba(158, 158, 158, 0.1)', border: 'rgba(158, 158, 158, 0.3)', text: '#757575' }
+                  const diaryDate = diary.date || diary.diaryDate || diary.id
                   
                   return (
                     <div
-                      key={diary.id}
-                      onClick={() => navigate(`/diary/${diary.diaryDate}`)}
+                      key={diary.id || diary.date || index}
+                      onClick={() => navigate(`/diary/${diaryDate}`)}
                       style={{
                         background: isDarkMode 
                           ? 'rgba(58, 58, 60, 0.7)' 
@@ -486,7 +538,7 @@ function DiarySearch() {
                       </p>
                       
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '14px' }}>
-                        <span style={{ color: isDarkMode ? '#8E8E93' : '#777' }}>{formatDate(diary.diaryDate)}</span>
+                        <span style={{ color: isDarkMode ? '#8E8E93' : '#777' }}>{formatDate(diaryDate)}</span>
                         <span style={{ 
                           color: '#17A2B8', 
                           fontWeight: '600'

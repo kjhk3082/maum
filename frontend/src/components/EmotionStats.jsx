@@ -124,21 +124,9 @@ function EmotionStats({ user }) {
     const loadStatsData = async () => {
       setIsLoading(true)
       try {
-        // 로컬스토리지에서 기본 데이터 로드
-        const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
-        const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
-          ...diary,
-          date: date,
-          id: date
-        }))
-
-        console.log('📊 로컬 일기 데이터:', localDiariesArray.length, '개')
-
-        // 로컬 데이터로 기본 통계 계산
-        let localStatsData = calculateLocalStats(localDiariesArray)
-        setStatsData(localStatsData)
-
-        // Firebase 데이터 로드 시도 (백그라운드)
+        console.log('📊 통계: 데이터 로드 시작')
+        
+        // Firebase 데이터 우선 로드 시도
         if (user) {
           try {
             const [emotionResult, streakResult, diariesResult] = await Promise.all([
@@ -147,9 +135,9 @@ function EmotionStats({ user }) {
               getAllDiaries(365)
             ])
 
-            // Firebase 데이터가 있으면 업데이트
+            // Firebase 데이터가 있으면 우선 사용
             if (emotionResult.success && emotionResult.stats.totalDiaries > 0) {
-              console.log('🔥 Firebase 데이터로 업데이트:', emotionResult.stats.totalDiaries, '개')
+              console.log('🔥 Firebase 통계 데이터 로드 성공:', emotionResult.stats.totalDiaries, '개')
               
               let firebaseStatsData = {
                 totalDiaries: emotionResult.stats.totalDiaries,
@@ -160,18 +148,53 @@ function EmotionStats({ user }) {
                 weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
               }
 
-              if (diariesResult.success) {
+              if (diariesResult.success && diariesResult.diaries) {
                 firebaseStatsData.monthlyData = calculateMonthlyData(diariesResult.diaries)
                 firebaseStatsData.weeklyPattern = calculateWeeklyPattern(diariesResult.diaries)
               }
 
               setStatsData(firebaseStatsData)
             } else {
-              console.log('🔄 Firebase 데이터 없음, 로컬 데이터 유지')
+              console.log('📱 Firebase 데이터 없음, 로컬 데이터 사용')
+              // Firebase 데이터가 없으면 로컬 데이터 사용
+              const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+              const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+                ...diary,
+                date: date,
+                id: date
+              }))
+              
+              console.log('📊 로컬 일기 데이터:', localDiariesArray.length, '개')
+              let localStatsData = calculateLocalStats(localDiariesArray)
+              setStatsData(localStatsData)
             }
           } catch (firebaseError) {
             console.warn('Firebase 로드 실패, 로컬 데이터 사용:', firebaseError)
+            // Firebase 오류 시 로컬 데이터 사용
+            const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+            const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+              ...diary,
+              date: date,
+              id: date
+            }))
+            
+            console.log('📊 로컬 일기 데이터:', localDiariesArray.length, '개')
+            let localStatsData = calculateLocalStats(localDiariesArray)
+            setStatsData(localStatsData)
           }
+        } else {
+          console.log('👤 로그인 안함, 로컬 데이터만 사용')
+          // 로그인하지 않은 경우 로컬 데이터만 사용
+          const localDiaries = JSON.parse(localStorage.getItem('diaryEntries') || '{}')
+          const localDiariesArray = Object.entries(localDiaries).map(([date, diary]) => ({
+            ...diary,
+            date: date,
+            id: date
+          }))
+          
+          console.log('📊 로컬 일기 데이터:', localDiariesArray.length, '개')
+          let localStatsData = calculateLocalStats(localDiariesArray)
+          setStatsData(localStatsData)
         }
 
       } catch (error) {
