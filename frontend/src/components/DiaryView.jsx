@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Edit3, Trash2, Calendar, Loader } from 'lucide-react'
-import { diaryAPI } from '../services/api'
+import { getDiaryByDate, deleteDiary } from '../firebase/diaryService'
 
 const emotions = {
   HAPPY: { emoji: '😊', label: '기쁨' },
@@ -23,8 +23,12 @@ function DiaryView() {
     const loadDiary = async () => {
       try {
         setLoading(true)
-        const diary = await diaryAPI.getDiary(date)
-        setEntry(diary)
+        const { success, diary } = await getDiaryByDate(date)
+        if (success && diary) {
+          setEntry(diary)
+        } else {
+          setEntry(null)
+        }
       } catch (error) {
         console.error('일기 로드 오류:', error)
         setEntry(null)
@@ -54,31 +58,23 @@ function DiaryView() {
     })
   }
 
-  const handleEdit = async () => {
-    try {
-      const isWritable = await diaryAPI.checkWritableTime()
-      const today = new Date().toISOString().split('T')[0]
-      
-      // 오늘 일기이고 작성 가능 시간이면 수정 가능
-      if (date === today && isWritable) {
-        navigate(`/write/${date}`)
-      } else {
-        alert('일기는 작성 당일 18:00~24:00 사이에만 수정할 수 있습니다.')
-      }
-    } catch (error) {
-      console.error('수정 가능 시간 체크 오류:', error)
-      alert('서버 연결에 문제가 있습니다.')
-    }
+  const handleEdit = () => {
+    // 24시간 언제든 수정 가능하도록 변경 (이전 18시 제한 제거)
+    navigate(`/write/${date}`)
   }
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true)
-      await diaryAPI.deleteDiary(date)
+      const { success } = await deleteDiary(entry.id)
       
-      setShowDeleteModal(false)
-      alert('일기가 삭제되었습니다.')
-      navigate('/')
+      if (success) {
+        setShowDeleteModal(false)
+        alert('일기가 삭제되었습니다.')
+        navigate('/')
+      } else {
+        throw new Error('삭제에 실패했습니다.')
+      }
     } catch (error) {
       console.error('삭제 오류:', error)
       alert(error.message || '삭제 중 오류가 발생했습니다.')
