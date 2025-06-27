@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, TrendingUp, Heart, BarChart3, PieChart, Activity, ArrowLeft } from 'lucide-react'
+import { Calendar, TrendingUp, Heart, BarChart3, PieChart, Activity, ArrowLeft, Brain, Sparkles } from 'lucide-react'
 import { useTheme, ThemeContext } from '../App'
 import { getEmotionStats, getStreakDays, getAllDiaries } from '../firebase/diaryService'
+import { openaiService } from '../services/openaiService'
 
 const emotions = {
   HAPPY: { emoji: '😊', label: '기쁨', color: '#FFD93D', bgColor: '#FFF4E6' },
@@ -12,16 +13,119 @@ const emotions = {
   ANXIOUS: { emoji: '😰', label: '불안', color: '#FF9800', bgColor: '#FFF4E6' }
 }
 
-const WeeklyPattern = ({ diaries, isDarkMode }) => {
-  const weekDays = ['일', '월', '화', '수', '목', '금', '토']
-  const weekPattern = Array(7).fill(0)
+const PatternAnalysis = ({ diaries, isDarkMode }) => {
+  const [viewType, setViewType] = useState('week') // week, month, year
   
-  Object.entries(diaries).forEach(([date, diary]) => {
-    const dayOfWeek = new Date(date).getDay()
-    weekPattern[dayOfWeek]++
-  })
+  // 현재 날짜 기준으로 기간 텍스트 생성
+  const getCurrentPeriodText = () => {
+    const now = new Date()
+    
+    if (viewType === 'week') {
+      const startOfWeek = new Date(now)
+      startOfWeek.setDate(now.getDate() - now.getDay())
+      const endOfWeek = new Date(startOfWeek)
+      endOfWeek.setDate(startOfWeek.getDate() + 6)
+      
+      return `${startOfWeek.getMonth() + 1}월 ${startOfWeek.getDate()}일 - ${endOfWeek.getMonth() + 1}월 ${endOfWeek.getDate()}일 주간`
+    } else if (viewType === 'month') {
+      return `${now.getFullYear()}년 ${now.getMonth() + 1}월`
+    } else {
+      return `${now.getFullYear()}년`
+    }
+  }
   
-  const maxCount = Math.max(...weekPattern) || 1
+  // 주간 패턴 계산
+  const getWeeklyPattern = () => {
+    const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+    const weekPattern = Array(7).fill(0)
+    
+    // 실제 일기 데이터를 기반으로 계산
+    if (Array.isArray(diaries)) {
+      diaries.forEach(diary => {
+        const dayOfWeek = new Date(diary.date).getDay()
+        weekPattern[dayOfWeek]++
+      })
+    } else if (typeof diaries === 'object') {
+      Object.entries(diaries).forEach(([date, diary]) => {
+        const dayOfWeek = new Date(date).getDay()
+        weekPattern[dayOfWeek]++
+      })
+    }
+    
+    return { labels: weekDays, data: weekPattern }
+  }
+  
+  // 월간 패턴 계산
+  const getMonthlyPattern = () => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+    
+    const monthPattern = Array(daysInMonth).fill(0)
+    const labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}일`)
+    
+    if (Array.isArray(diaries)) {
+      diaries.forEach(diary => {
+        const diaryDate = new Date(diary.date)
+        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
+          const dayOfMonth = diaryDate.getDate() - 1
+          monthPattern[dayOfMonth]++
+        }
+      })
+    } else if (typeof diaries === 'object') {
+      Object.entries(diaries).forEach(([date, diary]) => {
+        const diaryDate = new Date(date)
+        if (diaryDate.getMonth() === currentMonth && diaryDate.getFullYear() === currentYear) {
+          const dayOfMonth = diaryDate.getDate() - 1
+          monthPattern[dayOfMonth]++
+        }
+      })
+    }
+    
+    return { labels, data: monthPattern }
+  }
+  
+  // 연간 패턴 계산
+  const getYearlyPattern = () => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+    
+    const yearPattern = Array(12).fill(0)
+    
+    if (Array.isArray(diaries)) {
+      diaries.forEach(diary => {
+        const diaryDate = new Date(diary.date)
+        if (diaryDate.getFullYear() === currentYear) {
+          const monthOfYear = diaryDate.getMonth()
+          yearPattern[monthOfYear]++
+        }
+      })
+    } else if (typeof diaries === 'object') {
+      Object.entries(diaries).forEach(([date, diary]) => {
+        const diaryDate = new Date(date)
+        if (diaryDate.getFullYear() === currentYear) {
+          const monthOfYear = diaryDate.getMonth()
+          yearPattern[monthOfYear]++
+        }
+      })
+    }
+    
+    return { labels: monthNames, data: yearPattern }
+  }
+  
+  const getCurrentPattern = () => {
+    switch (viewType) {
+      case 'week': return getWeeklyPattern()
+      case 'month': return getMonthlyPattern()
+      case 'year': return getYearlyPattern()
+      default: return getWeeklyPattern()
+    }
+  }
+  
+  const { labels, data } = getCurrentPattern()
+  const maxCount = Math.max(...data) || 1
   
   return (
     <div style={{
@@ -34,36 +138,91 @@ const WeeklyPattern = ({ diaries, isDarkMode }) => {
       border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
       backdropFilter: 'blur(10px)'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Activity size={20} color="white" />
+      {/* 헤더 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Activity size={20} color="white" />
+          </div>
+          <div>
+            <h3 style={{ 
+              margin: 0, 
+              fontSize: '18px', 
+              fontWeight: '700',
+              color: isDarkMode ? '#FFFFFF' : '#333'
+            }}>
+              작성 패턴
+            </h3>
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              color: isDarkMode ? '#8E8E93' : '#666'
+            }}>
+              {getCurrentPeriodText()}
+            </p>
+          </div>
         </div>
-        <h3 style={{ 
-          margin: 0, 
-          fontSize: '18px', 
-          fontWeight: '700',
-          color: isDarkMode ? '#FFFFFF' : '#333'
+        
+        {/* 뷰 타입 선택 버튼 */}
+        <div style={{
+          display: 'flex',
+          background: isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+          borderRadius: '12px',
+          padding: '4px',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
         }}>
-          주간 작성 패턴
-        </h3>
+          {[
+            { key: 'week', label: '주간' },
+            { key: 'month', label: '월간' },
+            { key: 'year', label: '연간' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setViewType(key)}
+              style={{
+                padding: '6px 12px',
+                background: viewType === key 
+                  ? 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)' 
+                  : 'transparent',
+                color: viewType === key 
+                  ? 'white' 
+                  : (isDarkMode ? '#FFFFFF' : '#333'),
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px' }}>
-        {weekDays.map((day, index) => (
-          <div key={day} style={{ textAlign: 'center' }}>
+      {/* 그래프 */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: `repeat(${labels.length}, 1fr)`, 
+        gap: viewType === 'month' ? '4px' : '12px',
+        overflowX: viewType === 'month' ? 'auto' : 'visible'
+      }}>
+        {labels.map((label, index) => (
+          <div key={label} style={{ textAlign: 'center', minWidth: viewType === 'month' ? '20px' : 'auto' }}>
             <div style={{
               width: '100%',
               height: '80px',
               background: isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(248, 250, 252, 0.8)',
-              borderRadius: '12px',
+              borderRadius: viewType === 'month' ? '6px' : '12px',
               marginBottom: '8px',
               position: 'relative',
               overflow: 'hidden',
@@ -74,9 +233,9 @@ const WeeklyPattern = ({ diaries, isDarkMode }) => {
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: `${(weekPattern[index] / maxCount) * 100}%`,
+                height: `${data[index] > 0 ? Math.max((data[index] / maxCount) * 100, 10) : 0}%`,
                 background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
-                borderRadius: '0 0 11px 11px',
+                borderRadius: viewType === 'month' ? '0 0 5px 5px' : '0 0 11px 11px',
                 transition: 'all 0.3s ease'
               }}></div>
               <div style={{
@@ -84,20 +243,26 @@ const WeeklyPattern = ({ diaries, isDarkMode }) => {
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                fontSize: '14px',
+                fontSize: viewType === 'month' ? '10px' : '14px',
                 fontWeight: '600',
-                color: weekPattern[index] > 0 ? 'white' : (isDarkMode ? '#8E8E93' : '#666'),
+                color: data[index] > 0 ? 'white' : (isDarkMode ? '#8E8E93' : '#666'),
                 zIndex: 1
               }}>
-                {weekPattern[index]}
+                {data[index]}
               </div>
             </div>
             <span style={{ 
-              fontSize: '13px', 
+              fontSize: viewType === 'month' ? '8px' : '13px',
               fontWeight: '500',
-              color: index === 0 || index === 6 ? '#17A2B8' : (isDarkMode ? '#8E8E93' : '#666')
+              color: (viewType === 'week' && (index === 0 || index === 6)) 
+                ? '#17A2B8' 
+                : (isDarkMode ? '#8E8E93' : '#666'),
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
-              {day}
+              {viewType === 'month' ? label.replace('일', '') : label}
             </span>
           </div>
         ))}
@@ -115,9 +280,15 @@ function EmotionStats({ user }) {
     emotionStats: [],
     emotionCounts: {},
     monthlyData: [],
-    weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+    weeklyPattern: [0, 0, 0, 0, 0, 0, 0],
+    diaries: []
   })
   const navigate = useNavigate()
+  
+  // AI 분석 리포트 상태
+  const [showAIReport, setShowAIReport] = useState(false)
+  const [aiReport, setAiReport] = useState('')
+  const [isAILoading, setIsAILoading] = useState(false)
 
   // Firebase에서 감정 통계 데이터 로드
   useEffect(() => {
@@ -154,12 +325,14 @@ function EmotionStats({ user }) {
                 emotionStats: emotionResult.stats.emotionStats,
                 emotionCounts: emotionResult.stats.emotionCounts,
                 monthlyData: [],
-                weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+                weeklyPattern: [0, 0, 0, 0, 0, 0, 0],
+                diaries: []
               }
 
               if (diariesResult.success && diariesResult.diaries) {
                 firebaseStatsData.monthlyData = calculateMonthlyData(diariesResult.diaries)
                 firebaseStatsData.weeklyPattern = calculateWeeklyPattern(diariesResult.diaries)
+                firebaseStatsData.diaries = diariesResult.diaries
               }
 
               setStatsData(firebaseStatsData)
@@ -217,7 +390,8 @@ function EmotionStats({ user }) {
           emotionStats: [],
           emotionCounts: {},
           monthlyData: [],
-          weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+          weeklyPattern: [0, 0, 0, 0, 0, 0, 0],
+          diaries: []
         })
       } finally {
         setIsLoading(false)
@@ -238,7 +412,8 @@ function EmotionStats({ user }) {
         emotionStats: [],
         emotionCounts: {},
         monthlyData: [],
-        weeklyPattern: [0, 0, 0, 0, 0, 0, 0]
+        weeklyPattern: [0, 0, 0, 0, 0, 0, 0],
+        diaries: []
       }
     }
 
@@ -280,7 +455,8 @@ function EmotionStats({ user }) {
       emotionStats,
       emotionCounts,
       monthlyData,
-      weeklyPattern
+      weeklyPattern,
+      diaries
     }
   }
 
@@ -288,7 +464,20 @@ function EmotionStats({ user }) {
   const calculateLocalStreak = (diaries) => {
     if (diaries.length === 0) return 0
 
-    const sortedDiaries = diaries.sort((a, b) => new Date(b.date) - new Date(a.date))
+    // 18시-23시59분 사이에 작성된 일기만 필터링
+    const validTimeDiaries = diaries.filter(diary => {
+      if (!diary.createdAt) return false // 작성 시간이 없으면 제외
+      
+      const createdDate = new Date(diary.createdAt)
+      const hour = createdDate.getHours()
+      
+      // 18시-23시59분 사이에 작성된 일기만 포함
+      return hour >= 18 && hour <= 23
+    })
+
+    if (validTimeDiaries.length === 0) return 0
+
+    const sortedDiaries = validTimeDiaries.sort((a, b) => new Date(b.date) - new Date(a.date))
     
     let streakDays = 0
     let currentDate = new Date()
@@ -353,6 +542,80 @@ function EmotionStats({ user }) {
     })
 
     return weekDayCounts
+  }
+
+  // AI 분석 리포트 생성
+  const generateAIReport = async () => {
+    if (statsData.totalDiaries === 0) {
+      setAiReport('아직 분석할 일기가 충분하지 않습니다. 더 많은 일기를 작성해주세요!')
+      return
+    }
+
+    setIsAILoading(true)
+    setShowAIReport(true)
+
+    try {
+      // 분석용 데이터 준비
+      const analysisData = {
+        totalDiaries: statsData.totalDiaries,
+        streakDays: statsData.streakDays,
+        emotionStats: statsData.emotionStats,
+        emotionCounts: statsData.emotionCounts,
+        dominantEmotion: statsData.emotionStats[0]?.emotion || 'PEACEFUL',
+        secondaryEmotion: statsData.emotionStats[1]?.emotion || 'HAPPY',
+        weeklyPattern: statsData.weeklyPattern,
+        recentDiaries: statsData.diaries.slice(-5) // 최근 5개 일기
+      }
+
+      // AI 분석 요청
+      const prompt = `
+다음은 사용자의 일기 작성 패턴과 감정 데이터입니다. 이를 기반으로 사용자의 심리 상태와 감정 패턴을 분석해주세요.
+
+**데이터:**
+- 총 일기 수: ${analysisData.totalDiaries}개
+- 연속 작성일: ${analysisData.streakDays}일
+- 주요 감정: ${emotions[analysisData.dominantEmotion]?.label} (${analysisData.emotionCounts[analysisData.dominantEmotion] || 0}회)
+- 보조 감정: ${emotions[analysisData.secondaryEmotion]?.label} (${analysisData.emotionCounts[analysisData.secondaryEmotion] || 0}회)
+- 주간 작성 패턴: 일(${analysisData.weeklyPattern[0]}), 월(${analysisData.weeklyPattern[1]}), 화(${analysisData.weeklyPattern[2]}), 수(${analysisData.weeklyPattern[3]}), 목(${analysisData.weeklyPattern[4]}), 금(${analysisData.weeklyPattern[5]}), 토(${analysisData.weeklyPattern[6]})
+
+**분석 요청사항:**
+1. 감정 패턴 분석 (주요 감정과 보조 감정의 의미)
+2. 작성 습관 분석 (연속 작성일과 주간 패턴)
+3. 심리 상태 추론
+4. 개선 제안 및 조언
+
+**답변 형식:**
+- 친근하고 따뜻한 톤으로 작성
+- 3-4문단으로 구성
+- 구체적이고 실용적인 조언 포함
+- 격려와 긍정적인 메시지 포함
+`
+
+      const response = await openaiService.generateAIAnalysis(prompt)
+      setAiReport(response)
+
+    } catch (error) {
+      console.error('AI 분석 오류:', error)
+      setAiReport(`
+📊 **현재 감정 상태 분석**
+
+총 ${statsData.totalDiaries}개의 일기를 통해 분석한 결과, 주요 감정은 **${emotions[statsData.emotionStats[0]?.emotion]?.label || '평온'}**이며, ${statsData.streakDays}일 연속으로 꾸준히 기록하고 계시네요!
+
+🔄 **작성 패턴 분석**
+
+주간 작성 패턴을 보면, 특정 요일에 더 활발하게 일기를 작성하는 경향이 있습니다. 이는 일정한 루틴이 형성되어 있음을 의미합니다.
+
+💡 **개선 제안**
+
+감정의 다양성을 늘리고 더 풍부한 표현을 시도해보세요. 매일 다른 관점에서 하루를 돌아보면 새로운 감정을 발견할 수 있을 거예요.
+
+✨ **격려 메시지**
+
+꾸준한 일기 작성 습관이 정말 훌륭합니다! 자신의 감정을 기록하고 돌아보는 것은 심리적 안정과 자기 이해에 큰 도움이 됩니다.
+      `)
+    } finally {
+      setIsAILoading(false)
+    }
   }
 
   // 로딩 중 화면
@@ -718,8 +981,218 @@ function EmotionStats({ user }) {
         </div>
 
         {/* 주간 작성 패턴 */}
-        <WeeklyPattern diaries={statsData.weeklyPattern} isDarkMode={isDarkMode} />
+        <PatternAnalysis diaries={statsData.diaries || []} isDarkMode={isDarkMode} />
+        
+        {/* AI 분석 리포트 */}
+        <div style={{
+          background: isDarkMode ? 'rgba(44, 44, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          borderRadius: '20px',
+          padding: '24px',
+          boxShadow: isDarkMode 
+            ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.1)',
+          border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+          backdropFilter: 'blur(10px)',
+          marginTop: '20px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Brain size={20} color="white" />
+              </div>
+              <div>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '18px', 
+                  fontWeight: '700',
+                  color: isDarkMode ? '#FFFFFF' : '#333'
+                }}>
+                  AI 분석 리포트
+                </h3>
+                <p style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  color: isDarkMode ? '#8E8E93' : '#666'
+                }}>
+                  감정 패턴과 작성 습관을 AI가 분석해드려요
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={generateAIReport}
+              disabled={isAILoading || statsData.totalDiaries === 0}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                background: statsData.totalDiaries === 0 
+                  ? (isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(156, 163, 175, 0.5)')
+                  : (isAILoading 
+                    ? 'rgba(255, 107, 53, 0.7)'
+                    : 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)'),
+                color: statsData.totalDiaries === 0 
+                  ? (isDarkMode ? '#8E8E93' : '#9CA3AF')
+                  : 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: statsData.totalDiaries === 0 ? 'not-allowed' : (isAILoading ? 'wait' : 'pointer'),
+                transition: 'all 0.2s',
+                opacity: statsData.totalDiaries === 0 ? 0.5 : 1
+              }}
+              onMouseOver={(e) => {
+                if (statsData.totalDiaries > 0 && !isAILoading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 107, 53, 0.4)'
+                }
+              }}
+              onMouseOut={(e) => {
+                if (statsData.totalDiaries > 0 && !isAILoading) {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }
+              }}
+            >
+              {isAILoading ? (
+                <>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  <span>분석 중...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  <span>AI 분석 시작</span>
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* AI 분석 결과 */}
+          {showAIReport && (
+            <div style={{
+              background: isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+              borderRadius: '16px',
+              padding: '24px',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+              marginTop: '16px'
+            }}>
+              {isAILoading ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px',
+                  flexDirection: 'column',
+                  gap: '16px'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid rgba(255, 107, 53, 0.3)',
+                    borderTop: '4px solid #FF6B35',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  <div style={{
+                    textAlign: 'center',
+                    color: isDarkMode ? '#CCCCCC' : '#666'
+                  }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
+                      AI가 분석하고 있어요...
+                    </p>
+                    <p style={{ margin: 0, fontSize: '14px' }}>
+                      감정 패턴과 작성 습관을 꼼꼼히 살펴보는 중입니다 🤖
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  color: isDarkMode ? '#FFFFFF' : '#333',
+                  fontSize: '15px',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-line'
+                }}>
+                  {aiReport}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {!showAIReport && !isAILoading && statsData.totalDiaries > 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: isDarkMode ? '#8E8E93' : '#666'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+              <p style={{
+                fontSize: '16px',
+                margin: '0 0 8px 0',
+                color: isDarkMode ? '#CCCCCC' : '#666'
+              }}>
+                AI가 당신의 감정 패턴을 분석해드릴까요?
+              </p>
+              <p style={{
+                fontSize: '14px',
+                margin: 0,
+                color: isDarkMode ? '#8E8E93' : '#999'
+              }}>
+                작성한 일기를 바탕으로 개인화된 분석 리포트를 제공합니다
+              </p>
+            </div>
+          )}
+          
+          {statsData.totalDiaries === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: isDarkMode ? '#8E8E93' : '#666'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+              <p style={{
+                fontSize: '16px',
+                margin: '0 0 8px 0',
+                color: isDarkMode ? '#CCCCCC' : '#666'
+              }}>
+                일기를 작성하면 AI 분석을 받을 수 있어요
+              </p>
+              <p style={{
+                fontSize: '14px',
+                margin: 0,
+                color: isDarkMode ? '#8E8E93' : '#999'
+              }}>
+                감정과 작성 패턴을 분석하여 개인화된 인사이트를 제공합니다
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* 스피너 애니메이션 스타일 */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }

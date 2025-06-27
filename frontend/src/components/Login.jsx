@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MessageCircle, Star, Heart, Sparkles, Shield, Zap, Layers } from 'lucide-react'
+import { Calendar, MessageCircle, Star, Heart, Sparkles, Shield, Zap, Layers, CheckCircle, Loader, XCircle } from 'lucide-react'
 import { signInWithKakaoSDK, handleRedirectResult, checkKakaoSDK } from '../firebase/authService'
 import { ThemeContext } from '../App'
 
@@ -8,6 +8,7 @@ function Login({ onLogin }) {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loginStatus, setLoginStatus] = useState('') // 로그인 상태: success, processing, error
   const { isDarkMode } = useContext(ThemeContext)
 
   useEffect(() => {
@@ -32,6 +33,7 @@ function Login({ onLogin }) {
   const handleKakaoLogin = async () => {
     setIsLoading(true)
     setError('')
+    setLoginStatus('processing')
     
     try {
       // 카카오 SDK 상태 확인
@@ -42,13 +44,18 @@ function Login({ onLogin }) {
       const result = await signInWithKakaoSDK()
       
       if (result.success) {
-        onLogin(result.user)
-        navigate('/')
+        setLoginStatus('success')
+        setTimeout(() => {
+          onLogin(result.user)
+          navigate('/')
+        }, 1500) // 성공 메시지를 잠시 보여준 후 이동
       } else {
+        setLoginStatus('error')
         setError(result.error || '로그인에 실패했습니다')
       }
     } catch (error) {
       console.error('로그인 오류:', error)
+      setLoginStatus('error')
       setError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setIsLoading(false)
@@ -58,8 +65,11 @@ function Login({ onLogin }) {
   // 데모 로그인 (개발/테스트용)
   const handleDemoLogin = () => {
     setIsLoading(true)
+    setError('')
+    setLoginStatus('processing')
     
     setTimeout(() => {
+      setLoginStatus('success')
       const userData = {
         id: 'demo123',
         name: '테스트 사용자',
@@ -69,9 +79,12 @@ function Login({ onLogin }) {
       }
       
       localStorage.setItem('user', JSON.stringify(userData))
-      onLogin(userData)
-      setIsLoading(false)
-      navigate('/')
+      
+      setTimeout(() => {
+        onLogin(userData)
+        setIsLoading(false)
+        navigate('/')
+      }, 1500) // 성공 메시지 후 이동
     }, 1500)
   }
 
@@ -255,25 +268,55 @@ function Login({ onLogin }) {
             </p>
           </div>
 
-          {/* 오류 메시지 */}
-          {error && (
+          {/* 로그인 상태 표시 */}
+          {loginStatus && (
             <div style={{
               marginBottom: '32px',
               padding: '20px 24px',
               borderRadius: '20px',
-              background: isDarkMode 
-                ? 'linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))'
-                : 'linear-gradient(145deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.3))',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              textAlign: 'center'
+              background: 
+                loginStatus === 'success' 
+                  ? (isDarkMode 
+                      ? 'linear-gradient(145deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05))'
+                      : 'linear-gradient(145deg, rgba(220, 252, 231, 0.8), rgba(187, 247, 208, 0.3))')
+                  : loginStatus === 'error'
+                    ? (isDarkMode 
+                        ? 'linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))'
+                        : 'linear-gradient(145deg, rgba(254, 226, 226, 0.8), rgba(252, 165, 165, 0.3))')
+                    : (isDarkMode 
+                        ? 'linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05))'
+                        : 'linear-gradient(145deg, rgba(219, 234, 254, 0.8), rgba(191, 219, 254, 0.3))'),
+              border: `1px solid ${
+                loginStatus === 'success' 
+                  ? 'rgba(34, 197, 94, 0.2)'
+                  : loginStatus === 'error'
+                    ? 'rgba(239, 68, 68, 0.2)'
+                    : 'rgba(59, 130, 246, 0.2)'
+              }`,
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px'
             }}>
+              {loginStatus === 'processing' && <Loader size={20} className="animate-spin" color="#3b82f6" />}
+              {loginStatus === 'success' && <CheckCircle size={20} color="#22c55e" />}
+              {loginStatus === 'error' && <XCircle size={20} color="#ef4444" />}
+              
               <p style={{
                 margin: 0,
                 fontSize: '15px',
-                color: '#ef4444',
+                color: 
+                  loginStatus === 'success' 
+                    ? '#22c55e'
+                    : loginStatus === 'error'
+                      ? '#ef4444'
+                      : '#3b82f6',
                 fontWeight: '500'
               }}>
-                {error}
+                {loginStatus === 'processing' && '로그인 중입니다...'}
+                {loginStatus === 'success' && '로그인 성공! 잠시 후 이동합니다'}
+                {loginStatus === 'error' && (error || '로그인에 실패했습니다')}
               </p>
             </div>
           )}

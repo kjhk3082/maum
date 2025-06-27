@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, ArrowLeft, Sparkles, Image, Loader, Calendar as CalendarIcon, Upload, X, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { Save, ArrowLeft, Sparkles, Image, Loader, Calendar as CalendarIcon, Upload, X, CheckCircle, AlertCircle, Info, Clock, BarChart3 } from 'lucide-react'
 import { useTheme } from '../App'
 import { openaiService } from '../services/openaiService'
 import { imageService } from '../services/imageService'
@@ -56,6 +56,11 @@ const DiaryWrite = ({ user }) => {
   const [highlightedTexts, setHighlightedTexts] = useState([]) // 하이라이트된 텍스트들
   const [selectedTextInfo, setSelectedTextInfo] = useState(null) // 현재 선택된 텍스트 정보
   const [showHighlightModal, setShowHighlightModal] = useState(false) // 하이라이트 모달
+  const [highlightImages, setHighlightImages] = useState([]) // 하이라이트용 업로드된 이미지들
+  
+  // 시간 제한 관련 상태
+  const [showTimeModal, setShowTimeModal] = useState(false) // 시간 제한 모달
+  const [timeLeft, setTimeLeft] = useState('') // 남은 시간
   
   // 화면 내 알림 시스템 상태
   const [notification, setNotification] = useState({
@@ -68,6 +73,25 @@ const DiaryWrite = ({ user }) => {
   
   // 일기 작성 가능 시간은 useEffect에서 후에 체크
   const [isTimeToWrite, setIsTimeToWrite] = useState(true) // 데모 모드로 항상 true
+  
+  // 모바일 반응형을 위한 화면 크기 상태
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // 어드민 모달 상태
+  const [showAdminModal, setShowAdminModal] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
+
+  // 화면 크기 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // 화면 내 알림 표시 함수
   const showNotification = (type, title, message = '', details = '', duration = 5000) => {
@@ -137,36 +161,44 @@ const DiaryWrite = ({ user }) => {
   // 시간 제한 확인 함수는 useEffect에서 직접 구현하여 사용
 
   useEffect(() => {
-    // 백엔드 연결 시 사용할 시간 체크 API (현재 주석 처리)
-    /*
-    const checkWritableTime = async () => {
-      try {
-        const isWritable = await diaryAPI.checkWritableTime(date)
-        if (!isWritable && !isEditing) {
-          showNotification('warning', '시간 제한', '일기 작성이 허용되지 않은 시간입니다.')
-          navigate('/')
+    // 시간 제한 확인
+    const timeCheck = checkWritableTime()
+    
+    // 과거 날짜는 바로 작성 가능
+    if (timeCheck.isPastDate) {
+      console.log('📅 과거 날짜 일기 - 바로 작성 가능')
+      setIsTimeToWrite(true)
+      setShowTimeModal(false)
+      return
+    }
+    
+    if (!timeCheck.canWrite && !isEditing) {
+      console.log('⏰ 일기 작성 시간이 아님, 모달 표시')
+      setShowTimeModal(true)
+      setIsTimeToWrite(false)
+      
+      // 카운트다운 시작
+      updateCountdown(timeCheck.targetTime)
+      const countdownInterval = setInterval(() => {
+        updateCountdown(timeCheck.targetTime)
+        
+        // 시간이 되면 모달 닫고 작성 가능하게 설정
+        const newTimeCheck = checkWritableTime()
+        if (newTimeCheck.canWrite) {
+          setShowTimeModal(false)
+          setIsTimeToWrite(true)
+          clearInterval(countdownInterval)
         }
-      } catch (error) {
-        console.error('시간 체크 오류:', error)
-        showNotification('error', '서버 오류', '서버 연결에 문제가 있습니다.')
-        navigate('/')
-      }
+      }, 1000)
+      
+      // 컴포넌트 언마운트 시 인터벌 정리
+      return () => clearInterval(countdownInterval)
+    } else {
+      console.log('✅ 일기 작성 가능한 시간')
+      setIsTimeToWrite(true)
+      setShowTimeModal(false)
     }
-    checkWritableTime()
-    */
-    
-    // 데모모드에서는 시간 제한 없이 항상 작성 가능
-    setIsTimeToWrite(true)
-    
-    // 미래 날짜만 방지
-    const today = new Date()
-    const diaryDate = new Date(date)
-    
-    if (diaryDate > today && !isEditing) {
-      showNotification('warning', '날짜 오류', '미래 날짜의 일기는 작성할 수 없습니다.')
-      setTimeout(() => navigate('/'), 2000)
-    }
-  }, [date, isEditing, navigate])
+  }, [date, isEditing])
 
   // 텍스트 선택 감지 함수 (개선된 버전)
   const handleTextSelection = () => {
@@ -244,12 +276,40 @@ const DiaryWrite = ({ user }) => {
 
   // 하이라이트 모달 열기
   const handleOpenHighlightModal = () => {
-    if (!selectedTextInfo) {
-      showNotification('info', '텍스트 선택 필요', 
-        '먼저 이미지를 연결할 텍스트를 드래그해서 선택해주세요.')
+    // 현재 선택된 텍스트 확인
+    const selection = window.getSelection()
+    const selectedText = selection.toString().trim()
+    
+    console.log('🎯 하이라이트 모달 열기 시도:', { selectedText, selectedTextInfo })
+    
+    // 선택된 텍스트가 있으면 selectedTextInfo 업데이트
+    if (selectedText && selectedText.length > 0) {
+      const range = selection.getRangeAt(0)
+      const textInfo = {
+        text: selectedText,
+        startOffset: range.startOffset,
+        endOffset: range.endOffset,
+        id: Date.now()
+      }
+      setSelectedTextInfo(textInfo)
+      setHighlightImages([]) // 이미지 목록 초기화
+      setShowHighlightModal(true)
+      console.log('✅ 새로 선택된 텍스트로 모달 열기:', textInfo)
       return
     }
-    setShowHighlightModal(true)
+    
+    // 기존에 선택된 텍스트 정보가 있으면 사용
+    if (selectedTextInfo && selectedTextInfo.text) {
+      setHighlightImages([]) // 이미지 목록 초기화
+      setShowHighlightModal(true)
+      console.log('✅ 기존 선택된 텍스트로 모달 열기:', selectedTextInfo)
+      return
+    }
+    
+    // 아무것도 선택되지 않았을 때
+    showNotification('info', '텍스트 선택 필요', 
+      '먼저 이미지를 연결할 텍스트를 드래그해서 선택해주세요.', 
+      '예: "마음속에서" 처럼 텍스트를 드래그하면 됩니다.')
   }
 
   // 하이라이트에 연결할 이미지 업로드
@@ -263,10 +323,9 @@ const DiaryWrite = ({ user }) => {
 
     setImageUploading(true)
     const newImages = []
-    const currentTextInfo = selectedTextInfo // 상태 변경 전에 미리 저장
 
     try {
-      console.log('🔄 하이라이트 이미지 업로드 시작:', currentTextInfo.text)
+      console.log('🔄 하이라이트 이미지 업로드 시작:', selectedTextInfo.text)
       
       for (const file of Array.from(files)) {
         const { success, data, error } = await uploadCompressedImage(file, 'diary-images', 1200, 0.8)
@@ -288,16 +347,11 @@ const DiaryWrite = ({ user }) => {
       }
       
       if (newImages.length > 0) {
-        console.log('🎯 하이라이트에 이미지 추가 시도:', { textInfo: currentTextInfo, images: newImages })
-        addImageToHighlight(newImages, currentTextInfo)
-        
-        // 상태 초기화
-        setSelectedTextInfo(null)
-        setSelectedText('')
-        setShowHighlightModal(false)
-        
-        // 텍스트 선택 해제
-        window.getSelection().removeAllRanges()
+        // 임시로 저장 (바로 연결하지 않음)
+        setHighlightImages(prev => [...prev, ...newImages])
+        console.log('📷 하이라이트 이미지 임시 저장:', newImages.length, '개')
+        showNotification('success', '이미지 업로드 완료!', 
+          `${newImages.length}개의 이미지가 업로드되었습니다. "연결하기!" 버튼을 눌러주세요.`)
       }
       
     } catch (error) {
@@ -306,6 +360,32 @@ const DiaryWrite = ({ user }) => {
     } finally {
       setImageUploading(false)
     }
+  }
+
+  // 하이라이트 이미지 제거
+  const handleRemoveHighlightImage = (index) => {
+    const newImages = highlightImages.filter((_, i) => i !== index)
+    setHighlightImages(newImages)
+  }
+
+  // 하이라이트 연결하기
+  const handleConnectHighlight = () => {
+    if (!selectedTextInfo || highlightImages.length === 0) {
+      showNotification('error', '연결 실패', '텍스트와 이미지를 모두 선택해주세요.')
+      return
+    }
+
+    // 하이라이트 생성
+    addImageToHighlight(highlightImages, selectedTextInfo)
+    
+    // 모달 닫기 및 상태 초기화
+    setShowHighlightModal(false)
+    setSelectedTextInfo(null)
+    setSelectedText('')
+    setHighlightImages([])
+    
+    // 텍스트 선택 해제
+    window.getSelection().removeAllRanges()
   }
 
   // 텍스트에서 하이라이트 적용하여 렌더링
@@ -567,6 +647,12 @@ const DiaryWrite = ({ user }) => {
       return
     }
 
+    // 어드민 체크
+    if (title.trim().toLowerCase() === 'admin' && content.trim().toLowerCase() === 'admin') {
+      setShowAdminModal(true)
+      return
+    }
+
     setIsSaving(true)
     setSaveStatus('저장 중...')
     
@@ -654,6 +740,59 @@ const DiaryWrite = ({ user }) => {
 
   const formatDate = (date) => {
     return date.toISOString().split('T')[0]
+  }
+
+  // 일기 작성 시간 확인 함수
+  const checkWritableTime = () => {
+    const now = new Date()
+    const hour = now.getHours()
+    const minute = now.getMinutes()
+    const diaryDate = new Date(date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    diaryDate.setHours(0, 0, 0, 0)
+    
+    // 과거 날짜는 언제든 작성 가능 (연속 작성일에는 포함 안됨)
+    if (diaryDate < today) {
+      return { canWrite: true, targetTime: null, isPastDate: true }
+    }
+    
+    // 당일 일기: 18시(18:00) ~ 23시 59분(23:59)까지 작성 가능 (연속 작성일에 포함)
+    const isWritableTime = hour >= 18 && hour <= 23
+    
+    if (!isWritableTime) {
+      // 18시까지 남은 시간 계산
+      const tomorrow = new Date(now)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(18, 0, 0, 0)
+      
+      const nextWriteTime = new Date(now)
+      nextWriteTime.setHours(18, 0, 0, 0)
+      
+      // 현재 시간이 18시 이전이면 오늘 18시, 18시 이후면 내일 18시
+      const targetTime = hour < 18 ? nextWriteTime : tomorrow
+      
+      return { canWrite: false, targetTime, isPastDate: false }
+    }
+    
+    return { canWrite: true, targetTime: null, isPastDate: false }
+  }
+
+  // 카운트다운 업데이트 함수
+  const updateCountdown = (targetTime) => {
+    const now = new Date()
+    const diff = targetTime - now
+    
+    if (diff <= 0) {
+      setTimeLeft('곧 작성 가능합니다!')
+      return
+    }
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+    
+    setTimeLeft(`${hours}시간 ${minutes}분 ${seconds}초`)
   }
 
   return (
@@ -823,6 +962,7 @@ const DiaryWrite = ({ user }) => {
                 placeholder="오늘의 일기 제목을 입력해주세요"
                 style={{
                   width: '100%',
+                  boxSizing: 'border-box',
                   padding: '16px 20px',
                   fontSize: '17px',
                   border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)'}`,
@@ -1006,6 +1146,7 @@ const DiaryWrite = ({ user }) => {
                 placeholder="오늘 하루에 있었던 일들을 적어보세요. 특정 텍스트를 드래그한 후 '이미지 연결' 버튼을 누르면 해당 텍스트에 이미지를 연결할 수 있어요."
                 style={{
                   width: '100%',
+                  boxSizing: 'border-box',
                   height: '280px',
                   padding: '16px 20px',
                   fontSize: '16px',
@@ -1314,7 +1455,7 @@ const DiaryWrite = ({ user }) => {
                   </>
                 ) : (
                   <>
-                    <Sparkles style={{ width: '20px', height: '20px' }} />
+                                         <Sparkles style={{ width: '20px', height: '20px' }} />
                     <span>AI 문장 만들기</span>
                   </>
                 )}
@@ -1847,8 +1988,82 @@ const DiaryWrite = ({ user }) => {
                   fontSize: '14px',
                   color: isDarkMode ? '#CCCCCC' : '#666'
                 }}>
-                  이미지를 업로드하고 하이라이트를 생성하는 중...
+                  이미지를 업로드하는 중...
                 </p>
+              </div>
+            )}
+
+            {/* 업로드된 이미지 미리보기 */}
+            {highlightImages.length > 0 && (
+              <div style={{
+                background: isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+                borderRadius: '16px',
+                padding: '20px',
+                marginBottom: '20px',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+              }}>
+                <h4 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: isDarkMode ? '#FFFFFF' : '#333'
+                }}>
+                  📷 업로드된 이미지 ({highlightImages.length}개)
+                </h4>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: '12px'
+                }}>
+                  {highlightImages.map((image, index) => (
+                    <div key={image.id} style={{
+                      position: 'relative',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '2px solid rgba(255, 215, 0, 0.3)',
+                      background: isDarkMode ? 'rgba(44, 44, 46, 0.8)' : 'rgba(255, 255, 255, 0.8)'
+                    }}>
+                      <img 
+                        src={image.url}
+                        alt={`하이라이트 이미지 ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100px',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleRemoveHighlightImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          width: '24px',
+                          height: '24px',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 0, 0, 0.8)'
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -1885,6 +2100,7 @@ const DiaryWrite = ({ user }) => {
                   setShowHighlightModal(false)
                   setSelectedTextInfo(null)
                   setSelectedText('')
+                  setHighlightImages([])
                   // 텍스트 선택 해제
                   window.getSelection().removeAllRanges()
                 }}
@@ -1909,16 +2125,190 @@ const DiaryWrite = ({ user }) => {
               </button>
               
               <button
+                onClick={handleConnectHighlight}
+                disabled={highlightImages.length === 0}
+                style={{
+                  padding: '12px 24px',
+                  background: highlightImages.length > 0 
+                    ? 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)'
+                    : (isDarkMode ? 'rgba(58, 58, 60, 0.5)' : 'rgba(156, 163, 175, 0.3)'),
+                  color: highlightImages.length > 0 ? 'white' : (isDarkMode ? '#8E8E93' : '#9CA3AF'),
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: highlightImages.length > 0 ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  transition: 'all 0.2s',
+                  opacity: highlightImages.length > 0 ? 1 : 0.6
+                }}
+                onMouseOver={(e) => {
+                  if (highlightImages.length > 0) {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 149, 0, 0.3)'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (highlightImages.length > 0) {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }
+                }}
+              >
+                {highlightImages.length > 0 ? `🎯 연결하기! (${highlightImages.length}개)` : '이미지를 먼저 업로드하세요'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 시간 제한 카운트다운 모달 */}
+      {showTimeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1200,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: isDarkMode 
+              ? '0 20px 40px rgba(0, 0, 0, 0.5)' 
+              : '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+          }}>
+            {/* 시계 아이콘 */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 24px auto',
+              boxShadow: '0 8px 24px rgba(255, 107, 107, 0.3)'
+            }}>
+              <Clock size={40} color="white" />
+            </div>
+
+            <h2 style={{
+              margin: '0 0 16px 0',
+              fontSize: '28px',
+              fontWeight: '700',
+              color: isDarkMode ? '#FFFFFF' : '#1D1D1F',
+              lineHeight: '1.2'
+            }}>
+              잠시만요! ⏰
+            </h2>
+
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '18px',
+              color: isDarkMode ? '#E5E5E7' : '#424245',
+              lineHeight: '1.5'
+            }}>
+              마음일기는 <strong style={{ color: '#FF6B6B' }}>18시부터 23시 59분</strong>까지<br />
+              당일 일기를 작성할 수 있습니다.
+            </p>
+
+            <div style={{
+              background: isDarkMode ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 107, 107, 0.1)',
+              border: '2px solid rgba(255, 107, 107, 0.3)',
+              borderRadius: '16px',
+              padding: '20px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#FF6B6B',
+                marginBottom: '12px'
+              }}>
+                다음 작성 가능 시간까지
+              </div>
+              
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '700',
+                color: '#FF6B6B',
+                fontFamily: 'monospace',
+                letterSpacing: '2px'
+              }}>
+                {timeLeft}
+              </div>
+            </div>
+
+            <div style={{
+              padding: '16px',
+              background: isDarkMode ? 'rgba(58, 58, 60, 0.3)' : 'rgba(248, 250, 252, 0.8)',
+              borderRadius: '12px',
+              marginBottom: '24px'
+            }}>
+              <h4 style={{
+                margin: '0 0 8px 0',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: isDarkMode ? '#FFFFFF' : '#333'
+              }}>
+                💡 안내
+              </h4>
+              <p style={{
+                margin: '0',
+                fontSize: '13px',
+                color: isDarkMode ? '#CCCCCC' : '#666',
+                lineHeight: '1.4'
+              }}>
+                하루를 마무리하며 감정을 차분히 정리할 수 있는 시간에<br />
+                일기를 작성해보세요. 조금만 기다려주시면 됩니다! 😊
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
                 onClick={() => {
-                  setShowHighlightModal(false)
-                  setSelectedTextInfo(null)
-                  setSelectedText('')
-                  // 텍스트 선택 해제
-                  window.getSelection().removeAllRanges()
+                  setShowTimeModal(false)
+                  navigate('/')
                 }}
                 style={{
                   padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)',
+                  color: isDarkMode ? '#FFFFFF' : '#374151',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(72, 72, 74, 0.9)' : 'rgba(156, 163, 175, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)'
+                }}
+              >
+                홈으로 돌아가기
+              </button>
+              
+              <button
+                onClick={() => setShowTimeModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
@@ -1928,14 +2318,178 @@ const DiaryWrite = ({ user }) => {
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 149, 0, 0.3)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 107, 107, 0.4)'
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                나중에 연결하기
+                알겠습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 어드민 모달 */}
+      {showAdminModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            padding: '40px',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: isDarkMode 
+              ? '0 20px 40px rgba(0, 0, 0, 0.5)' 
+              : '0 20px 40px rgba(0, 0, 0, 0.2)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+          }}>
+            {/* 어드민 아이콘 */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 24px auto',
+              boxShadow: '0 8px 24px rgba(255, 107, 107, 0.3)'
+            }}>
+              <BarChart3 size={40} color="white" />
+            </div>
+
+            <h2 style={{
+              margin: '0 0 16px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+            }}>
+              관리자 인증
+            </h2>
+
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '16px',
+              color: isDarkMode ? '#8E8E93' : '#666'
+            }}>
+              관리자 대시보드에 접근하려면<br />
+              비밀번호를 입력해주세요
+            </p>
+
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="비밀번호 입력"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '16px 20px',
+                fontSize: '16px',
+                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)'}`,
+                borderRadius: '12px',
+                background: isDarkMode ? 'rgba(58, 58, 60, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.3s',
+                outline: 'none',
+                color: isDarkMode ? '#FFFFFF' : '#333',
+                marginBottom: '24px'
+              }}
+              onFocus={(e) => {
+                e.target.style.boxShadow = '0 0 0 4px rgba(255, 107, 107, 0.2)';
+                e.target.style.borderColor = '#FF6B6B';
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+                e.target.style.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)';
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  if (adminPassword === 'dream4551') {
+                    navigate('/admin')
+                  } else {
+                    showNotification('error', '접근 거부', '잘못된 비밀번호입니다.')
+                    setAdminPassword('')
+                  }
+                }
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  setShowAdminModal(false)
+                  setAdminPassword('')
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)',
+                  color: isDarkMode ? '#FFFFFF' : '#374151',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(72, 72, 74, 0.9)' : 'rgba(156, 163, 175, 0.3)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(156, 163, 175, 0.2)'
+                }}
+              >
+                취소
+              </button>
+              
+              <button
+                onClick={() => {
+                  if (adminPassword === 'dream4551') {
+                    navigate('/admin')
+                  } else {
+                    showNotification('error', '접근 거부', '잘못된 비밀번호입니다.')
+                    setAdminPassword('')
+                  }
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(255, 107, 107, 0.4)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                확인
               </button>
             </div>
           </div>

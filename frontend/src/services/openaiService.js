@@ -295,7 +295,7 @@ export const openaiService = {
     const emotionPatterns = {
       'HAPPY': {
         actions: ['했더니 기분이 환해졌다', '하니까 마음이 따뜻해졌다', '하고 나서 입가에 미소가 떠올랐다', '했는데 정말 신났다'],
-        descriptive: ['기분 좋은', '환한', '따뜻한', '설레는', '즐거운'],
+        descriptive: ['기분 좋은', '환한', '따뜻한', '설렘한', '즐거운'],
         endings: ['덕분에 하루가 밝았다', '로 인해 기분이 좋아졌다', '에서 행복을 느꼈다', '으로 마음이 포근해졌다']
       },
       'SAD': {
@@ -456,5 +456,168 @@ export const openaiService = {
     }
     
     return timeMap[timeStr] || timeStr
-  }
+  },
+
+  // 키워드를 자연스러운 일기 문장으로 확장
+  expandTextToDiary: async (text, emotion) => {
+    if (!text.trim()) {
+      return '내용을 입력해주세요.'
+    }
+
+    // 데모 모드: API 키가 없거나 설정되지 않은 경우
+    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your-api-key-here') {
+      console.log('🤖 OpenAI API 키가 설정되지 않음, 데모 모드로 실행')
+      return openaiService.getDemoExpansion(text, emotion)
+    }
+
+    try {
+      console.log('🤖 OpenAI API 호출:', { text, emotion })
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `당신은 일기 작성을 도와주는 따뜻하고 친근한 AI 어시스턴트입니다. 사용자가 입력한 키워드나 간단한 메모를 자연스럽고 감정이 담긴 일기 문장으로 확장해주세요.
+
+규칙:
+1. 한국어로 자연스럽게 작성
+2. 감정에 맞는 톤과 어조 사용
+3. 구체적이고 감각적인 표현 사용
+4. "기분 좋았다", "힘들었다" 같은 뻔한 표현 지양
+5. 키워드가 불완전한 문장이면 완전한 문장으로, 이미 완전한 문장이면 더 풍부하게 확장
+6. 1-3문장으로 간결하게 작성
+7. 시간, 장소, 활동 키워드는 자연스럽게 연결
+
+감정별 톤:
+- 기쁨: 밝고 활기찬 톤
+- 슬픔: 차분하고 성찰적인 톤  
+- 화남: 강하지만 절제된 표현
+- 평온: 따뜻하고 차분한 톤
+- 불안: 솔직하지만 희망적인 톤`
+            },
+            {
+              role: 'user',
+              content: `감정: ${emotion}
+입력: ${text}
+
+위 내용을 자연스러운 일기 문장으로 확장해주세요.`
+            }
+          ],
+          max_tokens: 200,
+          temperature: 0.8
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API 요청 실패: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const expandedText = data.choices[0]?.message?.content?.trim()
+
+      if (!expandedText) {
+        throw new Error('AI 응답이 비어있습니다')
+      }
+
+      console.log('✅ OpenAI API 응답 성공:', expandedText)
+      return expandedText
+
+    } catch (error) {
+      console.error('❌ OpenAI API 오류:', error)
+      
+      // API 오류시 데모 모드로 폴백
+      return openaiService.getDemoExpansion(text, emotion)
+    }
+  },
+
+  // AI 분석 리포트 생성
+  generateAIAnalysis: async (prompt) => {
+    // 데모 모드: API 키가 없거나 설정되지 않은 경우
+    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your-api-key-here') {
+      console.log('🤖 OpenAI API 키가 설정되지 않음, 데모 분석 반환')
+      return `
+📊 **감정 패턴 분석**
+
+최근 일기 작성 패턴을 분석한 결과, 감정 표현이 다양하고 자신의 마음을 잘 들여다보고 계시는 것 같아요. 특히 꾸준한 작성 습관이 인상적입니다!
+
+🔄 **작성 습관 분석**
+
+규칙적인 일기 작성은 자기 성찰과 감정 조절에 매우 도움이 됩니다. 현재의 패턴을 보면 안정적인 루틴이 형성되어 있어 앞으로도 지속할 수 있을 것 같아요.
+
+💡 **개선 제안**
+
+더 다양한 감정 표현을 시도해보세요. 미묘한 감정의 변화까지 포착한다면 더욱 풍부한 자기 이해가 가능할 거예요.
+
+✨ **따뜻한 격려**
+
+일기를 통해 자신과 마주하는 용기가 정말 대단합니다. 이런 습관이 더 나은 내일을 만들어갈 거예요! 🌟
+      `
+    }
+
+    try {
+      console.log('🤖 AI 분석 요청 시작')
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `당신은 심리학과 감정 분석에 전문적인 지식을 가진 친근한 AI 상담사입니다. 사용자의 일기 작성 패턴과 감정 데이터를 분석하여 통찰력 있는 조언을 제공해주세요.
+
+분석 원칙:
+1. 데이터 기반의 객관적 분석
+2. 따뜻하고 격려적인 톤
+3. 구체적이고 실용적인 조언
+4. 긍정적인 관점 유지
+5. 개인의 성장과 발전에 초점
+
+답변 구조:
+- 감정 패턴에 대한 분석
+- 작성 습관과 루틴 평가  
+- 심리적 상태 해석
+- 개선 방향 제시
+- 격려와 응원 메시지`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API 요청 실패: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const analysis = data.choices[0]?.message?.content?.trim()
+
+      if (!analysis) {
+        throw new Error('AI 분석 응답이 비어있습니다')
+      }
+
+      console.log('✅ AI 분석 성공')
+      return analysis
+
+    } catch (error) {
+      console.error('❌ AI 분석 오류:', error)
+      throw error
+    }
+  },
 } 

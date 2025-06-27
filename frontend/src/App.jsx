@@ -8,6 +8,7 @@ import StatsPage from './components/StatsPage'
 import FAQ from './components/FAQ'
 import Login from './components/Login'
 import KakaoCallback from './components/KakaoCallback'
+import AdminDashboard from './components/AdminDashboard'
 import { onAuthStateChange, getCurrentUser } from './firebase/authService'
 import './App.css'
 
@@ -146,7 +147,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
+            <Route path="/kakao-callback" element={<KakaoCallback onLogin={handleLogin} />} />
             <Route path="/" element={
               isLoggedIn ? (
                 <CalendarModern onLogout={handleLogout} user={user} />
@@ -166,6 +167,7 @@ function App() {
             <Route path="/stats" element={
               isLoggedIn ? <StatsPage user={user} /> : <Login onLogin={handleLogin} />
             } />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/faq" element={<FAQ />} />
           </Routes>
         </Router>

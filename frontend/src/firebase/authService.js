@@ -13,7 +13,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './config'
 
 /**
- * 카카오 SDK 로그인 (올바른 2.7.4 인증 플로우)
+ * 카카오 SDK 로그인 (모바일 최적화 - 팝업 우선)
  */
 export const signInWithKakaoSDK = async () => {
   try {
@@ -26,20 +26,26 @@ export const signInWithKakaoSDK = async () => {
     }
 
     console.log('카카오 로그인 시도 중...')
-    console.log('사용 가능한 Auth 메서드:', Object.keys(window.Kakao.Auth || {}))
+    
+    // 모바일 환경 감지
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    console.log('모바일 환경:', isMobile)
 
+    if (isMobile) {
+      // 모바일에서는 팝업 방식 우선 사용
+      return await signInWithKakaoPopup()
+    }
+
+    // 데스크톱에서는 기존 방식 시도
     try {
-      // 1단계: 카카오 인증 (SDK 2.7.4 방식)
-      console.log('카카오 인증 시작...')
+      console.log('데스크톱 환경 - 표준 로그인 시도...')
       
       const authResponse = await window.Kakao.Auth.authorize({
-        redirectUri: window.location.origin
+        redirectUri: window.location.origin + '/kakao-callback',
+        scope: 'profile_nickname,profile_image,account_email'
       })
       
       console.log('카카오 인증 성공:', authResponse)
-      
-      // 2단계: 인증 후 사용자 정보 요청
-      console.log('인증 완료, 사용자 정보 요청...')
       
       const userResponse = await window.Kakao.API.request({
         url: '/v2/user/me'
@@ -58,7 +64,6 @@ export const signInWithKakaoSDK = async () => {
         accessToken: authResponse.access_token || 'authorized'
       }
 
-      // Firebase에 사용자 정보 저장
       await saveUserToFirestore(userInfo)
       
       return {
@@ -67,47 +72,8 @@ export const signInWithKakaoSDK = async () => {
       }
 
     } catch (authError) {
-      console.error('카카오 인증 실패:', authError)
-      
-      // 폴백 1: 간단한 authorize 방식
-      try {
-        console.log('간단 인증 방식 시도...')
-        
-        // 파라미터 없이 authorize 시도
-        await window.Kakao.Auth.authorize()
-        console.log('간단 인증 성공')
-        
-        // 사용자 정보 요청
-        const userResponse = await window.Kakao.API.request({
-          url: '/v2/user/me'
-        })
-        
-        console.log('간단 인증 후 사용자 정보:', userResponse)
-
-        const userInfo = {
-          id: userResponse.id.toString(),
-          uid: userResponse.id.toString(),
-          name: userResponse.properties?.nickname || '카카오 사용자',
-          email: userResponse.kakao_account?.email || '',
-          profileImage: userResponse.properties?.profile_image || '',
-          loginType: 'kakao',
-          loginAt: new Date().toISOString(),
-          accessToken: 'simple_auth'
-        }
-
-        await saveUserToFirestore(userInfo)
-        
-        return {
-          success: true,
-          user: userInfo
-        }
-        
-      } catch (simpleError) {
-        console.error('간단 인증도 실패:', simpleError)
-        
-        // 폴백 2: 팝업 방식 로그인
-        return await signInWithKakaoPopup()
-      }
+      console.error('표준 인증 실패, 팝업 방식으로 전환:', authError)
+      return await signInWithKakaoPopup()
     }
 
   } catch (error) {
@@ -120,82 +86,104 @@ export const signInWithKakaoSDK = async () => {
 }
 
 /**
- * 카카오 팝업 로그인 (폴백 방식)
+ * 카카오 팝업 로그인 (모바일 최적화)
  */
 export const signInWithKakaoPopup = async () => {
   try {
     console.log('팝업 로그인 방식 시도...')
     
-    // 카카오 로그인 페이지로 리다이렉트
     const currentUrl = window.location.origin
-    const loginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=240138285eefbcd9ab66f4a85efbfbb5&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=code`
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
-    console.log('카카오 로그인 URL:', loginUrl)
+    // 카카오 로그인 URL 생성
+    const loginUrl = new URL('https://kauth.kakao.com/oauth/authorize')
+    loginUrl.searchParams.append('client_id', '240138285eefbcd9ab66f4a85efbfbb5')
+    loginUrl.searchParams.append('redirect_uri', currentUrl + '/kakao-callback')
+    loginUrl.searchParams.append('response_type', 'code')
+    loginUrl.searchParams.append('scope', 'profile_nickname,profile_image,account_email')
     
-    // 새 창으로 로그인
-    const popup = window.open(loginUrl, 'kakao_login', 'width=500,height=600')
+    console.log('카카오 로그인 URL:', loginUrl.toString())
     
-    return new Promise((resolve) => {
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed)
-          console.log('팝업 창이 닫혔습니다. 로그인 상태 확인 중...')
-          
-          // 팝업이 닫혔을 때 인증 상태 확인
-          setTimeout(async () => {
-            try {
-              // 인증 상태 확인
-              const authStatus = window.Kakao.Auth.getStatusInfo()
-              console.log('팝업 후 인증 상태:', authStatus)
-              
-              if (authStatus.status === 'connected') {
-                // 인증 성공 - 사용자 정보 요청
-                const userResponse = await window.Kakao.API.request({
-                  url: '/v2/user/me'
-                })
+    if (isMobile) {
+      // 모바일에서는 현재 창에서 리디렉션
+      console.log('모바일 환경 - 현재 창에서 로그인')
+      
+      // 현재 URL을 세션에 저장
+      sessionStorage.setItem('login_return_url', window.location.href)
+      
+      // 현재 창에서 카카오 로그인으로 이동
+      window.location.href = loginUrl.toString()
+      
+      return new Promise(() => {}) // pending 상태로 유지
+    } else {
+      // 데스크톱에서는 팝업 창 사용
+      console.log('데스크톱 환경 - 팝업 창 로그인')
+      
+      const popup = window.open(
+        loginUrl.toString(), 
+        'kakao_login', 
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      )
+      
+      return new Promise((resolve) => {
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed)
+            console.log('팝업 창이 닫혔습니다.')
+            
+            // 팝업이 닫혔을 때 로그인 상태 확인
+            setTimeout(async () => {
+              try {
+                const authStatus = window.Kakao.Auth.getStatusInfo()
+                console.log('팝업 후 인증 상태:', authStatus)
                 
-                console.log('팝업 로그인 성공, 사용자 정보:', userResponse)
-                
-                const userInfo = {
-                  id: userResponse.id.toString(),
-                  uid: userResponse.id.toString(),
-                  name: userResponse.properties?.nickname || '카카오 사용자',
-                  email: userResponse.kakao_account?.email || '',
-                  profileImage: userResponse.properties?.profile_image || '',
-                  loginType: 'kakao',
-                  loginAt: new Date().toISOString(),
-                  accessToken: 'popup_login'
-                }
+                if (authStatus.status === 'connected') {
+                  const userResponse = await window.Kakao.API.request({
+                    url: '/v2/user/me'
+                  })
+                  
+                  console.log('팝업 로그인 성공, 사용자 정보:', userResponse)
+                  
+                  const userInfo = {
+                    id: userResponse.id.toString(),
+                    uid: userResponse.id.toString(),
+                    name: userResponse.properties?.nickname || '카카오 사용자',
+                    email: userResponse.kakao_account?.email || '',
+                    profileImage: userResponse.properties?.profile_image || '',
+                    loginType: 'kakao',
+                    loginAt: new Date().toISOString(),
+                    accessToken: 'popup_login'
+                  }
 
-                await saveUserToFirestore(userInfo)
-                
-                resolve({
-                  success: true,
-                  user: userInfo
-                })
-              } else {
-                // 인증 실패 - 데모 모드로 폴백
-                console.log('팝업 로그인 실패, 데모 모드로 전환')
+                  await saveUserToFirestore(userInfo)
+                  
+                  resolve({
+                    success: true,
+                    user: userInfo
+                  })
+                } else {
+                  console.log('팝업 로그인 실패, 데모 모드로 전환')
+                  resolve(await createDemoUser())
+                }
+              } catch (error) {
+                console.error('팝업 후 사용자 정보 조회 실패:', error)
                 resolve(await createDemoUser())
               }
-            } catch (error) {
-              console.error('팝업 후 사용자 정보 조회 실패:', error)
-              resolve(await createDemoUser())
-            }
-          }, 2000) // 2초 대기 후 확인
-        }
-      }, 1000)
-      
-      // 30초 후 자동 타임아웃
-      setTimeout(() => {
-        if (!popup.closed) {
-          popup.close()
-        }
-        clearInterval(checkClosed)
-        console.log('팝업 로그인 타임아웃, 데모 모드로 전환')
-        resolve(createDemoUser())
-      }, 30000)
-    })
+            }, 1000)
+          }
+        }, 1000)
+        
+        // 30초 후 자동 타임아웃
+        setTimeout(() => {
+          if (!popup.closed) {
+            popup.close()
+          }
+          clearInterval(checkClosed)
+          console.log('팝업 로그인 타임아웃, 데모 모드로 전환')
+          resolve(createDemoUser())
+        }, 30000)
+      })
+    }
     
   } catch (error) {
     console.error('팝업 로그인 오류:', error)
@@ -239,12 +227,33 @@ export const signInWithKakaoCallback = async () => {
 }
 
 /**
- * 리다이렉트 결과 처리
+ * 리다이렉트 결과 처리 (모바일 최적화)
  */
 export const handleRedirectResult = async () => {
   // URL에서 카카오 인증 코드 확인
   const urlParams = new URLSearchParams(window.location.search)
   const code = urlParams.get('code')
+  const error = urlParams.get('error')
+  
+  // 카카오 콜백 URL인지 확인
+  const isKakaoCallback = window.location.pathname === '/kakao-callback' || code || error
+  
+  if (error) {
+    console.error('카카오 로그인 오류:', error)
+    
+    // 원래 페이지로 이동 (모바일 고려)
+    const returnUrl = sessionStorage.getItem('login_return_url') || '/'
+    sessionStorage.removeItem('login_return_url')
+    
+    if (window.location.pathname === '/kakao-callback') {
+      window.location.href = returnUrl
+    }
+    
+    return { 
+      success: false,
+      error: '카카오 로그인이 취소되었습니다.'
+    }
+  }
   
   if (code) {
     console.log('카카오 인증 코드 발견:', code)
@@ -261,7 +270,7 @@ export const handleRedirectResult = async () => {
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           client_id: '240138285eefbcd9ab66f4a85efbfbb5',
-          redirect_uri: window.location.origin,
+          redirect_uri: window.location.origin + '/kakao-callback',
           code: code
         })
       })
@@ -273,56 +282,75 @@ export const handleRedirectResult = async () => {
       const tokenData = await tokenResponse.json()
       console.log('토큰 교환 성공:', tokenData)
       
-      // SDK에 액세스 토큰 설정
-      if (window.Kakao && window.Kakao.Auth && tokenData.access_token) {
-        window.Kakao.Auth.setAccessToken(tokenData.access_token)
-        console.log('SDK에 액세스 토큰 설정 완료')
-        
-        // 이제 사용자 정보 요청
-        const userResponse = await window.Kakao.API.request({
-          url: '/v2/user/me'
-        })
-        
-        console.log('토큰 교환 후 사용자 정보:', userResponse)
-        
-        const userInfo = {
-          id: userResponse.id.toString(),
-          uid: userResponse.id.toString(),
-          name: userResponse.properties?.nickname || '카카오 사용자',
-          email: userResponse.kakao_account?.email || '',
-          profileImage: userResponse.properties?.profile_image || '',
-          loginType: 'kakao',
-          loginAt: new Date().toISOString(),
-          accessToken: tokenData.access_token
+      // 사용자 정보 요청 (액세스 토큰 사용)
+      const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`
         }
+      })
+      
+      if (!userResponse.ok) {
+        throw new Error(`사용자 정보 조회 실패: ${userResponse.status}`)
+      }
+      
+      const userData = await userResponse.json()
+      console.log('사용자 정보 조회 성공:', userData)
+      
+      const userInfo = {
+        id: userData.id.toString(),
+        uid: userData.id.toString(),
+        name: userData.properties?.nickname || '카카오 사용자',
+        email: userData.kakao_account?.email || '',
+        profileImage: userData.properties?.profile_image || '',
+        loginType: 'kakao',
+        loginAt: new Date().toISOString(),
+        accessToken: tokenData.access_token
+      }
 
-        await saveUserToFirestore(userInfo)
-        
+      await saveUserToFirestore(userInfo)
+      
+      // 모바일에서 원래 페이지로 이동
+      const returnUrl = sessionStorage.getItem('login_return_url') || '/'
+      sessionStorage.removeItem('login_return_url')
+      
+      if (window.location.pathname === '/kakao-callback') {
+        // 콜백 페이지에서는 원래 페이지로 리디렉션
+        setTimeout(() => {
+          window.location.href = returnUrl
+        }, 1000)
+      } else {
         // URL에서 코드 제거
         window.history.replaceState({}, document.title, window.location.pathname)
-        
-        return { 
-          success: true,
-          user: userInfo,
-          message: '카카오 로그인 성공!' 
-        }
-      } else {
-        throw new Error('SDK 토큰 설정 실패')
+      }
+      
+      return { 
+        success: true,
+        user: userInfo,
+        message: '카카오 로그인 성공!',
+        redirect: window.location.pathname === '/kakao-callback'
       }
       
     } catch (error) {
       console.error('토큰 교환 또는 API 호출 실패:', error)
       
-      // 토큰 교환 실패 시 데모 모드로 폴백
-      console.log('토큰 교환 실패, 데모 모드로 전환')
+      // 원래 페이지로 이동 (모바일 고려)
+      const returnUrl = sessionStorage.getItem('login_return_url') || '/'
+      sessionStorage.removeItem('login_return_url')
       
-      // URL에서 코드 제거
-      window.history.replaceState({}, document.title, window.location.pathname)
+      if (window.location.pathname === '/kakao-callback') {
+        setTimeout(() => {
+          window.location.href = returnUrl
+        }, 2000)
+      } else {
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
       
       const demoUser = await createDemoUser()
       return {
         ...demoUser,
-        message: '카카오 로그인 처리 중 문제가 발생했습니다. 데모 모드로 시작합니다.'
+        message: '카카오 로그인 처리 중 문제가 발생했습니다. 데모 모드로 시작합니다.',
+        redirect: window.location.pathname === '/kakao-callback'
       }
     }
   }

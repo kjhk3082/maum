@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle } from 'lucide-react'
+import { Calendar, Pen, Search, BarChart3, ChevronLeft, ChevronRight, AlertCircle, Plus, Bell, BellOff, Sun, Moon, HelpCircle, Edit3 } from 'lucide-react'
 import { useTheme } from '../App'
 import { notificationService } from '../services/notificationService'
 import { getDiariesByMonth, getStreakDays } from '../firebase/diaryService'
@@ -19,18 +19,36 @@ export default function CalendarModern({ onLogout, user }) {
   console.log('🚀 CalendarModern component is rendering!')
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
+  
+  // 모바일 반응형을 위한 화면 크기 상태
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // 나머지 상태들
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [diaryEntries, setDiaryEntries] = useState({})
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [diaries, setDiaries] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [emotionStats, setEmotionStats] = useState({})
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
   const [monthlyEntries, setMonthlyEntries] = useState(0)
   const [streakDays, setStreakDays] = useState(0)
   const [mostFrequentEmotion, setMostFrequentEmotion] = useState(null)
-  const [notificationEnabled, setNotificationEnabled] = useState(false)
   const [monthlyDiaries, setMonthlyDiaries] = useState({})
-  const [isLoading, setIsLoading] = useState(false)
-  
+
+  // 화면 크기 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Firebase에서 월별 일기 데이터 로드
   useEffect(() => {
     const loadMonthlyDiaries = async () => {
@@ -46,18 +64,18 @@ export default function CalendarModern({ onLogout, user }) {
           diaries.forEach(diary => {
             diaryMap[diary.date] = diary
           })
-          setDiaryEntries(diaryMap)
+          setDiaries(diaryMap)
           
           // 통계 계산
           calculateStats(diaries)
         } else {
           console.error('월별 일기 로드 실패')
           // 로드 실패 시 빈 객체로 초기화
-          setDiaryEntries({})
+          setDiaries({})
         }
       } catch (error) {
         console.error('월별 일기 로드 오류:', error)
-        setDiaryEntries({})
+        setDiaries({})
       } finally {
         setIsLoading(false)
       }
@@ -82,7 +100,7 @@ export default function CalendarModern({ onLogout, user }) {
     }
 
     loadStreakDays()
-  }, [user, diaryEntries])
+  }, [user, diaries])
 
   useEffect(() => {
     // 알림 설정 상태 확인
@@ -91,7 +109,7 @@ export default function CalendarModern({ onLogout, user }) {
       const permission = notificationService.getPermissionStatus()
       const isScheduled = notificationService.isScheduled()
       
-      setNotificationEnabled(isSupported && permission === 'granted' && isScheduled)
+      setNotificationsEnabled(isSupported && permission === 'granted' && isScheduled)
     }
 
     checkNotificationStatus()
@@ -147,16 +165,16 @@ export default function CalendarModern({ onLogout, user }) {
   // 알림 토글 함수
   const handleNotificationToggle = async () => {
     try {
-      if (notificationEnabled) {
+      if (notificationsEnabled) {
         // 알림 비활성화
         notificationService.clearReminders()
-        setNotificationEnabled(false)
+        setNotificationsEnabled(false)
         setAlertMessage('일기 작성 알림이 비활성화되었습니다.')
       } else {
         // 알림 활성화
         await notificationService.requestPermission()
         notificationService.scheduleReminders()
-        setNotificationEnabled(true)
+        setNotificationsEnabled(true)
         setAlertMessage('일기 작성 알림이 활성화되었습니다. (매일 18:00)')
       }
       
@@ -203,7 +221,7 @@ export default function CalendarModern({ onLogout, user }) {
 
   const hasEntry = (date) => {
     const dateStr = formatDate(date)
-    return diaryEntries[dateStr]
+    return diaries[dateStr]
   }
 
   const isToday = (date) => {
@@ -273,7 +291,7 @@ export default function CalendarModern({ onLogout, user }) {
     }
     
     // 해당 날짜에 일기가 있으면 조회, 없으면 작성
-    if (diaryEntries[dateString]) {
+    if (diaries[dateString]) {
       navigate(`/diary/${dateString}`)
     } else {
       navigate(`/write/${dateString}`)
@@ -283,22 +301,25 @@ export default function CalendarModern({ onLogout, user }) {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: isDarkMode ? '#1C1C1E' : '#F2F2F7',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif',
+      background: isDarkMode 
+        ? 'linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 100%)' 
+        : 'linear-gradient(135deg, #E3F2FD 0%, #F0F8FF 100%)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
       color: isDarkMode ? '#FFFFFF' : '#1D1D1F',
-      transition: 'all 0.3s ease'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      {/* 네비게이션 바 */}
+      {/* 상단 네비게이션 - 모바일 최적화 */}
       <div style={{
-        backgroundColor: isDarkMode 
-          ? 'rgba(28, 28, 30, 0.8)' 
-          : 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: `0.5px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-        padding: '16px 20px',
         position: 'sticky',
         top: 0,
-        zIndex: 100
+        zIndex: 100,
+        background: isDarkMode 
+          ? 'rgba(28, 28, 30, 0.95)' 
+          : 'rgba(248, 248, 248, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+        padding: isMobile ? '12px 16px' : '16px 24px' // 모바일에서 패딩 축소
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -307,229 +328,177 @@ export default function CalendarModern({ onLogout, user }) {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* 로고 및 제목 - 클릭 시 새로고침 */}
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+            onClick={() => window.location.reload()}
+          >
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              overflow: 'hidden',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              border: '1px solid rgba(0, 0, 0, 0.1)'
-            }}>
-              <img 
-                src="/app-icon.png" 
-                alt="마음일기" 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+              boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)',
+              transition: 'transform 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
+            >
+              <Calendar style={{ 
+                width: isMobile ? '18px' : '22px', 
+                height: isMobile ? '18px' : '22px', 
+                color: 'white' 
+              }} />
             </div>
             <h1 style={{
               margin: 0,
-              fontSize: '20px',
-              fontWeight: '600',
-              color: isDarkMode ? '#FFFFFF' : '#1D1D1F'
+              fontSize: isMobile ? '20px' : '24px',
+              fontWeight: '700',
+              color: isDarkMode ? '#FFFFFF' : '#17A2B8',
+              transition: 'color 0.2s'
             }}>
               마음일기
             </h1>
           </div>
-          
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+
+          {/* 네비게이션 메뉴 - 모바일 최적화 */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: isMobile ? '8px' : '12px' // 모바일에서 간격 축소
+          }}>
+            {/* 다크모드 토글 - 모바일에서 크기 조정 */}
             <button
               onClick={toggleTheme}
               style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
+                width: isMobile ? '40px' : '44px',
+                height: isMobile ? '40px' : '44px',
+                background: isDarkMode 
+                  ? 'rgba(255, 255, 255, 0.1)' 
+                  : 'rgba(0, 0, 0, 0.05)',
                 border: 'none',
-                borderRadius: '20px',
+                borderRadius: '12px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: isDarkMode ? '#FFD60A' : '#17A2B8',
-                transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                backdropFilter: 'blur(10px)'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = isDarkMode 
-                  ? 'rgba(255, 214, 10, 0.1)' 
-                  : 'rgba(23, 162, 184, 0.1)'
+                  ? 'rgba(255, 255, 255, 0.15)' 
+                  : 'rgba(0, 0, 0, 0.1)'
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.backgroundColor = isDarkMode 
+                  ? 'rgba(255, 255, 255, 0.1)' 
+                  : 'rgba(0, 0, 0, 0.05)'
               }}
             >
-              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-              {isDarkMode ? '라이트' : '다크'}
+              {isDarkMode ? 
+                <Sun style={{ width: '20px', height: '20px', color: '#FFD60A' }} /> : 
+                <Moon style={{ width: '20px', height: '20px', color: '#6B7280' }} />
+              }
             </button>
-            
+
+            {/* 네비게이션 버튼들 - 모바일에서 더 작게 */}
+            {[
+              { icon: Search, label: '검색', path: '/search' },
+              { icon: BarChart3, label: '통계', path: '/stats' },
+              { icon: HelpCircle, label: 'FAQ', path: '/faq' },
+              { icon: Bell, label: '알림', action: handleNotificationToggle }
+            ].map((item, index) => (
+              <button
+                key={index}
+                onClick={item.action || (() => navigate(item.path))}
+                style={{
+                  width: isMobile ? '40px' : '44px',
+                  height: isMobile ? '40px' : '44px',
+                  background: (item.label === '알림' && notificationsEnabled) 
+                    ? 'rgba(23, 162, 184, 0.2)' 
+                    : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'),
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(10px)',
+                  position: 'relative'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode 
+                    ? 'rgba(255, 255, 255, 0.15)' 
+                    : 'rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = (item.label === '알림' && notificationsEnabled) 
+                    ? 'rgba(23, 162, 184, 0.2)' 
+                    : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)')
+                }}
+              >
+                <item.icon style={{ 
+                  width: '20px', 
+                  height: '20px', 
+                  color: (item.label === '알림' && notificationsEnabled) 
+                    ? '#17A2B8' 
+                    : (isDarkMode ? '#FFFFFF' : '#374151') 
+                }} />
+                
+                {item.label === '알림' && notificationsEnabled && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '6px',
+                    right: '6px',
+                    width: '8px',
+                    height: '8px',
+                    background: '#17A2B8',
+                    borderRadius: '50%',
+                    border: `2px solid ${isDarkMode ? '#1C1C1E' : '#F8F8F8'}`
+                  }}></div>
+                )}
+              </button>
+            ))}
+
+            {/* 오늘 일기 작성 버튼 - 모바일 최적화 */}
             <button
-              onClick={() => navigate('/search')}
+              onClick={() => navigate(`/write/${formatDate(new Date())}`)}
               style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: '#17A2B8',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(23, 162, 184, 0.1)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <Search size={16} />
-              검색
-            </button>
-            
-            <button
-              onClick={() => navigate('/stats')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: '#17A2B8',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(23, 162, 184, 0.1)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <BarChart3 size={16} />
-              통계
-            </button>
-            
-            <button
-              onClick={() => navigate('/faq')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: '#17A2B8',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(23, 162, 184, 0.1)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <HelpCircle size={16} />
-              FAQ
-            </button>
-            
-            <button
-              onClick={handleNotificationToggle}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: notificationEnabled ? '#34C759' : '#8E8E93',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = notificationEnabled 
-                  ? 'rgba(52, 199, 89, 0.1)' 
-                  : 'rgba(142, 142, 147, 0.1)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              {notificationEnabled ? <Bell size={16} /> : <BellOff size={16} />}
-              알림
-            </button>
-            
-            <button
-              onClick={handleTodayDiaryClick}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#17A2B8',
-                border: 'none',
-                borderRadius: '20px',
+                padding: isMobile ? '8px 16px' : '10px 20px',
+                background: 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
                 color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#138496'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#17A2B8'
-              }}
-            >
-              <Pen size={16} />
-              오늘 일기
-            </button>
-            
-            <button
-              onClick={handleFirebaseLogout}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
                 border: 'none',
-                borderRadius: '20px',
+                borderRadius: '16px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '400',
-                color: '#FF3B30',
-                transition: 'all 0.2s',
+                fontWeight: '600',
+                fontSize: isMobile ? '14px' : '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '8px',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(23, 162, 184, 0.3)',
+                whiteSpace: 'nowrap'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 59, 48, 0.1)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(23, 162, 184, 0.4)'
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.3)'
               }}
             >
-              로그아웃
+              <Edit3 style={{ width: '18px', height: '18px' }} />
+              {isMobile ? '일기' : '오늘 일기'}
             </button>
           </div>
         </div>
@@ -562,114 +531,152 @@ export default function CalendarModern({ onLogout, user }) {
         </div>
       )}
 
-      {/* 메인 컨텐츠 */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '20px'
+      {/* 메인 컨테이너 - 모바일 최적화 */}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: isMobile ? '16px' : '20px' // 모바일에서 패딩 축소
       }}>
-        {/* 통계 카드들 */}
+        {/* 통계 카드들 - 모바일 반응형 그리드 */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '12px',
-          marginBottom: '16px'
+          gridTemplateColumns: isMobile 
+            ? 'repeat(2, 1fr)' // 모바일에서는 2열
+            : 'repeat(auto-fit, minmax(250px, 1fr))', // 데스크톱에서는 자동 조정
+          gap: isMobile ? '12px' : '20px',
+          marginBottom: isMobile ? '20px' : '30px'
         }}>
-          {/* 월간 일기 수 */}
+          {/* 총 일기 수 카드 */}
           <div style={{
-            backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '12px',
-            padding: '16px',
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.9)' 
+              : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: isMobile ? '16px' : '20px',
+            padding: isMobile ? '16px' : '20px',
             boxShadow: isDarkMode 
-              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
-              : '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            transition: 'all 0.3s'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                borderRadius: '8px',
+                width: isMobile ? '40px' : '50px',
+                height: isMobile ? '40px' : '50px',
+                background: 'linear-gradient(135deg, #FFD93D 0%, #FF9800 100%)',
+                borderRadius: isMobile ? '12px' : '16px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                fontSize: isMobile ? '18px' : '24px'
               }}>
-                <Calendar size={16} color="#17A2B8" />
+                📖
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
-                  이번 달 일기
-                </h3>
-                <p style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#17A2B8' }}>
-                  {monthlyEntries}개
-                </p>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '12px' : '14px', 
+                  color: isDarkMode ? '#8E8E93' : '#666',
+                  fontWeight: '500'
+                }}>총 일기 수</h3>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '20px' : '24px', 
+                  fontWeight: '700', 
+                  color: '#FFD93D' 
+                }}>{monthlyEntries}개</p>
               </div>
             </div>
           </div>
 
-          {/* 연속 작성일 */}
+          {/* 연속 작성일 카드 */}
           <div style={{
-            backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '12px',
-            padding: '16px',
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.9)' 
+              : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: isMobile ? '16px' : '20px',
+            padding: isMobile ? '16px' : '20px',
             boxShadow: isDarkMode 
-              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
-              : '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            transition: 'all 0.3s'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'rgba(255, 149, 0, 0.1)',
-                borderRadius: '8px',
+                width: isMobile ? '40px' : '50px',
+                height: isMobile ? '40px' : '50px',
+                background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                borderRadius: isMobile ? '12px' : '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '14px'
+                fontSize: isMobile ? '18px' : '24px'
               }}>
                 🔥
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
-                  연속 작성일
-                </h3>
-                <p style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#FF9500' }}>
-                  {streakDays}일
-                </p>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '12px' : '14px', 
+                  color: isDarkMode ? '#8E8E93' : '#666',
+                  fontWeight: '500'
+                }}>연속 작성일</h3>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '20px' : '24px', 
+                  fontWeight: '700', 
+                  color: '#FF6B35' 
+                }}>{streakDays}일</p>
               </div>
             </div>
           </div>
 
-          {/* 이번 달 주요 감정 */}
+          {/* 이번 달 주요 감정 카드 - 모바일에서는 2열 전체 차지 */}
           <div style={{
-            backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-            borderRadius: '12px',
-            padding: '16px',
+            background: isDarkMode 
+              ? 'rgba(44, 44, 46, 0.9)' 
+              : 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: isMobile ? '16px' : '20px',
+            padding: isMobile ? '16px' : '20px',
             boxShadow: isDarkMode 
-              ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
-              : '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
+              ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+              : '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            transition: 'all 0.3s',
+            gridColumn: isMobile ? '1 / -1' : 'auto' // 모바일에서 전체 폭 차지
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: mostFrequentEmotion ? `${emotions[mostFrequentEmotion]?.bgColor}` : 'rgba(142, 142, 147, 0.1)',
-                borderRadius: '8px',
+                width: isMobile ? '40px' : '50px',
+                height: isMobile ? '40px' : '50px',
+                background: mostFrequentEmotion 
+                  ? `linear-gradient(135deg, ${emotions[mostFrequentEmotion]?.color}40, ${emotions[mostFrequentEmotion]?.color})`
+                  : 'linear-gradient(135deg, #17A2B8 0%, #138496 100%)',
+                borderRadius: isMobile ? '12px' : '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '16px'
+                fontSize: isMobile ? '18px' : '24px'
               }}>
-                {mostFrequentEmotion ? emotions[mostFrequentEmotion]?.emoji : '😊'}
+                {mostFrequentEmotion ? emotions[mostFrequentEmotion]?.emoji : '📊'}
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: isDarkMode ? '#FFFFFF' : '#1D1D1F' }}>
-                  이번 달 주요 감정
-                </h3>
-                <p style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: mostFrequentEmotion ? emotions[mostFrequentEmotion]?.color : '#8E8E93' }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '12px' : '14px', 
+                  color: isDarkMode ? '#8E8E93' : '#666',
+                  fontWeight: '500'
+                }}>이번 달 주요 감정</h3>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: isMobile ? '16px' : '20px', 
+                  fontWeight: '700', 
+                  color: mostFrequentEmotion ? emotions[mostFrequentEmotion]?.color : '#17A2B8' 
+                }}>
                   {mostFrequentEmotion ? 
                     (mostFrequentEmotion === 'HAPPY' ? '기쁨' : 
                      mostFrequentEmotion === 'SAD' ? '슬픔' : 
@@ -683,22 +690,27 @@ export default function CalendarModern({ onLogout, user }) {
           </div>
         </div>
 
-        {/* 캘린더 헤더 */}
+        {/* 캘린더 헤더 - 모바일 최적화 */}
         <div style={{
-          backgroundColor: isDarkMode ? '#2C2C2E' : '#FFFFFF',
-          borderRadius: '16px',
-          padding: '20px',
+          background: isDarkMode 
+            ? 'rgba(44, 44, 46, 0.95)' 
+            : 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: isMobile ? '16px' : '20px',
+          padding: isMobile ? '16px' : '20px',
           marginBottom: '0',
           boxShadow: isDarkMode 
-            ? '0 2px 8px rgba(0, 0, 0, 0.2)' 
-            : '0 2px 8px rgba(0, 0, 0, 0.04)',
+            ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.1)',
           border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '16px'
+            marginBottom: isMobile ? '12px' : '16px',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '12px' : '0'
           }}>
             <button
               onClick={prevMonth}
@@ -895,9 +907,9 @@ export default function CalendarModern({ onLogout, user }) {
                   onClick={() => handleDateClick(date)}
                   style={{
                     aspectRatio: '1',
-                    minHeight: '36px',
-                    maxHeight: '40px',
-                    borderRadius: '8px',
+                    minHeight: isMobile ? '44px' : '36px', // 모바일에서 터치하기 쉽게 크게
+                    maxHeight: isMobile ? '48px' : '40px',
+                    borderRadius: isMobile ? '12px' : '8px',
                     border: 'none',
                     backgroundColor: isTodayDate 
                       ? '#17A2B8' 
