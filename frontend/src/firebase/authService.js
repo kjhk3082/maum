@@ -4,7 +4,8 @@
 
 import { 
   signInAnonymously,
-  signOut
+  signOut,
+  onAuthStateChanged
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './config'
@@ -193,7 +194,7 @@ const saveUserToFirestore = async (userInfo) => {
 }
 
 /**
- * 인증 상태 확인 (Firebase만 사용)
+ * 인증 상태 확인 (Firebase 기반)
  */
 export const getCurrentUser = () => {
   return auth.currentUser
@@ -207,8 +208,59 @@ export const checkKakaoSDK = () => {
   return !!(window.Kakao && window.Kakao.isInitialized())
 }
 
-// 레거시 호환용 (사용하지 않음)
+/**
+ * 인증 상태 리스너 (Firebase 기반)
+ */
+export const onAuthStateChange = (callback) => {
+  // Firebase 인증 상태 리스너
+  const unsubscribeFirebase = onAuthStateChanged(auth, (firebaseUser) => {
+    if (firebaseUser) {
+      // Firebase 사용자가 있으면 Firestore에서 상세 정보 가져오기
+      getUserFromFirestore(firebaseUser.uid)
+        .then(userData => {
+          if (userData) {
+            const userInfo = {
+              uid: firebaseUser.uid,
+              id: userData.kakaoId || firebaseUser.uid,
+              name: userData.displayName || '사용자',
+              email: userData.email || '',
+              profileImage: userData.photoURL || '',
+              loginType: userData.loginType || 'kakao'
+            }
+            callback(userInfo)
+          } else {
+            callback(null)
+          }
+        })
+        .catch(() => {
+          callback(null)
+        })
+    } else {
+      callback(null)
+    }
+  })
+
+  return unsubscribeFirebase
+}
+
+/**
+ * Firestore에서 사용자 정보 가져오기
+ */
+export const getUserFromFirestore = async (uid) => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    
+    if (userSnap.exists()) {
+      return userSnap.data()
+    }
+    return null
+  } catch (error) {
+    console.error('사용자 정보 조회 오류:', error)
+    return null
+  }
+}
+
+// 레거시 호환용
 export const signInWithKakaoPopup = () => signInWithKakaoSDK()
-export const signInWithKakaoCallback = () => signInWithKakaoSDK()
-export const onAuthStateChange = () => {}
-export const getUserFromFirestore = () => null 
+export const signInWithKakaoCallback = () => signInWithKakaoSDK() 
