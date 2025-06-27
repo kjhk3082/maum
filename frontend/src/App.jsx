@@ -7,9 +7,8 @@ import DiarySearch from './components/DiarySearch'
 import StatsPage from './components/StatsPage'
 import FAQ from './components/FAQ'
 import Login from './components/Login'
-import KakaoCallback from './components/KakaoCallback'
 import AdminDashboard from './components/AdminDashboard'
-import { onAuthStateChange, getCurrentUser } from './firebase/authService'
+import { onAuthStateChange, getCurrentUser, initializeAuth } from './firebase/authService'
 import './App.css'
 
 // 다크모드 컨텍스트
@@ -66,13 +65,28 @@ function App() {
 
   // Firebase 인증 상태 리스너
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user)
-      setIsLoggedIn(!!user)
-      setIsLoading(false)
+    const setupAuth = async () => {
+      // 앱 시작 시 Firebase 초기화 (기존 사용자 제거)
+      await initializeAuth()
+      
+      // 카카오 로그인 사용자만 인정하는 리스너 설정
+      const unsubscribe = onAuthStateChange((user) => {
+        setUser(user)
+        setIsLoggedIn(!!user)
+        setIsLoading(false)
+      })
+
+      return unsubscribe
+    }
+
+    let unsubscribe
+    setupAuth().then(unsub => {
+      unsubscribe = unsub
     })
 
-    return () => unsubscribe()
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
   }, [])
 
   // 실제 웹용 - 로컬스토리지 사용 안함
@@ -116,7 +130,6 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/kakao-callback" element={<KakaoCallback onLogin={handleLogin} />} />
             <Route path="/" element={
               isLoggedIn ? (
                 <CalendarModern onLogout={handleLogout} user={user} />

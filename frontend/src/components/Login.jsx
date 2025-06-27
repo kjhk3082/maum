@@ -12,21 +12,8 @@ function Login({ onLogin }) {
   const { isDarkMode } = useContext(ThemeContext)
 
   useEffect(() => {
-    // 이미 로그인되어 있으면 홈으로 리다이렉트
-    if (localStorage.getItem('user')) {
-      navigate('/')
-    }
-
-    // 리다이렉트 결과 처리 (페이지 새로고침 시)
-    const handleAuthRedirect = async () => {
-      const result = await handleRedirectResult()
-      if (result.success) {
-        onLogin(result.user)
-        navigate('/')
-      }
-    }
-
-    handleAuthRedirect()
+    // SDK 방식에서는 리다이렉트 처리가 필요 없음
+    // 앱이 시작될 때 인증 상태는 App.jsx에서 처리됨
   }, [navigate, onLogin])
 
   // 카카오 SDK 로그인
@@ -62,31 +49,7 @@ function Login({ onLogin }) {
     }
   }
 
-  // 데모 로그인 (개발/테스트용)
-  const handleDemoLogin = () => {
-    setIsLoading(true)
-    setError('')
-    setLoginStatus('processing')
-    
-    setTimeout(() => {
-      setLoginStatus('success')
-      const userData = {
-        id: 'demo123',
-        name: '테스트 사용자',
-        email: 'demo@example.com',
-        loginType: 'demo',
-        loginAt: new Date().toISOString()
-      }
-      
-      localStorage.setItem('user', JSON.stringify(userData))
-      
-      setTimeout(() => {
-        onLogin(userData)
-        setIsLoading(false)
-        navigate('/')
-      }, 1500) // 성공 메시지 후 이동
-    }, 1500)
-  }
+
 
   return (
     <div style={{
@@ -469,67 +432,7 @@ function Login({ onLogin }) {
               )}
             </button>
 
-            {/* 데모 로그인 버튼 */}
-            {import.meta.env.DEV && (
-              <button
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '16px',
-                  padding: '16px 32px',
-                  background: isDarkMode 
-                    ? 'linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.6))'
-                    : 'linear-gradient(145deg, rgba(241, 245, 249, 0.8), rgba(226, 232, 240, 0.6))',
-                  border: isDarkMode 
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(203, 213, 225, 0.4)',
-                  borderRadius: '16px',
-                  color: isDarkMode ? '#e2e8f0' : '#475569',
-                  fontSize: '15px',
-                  fontWeight: '500',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  backdropFilter: 'blur(10px)',
-                  opacity: isLoading ? 0.7 : 1
-                }}
-                onMouseEnter={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = isDarkMode 
-                      ? 'linear-gradient(145deg, rgba(71, 85, 105, 0.8), rgba(51, 65, 85, 0.6))'
-                      : 'linear-gradient(145deg, rgba(226, 232, 240, 0.8), rgba(203, 213, 225, 0.6))'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = isDarkMode 
-                      ? 'linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.6))'
-                      : 'linear-gradient(145deg, rgba(241, 245, 249, 0.8), rgba(226, 232, 240, 0.6))'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }
-                }}
-              >
-                {isLoading ? (
-                  <div style={{
-                    width: '18px',
-                    height: '18px',
-                    border: `2px solid ${isDarkMode ? '#e2e8f0' : '#475569'}`,
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }} />
-                ) : (
-                  <>
-                    <Calendar size={20} strokeWidth={1.5} />
-                    <span>데모로 체험하기</span>
-                  </>
-                )}
-              </button>
-            )}
+
           </div>
 
           {/* 하단 안내 */}
