@@ -48,19 +48,18 @@ jobs:
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: 'maumilgi-1a4cb'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: maumilgi-1a4cb
           channelId: live
-
-    # 6. 배포 결과 알림
-    - name: ✅ 배포 완료 알림
-      if: success()
-      run: |
-        echo "🎉 배포가 성공적으로 완료되었습니다!"
-        echo "🌐 사이트 URL: https://maumilgi-1a4cb.web.app"
-        
-    - name: ❌ 배포 실패 알림  
-      if: failure()
-      run: |
-        echo "💥 배포가 실패했습니다. 로그를 확인해주세요." 
+          
+      - name: ✅ 배포 완료 알림
+        if: success()
+        run: |
+          echo "🎉 배포가 성공적으로 완료되었습니다!"
+          echo "🌐 사이트 URL: https://maumilgi-1a4cb.web.app"
+          
+      - name: ❌ 배포 실패 알림  
+        if: failure()
+        run: |
+          echo "💥 배포가 실패했습니다. 로그를 확인해주세요." 
