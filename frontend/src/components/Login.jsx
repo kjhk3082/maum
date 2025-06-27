@@ -12,8 +12,15 @@ function Login({ onLogin }) {
   const { isDarkMode } = useContext(ThemeContext)
 
   useEffect(() => {
-    // SDK 방식에서는 리다이렉트 처리가 필요 없음
-    // 앱이 시작될 때 인증 상태는 App.jsx에서 처리됨
+    // 리다이렉트 결과 확인
+    const checkRedirect = async () => {
+      const result = await handleRedirectResult()
+      if (result.success) {
+        onLogin(result.user)
+        navigate('/')
+      }
+    }
+    checkRedirect()
   }, [navigate, onLogin])
 
   // 카카오 SDK 로그인

@@ -35,62 +35,22 @@ export const signInWithKakaoSDK = async () => {
       throw new Error('카카오 SDK가 초기화되지 않았습니다.')
     }
     
-    return new Promise((resolve) => {
-      // 팝업 방식으로 로그인
-      window.Kakao.Auth.loginForm({
-        success: function() {
-          console.log('카카오 로그인 성공')
-          
-          // 사용자 정보 가져오기
-          window.Kakao.API.request({
-            url: '/v2/user/me',
-            success: async (userData) => {
-              console.log('사용자 정보 조회 성공:', userData)
-              
-              const userInfo = {
-                id: userData.id.toString(),
-                uid: userData.id.toString(),
-                name: userData.properties?.nickname || '카카오 사용자',
-                email: userData.kakao_account?.email || '',
-                profileImage: userData.properties?.profile_image || '',
-                loginType: 'kakao'
-              }
-
-              try {
-                // Firebase에 저장
-                await saveUserToFirestore(userInfo)
-                
-                resolve({ 
-                  success: true, 
-                  user: userInfo,
-                  message: '로그인 성공!'
-                })
-              } catch (error) {
-                console.error('Firebase 저장 오류:', error)
-                resolve({
-                  success: false,
-                  error: '로그인 정보 저장 중 오류가 발생했습니다.'
-                })
-              }
-            },
-            fail: (error) => {
-              console.error('사용자 정보 조회 실패:', error)
-              resolve({
-                success: false,
-                error: '사용자 정보를 가져올 수 없습니다.'
-              })
-            }
-          })
-        },
-        fail: function(error) {
-          console.error('카카오 로그인 실패:', error)
-          resolve({
-            success: false,
-            error: '카카오 로그인에 실패했습니다.'
-          })
-        }
-      })
+    // 카카오 SDK v2에서 사용 가능한 메서드 확인
+    console.log('Kakao.Auth 메서드들:', Object.keys(window.Kakao.Auth))
+    
+    // SDK v2에서는 authorize 사용 (현재 페이지에서 처리)
+    window.Kakao.Auth.authorize({
+      redirectUri: window.location.origin + '/',
+      scope: 'profile_nickname,profile_image,account_email',
+      throughTalk: false, // 카카오톡 사용 안함
+      prompts: 'login' // 항상 로그인 창 표시
     })
+    
+    // authorize는 페이지를 이동시키므로 Promise 불필요
+    return { 
+      success: true,
+      message: '카카오 로그인 페이지로 이동합니다...'
+    }
     
   } catch (error) {
     console.error('카카오 로그인 오류:', error)
@@ -102,10 +62,89 @@ export const signInWithKakaoSDK = async () => {
 }
 
 /**
- * 리다이렉트 결과 처리 (카카오 SDK 사용 시 필요 없음)
+ * 리다이렉트 결과 처리
  */
 export const handleRedirectResult = async () => {
-  // 카카오 SDK 사용 시에는 리다이렉트 처리가 필요 없음
+  const urlParams = new URLSearchParams(window.location.search)
+  const code = urlParams.get('code')
+  const error = urlParams.get('error')
+  
+  if (error) {
+    console.error('카카오 로그인 오류:', error)
+    return { 
+      success: false,
+      error: '카카오 로그인이 취소되었습니다.'
+    }
+  }
+  
+  if (code) {
+    console.log('카카오 인증 코드 발견:', code)
+    
+    try {
+      // 토큰 교환
+      const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: '240138285eefbcd9ab66f4a85efbfbb5',
+          redirect_uri: window.location.origin + '/',
+          code: code
+        })
+      })
+      
+      const tokenData = await tokenResponse.json()
+      
+      if (tokenData.access_token) {
+        console.log('토큰 교환 성공')
+        
+        // 사용자 정보 요청
+        const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${tokenData.access_token}`
+          }
+        })
+        
+        const userData = await userResponse.json()
+        console.log('사용자 정보 조회 성공:', userData)
+        
+        const userInfo = {
+          id: userData.id.toString(),
+          uid: userData.id.toString(),
+          name: userData.properties?.nickname || '카카오 사용자',
+          email: userData.kakao_account?.email || '',
+          profileImage: userData.properties?.profile_image || '',
+          loginType: 'kakao',
+          accessToken: tokenData.access_token
+        }
+
+        // Firebase에 저장
+        await saveUserToFirestore(userInfo)
+        
+        // URL에서 code 파라미터 제거
+        window.history.replaceState({}, document.title, window.location.pathname)
+        
+        return { 
+          success: true,
+          user: userInfo,
+          message: '카카오 로그인 성공!'
+        }
+      } else {
+        throw new Error('토큰 교환 실패')
+      }
+      
+    } catch (error) {
+      console.error('카카오 로그인 처리 실패:', error)
+      return {
+        success: false,
+        error: '카카오 로그인 처리 중 문제가 발생했습니다.'
+      }
+    }
+  }
+  
   return { success: false }
 }
 

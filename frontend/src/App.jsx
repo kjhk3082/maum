@@ -8,7 +8,7 @@ import StatsPage from './components/StatsPage'
 import FAQ from './components/FAQ'
 import Login from './components/Login'
 import AdminDashboard from './components/AdminDashboard'
-import { onAuthStateChange, getCurrentUser, initializeAuth } from './firebase/authService'
+import { onAuthStateChange, getCurrentUser, initializeAuth, handleRedirectResult } from './firebase/authService'
 import './App.css'
 
 // 다크모드 컨텍스트
@@ -68,6 +68,13 @@ function App() {
     const setupAuth = async () => {
       // 앱 시작 시 Firebase 초기화 (기존 사용자 제거)
       await initializeAuth()
+      
+      // 카카오 리다이렉트 결과 처리
+      const redirectResult = await handleRedirectResult()
+      if (redirectResult.success) {
+        console.log('카카오 로그인 성공 (리다이렉트):', redirectResult.user)
+        handleLogin(redirectResult.user)
+      }
       
       // 카카오 로그인 사용자만 인정하는 리스너 설정
       const unsubscribe = onAuthStateChange((user) => {
