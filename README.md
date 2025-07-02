@@ -926,7 +926,7 @@ const CalendarModern = () => {}
 
 **⭐ 이 프로젝트가 도움이 되셨다면 스타를 눌러주세요! ⭐**
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by [KIMJAEHYUNG]
 
 [🔝 맨 위로 올라가기](#-마음일기---ai-기반-감정-일기-웹-서비스)
 
