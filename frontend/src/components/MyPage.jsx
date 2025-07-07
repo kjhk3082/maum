@@ -462,7 +462,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                이메일일일
+                &nbsp;이메일
               </span>
             </div>
             <p style={{
@@ -520,7 +520,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                가입일
+                &nbsp;가입일
               </span>
             </div>
             <p style={{
@@ -577,7 +577,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                작성한 일기기기
+                &nbsp;작성한 일기
               </span>
             </div>
             <p style={{
@@ -638,7 +638,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                계정 타입
+                &nbsp;계정 타입
               </span>
             </div>
             <div className="flex items-center gap-3">
