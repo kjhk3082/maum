@@ -462,18 +462,10 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                &nbsp;이메일
+                이메일&nbsp;{user?.email || '이메일 정보 없음'}
               </span>
             </div>
-            <p style={{
-              fontSize: '18px',
-              fontWeight: '500',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              wordBreak: 'break-all'
-            }}>
-              {user?.email || '이메일 정보 없음'}
-            </p>
+            
           </div>
 
           {/* 가입일 */}
