@@ -462,7 +462,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                이메일
+                이메일일일
               </span>
             </div>
             <p style={{
@@ -577,7 +577,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                작성한 일기
+                작성한 일기기기
               </span>
             </div>
             <p style={{
