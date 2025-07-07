@@ -462,19 +462,10 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                &nbsp;이메일
+                이메일&nbsp;{user?.email || '이메일 정보 없음'}
               </span>
             </div>
-            <p style={{
-              fontSize: '18px',
-              fontWeight: '500',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              wordBreak: 'break-all'
-            }}>
-              {user?.email || '이메일 정보 없음'}
-            </p>
-          </div>
+            
 
           {/* 가입일 */}
           <div style={{
@@ -577,22 +568,11 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                &nbsp;작성한 일기
+                &nbsp;작성한 일기&nbsp{diaryCount}개
               </span>
             </div>
-            <p style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              background: 'linear-gradient(135deg, #06d6a0, #048c73)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              {diaryCount}개
-            </p>
-          </div>
+            
+          
 
           {/* 계정 타입 */}
           <div style={{
