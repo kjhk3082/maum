@@ -216,11 +216,11 @@ export const openaiService = {
 - 문체: 반말 일기체, 때로는 의성어나 의태어 활
 
 현재 감정 상태: ${emotion}
-선택된 텍스트: "${textToExpand}"
+선택된 텍스트: ${textToExpand}
 
 위 텍스트를 바탕으로 개성 있고 진솔한 일기 문장으로 변환해주세요. 단순한 감정 형용사 남발은 피하고, 구체적이고 생생한 표현을 사용해주세요.`
 
-        const userPrompt = customPrompt || `키워드: "${textToExpand}"`
+        const userPrompt = customPrompt || `키워드: ${textToExpand}`
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
