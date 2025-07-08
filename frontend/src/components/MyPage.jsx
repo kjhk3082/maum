@@ -382,6 +382,10 @@ function MyPage({ user, onLogout }) {
 
         {/* ────────── 정보 카드 2×2 ────────── */}
         <div className="grid grid-cols-2 gap-6 mb-8">
+          <div
+            className="grid grid-cols-2 gap-6 mb-8"
+            style={{ fontFamily: "'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif" }}
+          ></div>
           {[
             { icon: Mail, color: '#17A2B8', label: '이메일', value: user?.email || '정보 없음' },
             { icon: Calendar, color: '#8B5CF6', label: '가입일', value: formatDate(user?.createdAt) },
