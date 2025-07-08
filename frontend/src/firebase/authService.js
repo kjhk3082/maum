@@ -72,7 +72,7 @@ export const signOut = async () => {
 const saveUserToFirestore = async (userInfo) => {
   const userRef = doc(db, 'users', userInfo.uid);
   const userSnap = await getDoc(userRef);
-
+//
   const base = {
     uid: userInfo.uid,
     email: userInfo.email,
