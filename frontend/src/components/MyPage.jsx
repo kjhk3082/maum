@@ -167,47 +167,61 @@ function MyPage({ user, onLogout }) {
               : '0 20px 40px rgba(0,0,0,0.1)'
           }}
         >
-          <div className="flex flex-col items-center">
-            {/* avatar-wrapper 시작 */}
+          <div className="relative">
             <div
-              className="relative inline-block"
-              style={{ width: '140px', height: '140px' }}
+              style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
+              }}
             >
-              <div
-                className="w-full h-full p-1 rounded-full flex items-center justify-center shadow-lg"
-                style={{ background: 'linear-gradient(145deg, #17A2B8, #138496)' }}
-              >
-                <img
-                  src={
-                    user?.profileImage ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user?.name
-                    )}&background=ffffff&color=17A2B8&size=200`
-                  }
-                  alt={user?.name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-              <button
-                className="absolute bottom-0 right-0 transform translate-x-1/2 translate-y-1/2
-                           w-14 h-14 rounded-full flex items-center justify-center
-                           border-4 border-white shadow-lg
-                           transition-transform duration-200 hover:scale-110 hover:shadow-xl"
-                style={{ background: 'linear-gradient(145deg, #17A2B8, #138496)' }}
-                onMouseOver={e => {
-                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(23,162,184,0.5)'
+              <img
+                src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name)}&background=ffffff&color=17A2B8&size=200`}
+                alt={user?.name}
+                style={{
+                  width: '132px',
+                  height: '132px',
+                  borderRadius: '50%',
+                  objectFit: 'cover'
                 }}
-                onMouseOut={e => {
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23,162,184,0.4)'
-                }}
-              >
-                <Camera size={32} color="white" />
-              </button>
+              />
             </div>
-            {/* avatar-wrapper 끝 */}
 
-            <h2 className="mt-4 text-xl font-semibold">{user?.name}</h2>
+            {/* ↓ 여기 bottom/right 를 음수로 조정 ↓ */}
+            <button
+              className="absolute -bottom-8 -right-8 transition-all duration-200"
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                color: 'white',
+                border: '4px solid white',
+                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'scale(1.1)'
+                e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)'
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
+              }}
+            >
+              <Camera size={32} />
+            </button>
           </div>
+
 
           {/* 편집/일반 보기 영역 */}
           <div className="flex-1 text-center md:text-left">
@@ -369,11 +383,11 @@ function MyPage({ user, onLogout }) {
                   ) : (
                     <>
                       <img
-                        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+" 
+                        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+"
                         alt="Kakao"
                         style={{ width: '32px', height: '32px' }}
                       />
-                      <span 
+                      <span
                         style={{
                           fontSize: '18px',
                           fontWeight: '600',
