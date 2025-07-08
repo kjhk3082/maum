@@ -324,18 +324,28 @@ function MyPage({ user, onLogout, onUpdateUser, onUpdateUserProfileImage }) {
               ) : (
                 <div>
                   <div className="flex flex-col sm:flex-row items-center gap-4 mb-3">
-                    <h2 style={{
-                      fontSize: '32px',
-                      fontWeight: '700',
-                      margin: '0',
-                      color: isDarkMode ? '#ffffff' : '#1d1d1f',
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
-                        : 'linear-gradient(135deg, #1e293b, #475569)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text'
-                    }}>
+                    <h2
+                      style={{
+                        fontSize: '32px',
+                        fontWeight: '700',
+                        margin: 0,
+                        ...(isDarkMode
+                          ? {
+                            color: '#ffffff',
+                            background: 'none',
+                            WebkitBackgroundClip: 'initial',
+                            WebkitTextFillColor: 'initial',
+                            backgroundClip: 'initial'
+                          }
+                          : {
+                            color: 'transparent',
+                            background: 'linear-gradient(135deg, #1e293b, #475569)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          })
+                      }}
+                    >
                       {user?.name || 'Unknown User'}
                     </h2>
                     <button
@@ -475,18 +485,28 @@ function MyPage({ user, onLogout, onUpdateUser, onUpdateUserProfileImage }) {
 
         {/* 설정 섹션 */}
         <div className="space-y-6">
-          <h3 style={{
-            fontSize: '24px',
-            fontWeight: '700',
-            marginBottom: '24px',
-            color: isDarkMode ? '#ffffff' : '#1e293b',
-            background: isDarkMode
-              ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
-              : 'linear-gradient(135deg, #1e293b, #475569)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
+          <h3
+            style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '24px',
+              ...(isDarkMode
+                ? {
+                  color: '#ffffff',
+                  background: 'none',
+                  WebkitBackgroundClip: 'initial',
+                  WebkitTextFillColor: 'initial',
+                  backgroundClip: 'initial'
+                }
+                : {
+                  color: 'transparent',
+                  background: 'linear-gradient(135deg, #1e293b, #475569)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                })
+            }}
+          >
             설정
           </h3>
 
