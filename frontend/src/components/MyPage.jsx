@@ -7,6 +7,7 @@ import {
 import { signOutUser } from '../firebase/authService'
 import { getDiaryCount } from '../firebase/diaryService'
 import { useTheme } from '../App'
+import { updateUserDisplayName } from '../firebase/authService'
 
 function MyPage({ user, onLogout }) {
   const navigate = useNavigate()
@@ -38,19 +39,13 @@ function MyPage({ user, onLogout }) {
   const handleUpdateProfile = async () => {
   setLoading(true)
   try {
-    // Firebase Auth 이름 변경
-    await updateProfile(auth.currentUser, {
-      displayName: displayName
-    })
-
-    // Firestore 이름 변경
-    const userRef = doc(db, 'users', auth.currentUser.uid)
-    await updateDoc(userRef, {
-      displayName: displayName
-    })
-
-    console.log('프로필 업데이트 완료')
-    setIsEditing(false)
+    const result = await updateUserDisplayName(user.uid, displayName)
+    if (result.success) {
+      console.log('이름 변경 성공')
+      setIsEditing(false)
+    } else {
+      console.error('이름 변경 실패:', result.error)
+    }
   } catch (error) {
     console.error('프로필 업데이트 실패:', error)
   } finally {

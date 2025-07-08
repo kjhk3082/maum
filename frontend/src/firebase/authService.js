@@ -12,7 +12,8 @@ import {
   doc, 
   setDoc, 
   getDoc, 
-  serverTimestamp
+  serverTimestamp,
+  updateDoc
 } from 'firebase/firestore'
 import { auth, db } from './config'
 
@@ -205,4 +206,15 @@ export const getUserFromFirestore = async (uid) => {
   }
 }
 
+export const updateUserDisplayName = async (uid, newName) => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    await updateDoc(userRef, { displayName: newName })
+    console.log('이름 변경 완료:', newName)
+    return { success: true }
+  } catch (error) {
+    console.error('이름 변경 실패:', error)
+    return { success: false, error: error.message }
+  }
+}
  
