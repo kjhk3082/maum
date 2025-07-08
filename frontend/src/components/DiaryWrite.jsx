@@ -2957,11 +2957,11 @@ const DiaryWrite = ({ user }) => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  background: 'red',
+                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(0, 0, 0, 0.1)',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'centger',
                   justifyContent: 'center',
                   color: isDarkMode ? '#FFFFFF' : '#000000',
                   transition: 'all 0.2s'
