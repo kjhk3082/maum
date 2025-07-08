@@ -462,7 +462,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                &ensp;이메일&nbsp;{user?.email || '이메일 정보 없음'}
+                &ensp;이메일&nbsp;:&nbsp;{user?.email || '이메일 정보 없음'}
               </span>
             </div>
             

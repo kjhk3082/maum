@@ -32,7 +32,7 @@ function MyPage({ user, onLogout }) {
   const [displayName, setDisplayName] = useState(user?.name || '')
   const [loading, setLoading] = useState(false)
 
-  /* ---------------- hooks --------------dffdfdf-- */
+  /* ---------------- hooks ---------------- */
   useEffect(() => {
     const fetchDiaryCount = async () => {
       if (user?.uid) {
@@ -462,18 +462,10 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                이메일
+                &ensp;이메일&nbsp;{user?.email || '이메일 정보 없음'}
               </span>
             </div>
-            <p style={{
-              fontSize: '18px',
-              fontWeight: '500',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              wordBreak: 'break-all'
-            }}>
-              {user?.email || '이메일 정보 없음'}
-            </p>
+            
           </div>
 
           {/* 가입일 */}
@@ -520,7 +512,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                가입일
+                &nbsp;가입일
               </span>
             </div>
             <p style={{
@@ -577,10 +569,10 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                작성한 일기
+                &nbsp;작성한 일기&nbsp{diaryCount}개
               </span>
             </div>
-            <p style={{
+            /*<p style={{
               fontSize: '28px',
               fontWeight: '700',
               color: isDarkMode ? '#ffffff' : '#1e293b',
@@ -592,6 +584,7 @@ function MyPage({ user, onLogout }) {
             }}>
               {diaryCount}개
             </p>
+            */
           </div>
 
           {/* 계정 타입 */}
@@ -638,7 +631,7 @@ function MyPage({ user, onLogout }) {
                 fontWeight: '600',
                 color: isDarkMode ? '#e2e8f0' : '#475569'
               }}>
-                계정 타입
+                &nbsp;계정 타입
               </span>
             </div>
             <div className="flex items-center gap-3">
