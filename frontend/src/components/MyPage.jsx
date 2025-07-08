@@ -40,14 +40,21 @@ const handleUpdateProfile = async () => {
   setLoading(true)
   try {
     const result = await updateUserDisplayName(user.uid, displayName)
-    if (result.success) {
-      onUpdateUser(displayName)   // 이 부분 추가
-      setIsEditing(false)
-    } else {
+
+    if (!result.success) {
       console.error('이름 저장 실패:', result.error)
+      alert('이름 변경에 실패했습니다: ' + result.error)
+      return
     }
+
+    console.log('이름 저장 성공:', displayName)
+
+    onUpdateUser(displayName)  // App.jsx의 상태 변경
+    setIsEditing(false)        // 수정 모드 종료
+
   } catch (error) {
     console.error('프로필 업데이트 실패:', error)
+    alert('오류 발생: ' + error.message)
   } finally {
     setLoading(false)
   }
