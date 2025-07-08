@@ -160,47 +160,47 @@ function MyPage({ user, onLogout }) {
             : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
           <div className="flex flex-col items-center">
-            <div
-              className="relative inline-block"
-              style={{ width: '140px', height: '140px' }}
-            >
-              <div
-                className="w-full h-full p-1 rounded-full flex items-center justify-center shadow-lg"
-                style={{
-                  background: 'linear-gradient(145deg, #17A2B8, #138496)'
-                }}
-              >
-                <img
-                  src={
-                    user?.profileImage ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user?.name
-                    )}&background=ffffff&color=17A2B8&size=200`
-                  }
-                  alt={user?.name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
+  <div
+    className="relative inline-block"
+    style={{ width: '140px', height: '140px' }}
+  >
+    <div
+      className="w-full h-full p-1 rounded-full flex items-center justify-center shadow-lg"
+      style={{
+        background: 'linear-gradient(145deg, #17A2B8, #138496)'
+      }}
+    >
+      <img
+        src={
+          user?.profileImage ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            user?.name
+          )}&background=ffffff&color=17A2B8&size=200`
+        }
+        alt={user?.name}
+        className="w-full h-full rounded-full object-cover"
+      />
+    </div>
 
-              <button
-                className="absolute bottom-0 right-0 transform translate-x-1/2 translate-y-1/2 w-14 h-14 rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-transform duration-200 hover:scale-110 hover:shadow-xl"
-                style={{
-                  background: 'linear-gradient(145deg, #17A2B8, #138496)'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(23,162,184,0.5)'
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23,162,184,0.4)'
-                }}
-              >
-                <Camera size={32} color="white" />
-              </button>
-            </div>
+    <button
+      className="absolute bottom-0 right-0 transform translate-x-1/2 translate-y-1/2 w-14 h-14 rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-transform duration-200 hover:scale-110 hover:shadow-xl"
+      style={{
+        background: 'linear-gradient(145deg, #17A2B8, #138496)'
+      }}
+      onMouseOver={e => {
+        e.currentTarget.style.boxShadow = '0 16px 32px rgba(23,162,184,0.5)'
+      }}
+      onMouseOut={e => {
+        e.currentTarget.style.boxShadow = '0 12px 24px rgba(23,162,184,0.4)'
+      }}
+    >
+      <Camera size={32} color="white" />
+    </button>
+  </div>
 
-            <h2 className="mt-4 text-xl font-semibold">{user?.name}</h2>
-
-
+  <h2 className="mt-4 text-xl font-semibold">{user?.name}</h2>
+  
+            
 
             <div className="flex-1 text-center md:text-left">
               {isEditing ? (
