@@ -39,6 +39,13 @@ function App() {
     }
   }, [])
 
+  const updateUserProfileImage = (newPhotoURL) => {
+  setUser((prevUser) => ({
+    ...prevUser,
+    profileImage: newPhotoURL
+  }))
+}
+
   const toggleTheme = () => {
     const newTheme = !isDarkMode
     setIsDarkMode(newTheme)
@@ -147,7 +154,7 @@ function App() {
               isLoggedIn ? <StatsPage user={user} /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/mypage" element={
-              isLoggedIn ? <MyPage user={user} onLogout={handleLogout} onUpdateUser={updateUserName} /> : <Login onLogin={handleLogin} />
+              isLoggedIn ? <MyPage user={user} onLogout={handleLogout} onUpdateUser={updateUserName} onUpdateUserProfileImage={updateUserProfileImage} />  : <Login onLogin={handleLogin} />
             } />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/faq" element={<FAQ />} />

@@ -7,9 +7,10 @@ import {
 import { signOutUser } from '../firebase/authService'
 import { getDiaryCount } from '../firebase/diaryService'
 import { useTheme } from '../App'
-import { updateUserDisplayName } from '../firebase/authService'
+import { updateUserDisplayName,updateUserProfileImage } from '../firebase/authService'
+import { uploadImage } from '../firebase/storageService'
 
-function MyPage({ user, onLogout,onUpdateUser }) {
+function MyPage({ user, onLogout,onUpdateUser ,onUpdateUserProfileImage}) {
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const [diaryCount, setDiaryCount] = useState(0)
@@ -28,6 +29,26 @@ function MyPage({ user, onLogout,onUpdateUser }) {
     fetchDiaryCount()
   }, [user])
 
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  setLoading(true)
+  try {
+    const result = await uploadImage(file, 'profile-images')
+    if (result.success) {
+      await updateUserProfileImage(user.uid, result.data.url)
+      onUpdateUserProfileImage(result.data.url) // 상태 업데이트용
+      console.log('프로필 이미지 변경 완료')
+    } else {
+      console.error('업로드 실패:', result.error)
+    }
+  } catch (error) {
+    console.error('프로필 이미지 변경 오류:', error)
+  } finally {
+    setLoading(false)
+  }
+}
   const handleLogout = async () => {
     const result = await signOutUser()
     if (result.success) {
@@ -221,7 +242,10 @@ const handleUpdateProfile = async () => {
                   e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
                 }}
               >
-                <Camera size={32} />
+                <label>
+  <Camera size={32} />
+  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+</label>
               </button>
             </div>
             

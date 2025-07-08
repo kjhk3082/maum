@@ -35,6 +35,18 @@ export const initializeAuth = async () => {
     console.log('Firebase 초기화 오류:', error.message)
   }
 }
+//이미지 업데이트
+export const updateUserProfileImage = async (uid, photoURL) => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    await updateDoc(userRef, { photoURL })
+    console.log('프로필 이미지 저장 완료:', photoURL)
+    return { success: true }
+  } catch (error) {
+    console.error('프로필 이미지 저장 실패:', error)
+    return { success: false, error: error.message }
+  }
+}
 
 /**
  * Google 로그인
