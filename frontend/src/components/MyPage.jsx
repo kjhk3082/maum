@@ -381,11 +381,10 @@ function MyPage({ user, onLogout }) {
         </div>
 
         {/* ────────── 정보 카드 2×2 ────────── */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div
-            className="grid grid-cols-2 gap-6 mb-8"
-            style={{ fontFamily: "'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif" }}
-          ></div>
+        <div
+          className="grid grid-cols-2 gap-6 mb-8"
+          style={{ fontFamily: "'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif" }}
+        >
           {[
             { icon: Mail, color: '#17A2B8', label: '이메일', value: user?.email || '정보 없음' },
             { icon: Calendar, color: '#8B5CF6', label: '가입일', value: formatDate(user?.createdAt) },
@@ -394,10 +393,7 @@ function MyPage({ user, onLogout }) {
           ].map(({ icon: Icon, color, label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center justify-center rounded-2xl shadow-md
-                 w-44 h-44                     
-                 backdrop-blur-md
-                 transition-transform duration-200 hover:-translate-y-1"
+              className="flex flex-col items-center justify-center rounded-2xl shadow-md w-44 h-44 backdrop-blur-md transition-transform duration-200 hover:-translate-y-1"
               style={{
                 background: isDarkMode
                   ? 'linear-gradient(145deg, rgba(44,44,46,.6), rgba(28,28,30,.8))'
@@ -418,14 +414,12 @@ function MyPage({ user, onLogout }) {
               >
                 <Icon size={28} color="white" />
               </div>
-
               <span
                 className="text-sm font-medium"
                 style={{ color: isDarkMode ? '#e2e8f0' : '#475569' }}
               >
                 {label}
               </span>
-
               <span
                 className="text-lg font-semibold"
                 style={{ color: isDarkMode ? '#ffffff' : '#1e293b' }}
