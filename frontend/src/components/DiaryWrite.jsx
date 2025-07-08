@@ -7,6 +7,7 @@ import { imageService } from '../services/imageService'
 import { notificationService } from '../services/notificationService'
 import { createDiary, getDiaryByDate, updateDiary } from '../firebase/diaryService'
 import { uploadCompressedImage, deleteImage } from '../firebase/storageService'
+import {useRef} from 'react'
 // import { diaryAPI } from '../services/api' // 백엔드 연결 시 주석 해제
 
 const emotions = [
@@ -308,10 +309,9 @@ const DiaryWrite = ({ user }) => {
       console.log('ℹ️ 선택된 텍스트가 없음')
     }
     
-    // 내용 칸 밖의 선택이거나 선택이 해제된 경우
-    console.log('🔄 selectedTextInfo 초기화')
-    setSelectedTextInfo(null)
-    setSelectedText('')
+    if (selectedTextInfo) {
+     lastSelectionRef.current = selectedTextInfo;   // 백업
+  }
   }
 
   // 선택된 텍스트 하이라이트 함수
@@ -404,6 +404,9 @@ const DiaryWrite = ({ user }) => {
     
     console.log('🎯 하이라이트 모달 열기 시도:', { selectedText, selectedTextInfo })
     
+     if (!selectedTextInfo && lastSelectionRef.current) {
+      setSelectedTextInfo(lastSelectionRef.current);
+   }
     // 선택된 텍스트가 있으면 selectedTextInfo 업데이트
     if (selectedText && selectedText.length > 0) {
       const range = selection.getRangeAt(0)
@@ -419,6 +422,8 @@ const DiaryWrite = ({ user }) => {
       console.log('✅ 새로 선택된 텍스트로 모달 열기:', textInfo)
       return
     }
+
+
     
     // 기존에 선택된 텍스트 정보가 있으면 사용
     if (selectedTextInfo && selectedTextInfo.text) {
