@@ -186,7 +186,7 @@ function MyPage({ user, onLogout }) {
                 />
               </div>
               <button 
-                className="absolute -bottom-2 -left-2 transition-all duration-200"
+                className="absolute bottom-2 right-2 transition-all duration-200"
                 style={{
                   width: '60px',
                   height: '60px',
