@@ -195,60 +195,59 @@ function MyPage({ user, onLogout, onUpdateUser, onUpdateUserProfileImage }) {
             : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4 mb-6">
-                      <div style={{
-                        width: '140px',
-                        height: '140px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
-                      }}>
-                        <img
-                          src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
-                          alt={user?.name}
-                          style={{
-                            width: '132px',
-                            height: '132px',
-                            borderRadius: '50%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </div>
+            <div className="relative w-fit mx-auto mb-6">
+              <div style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
+              }}>
+                <img
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
+                  alt={user?.name}
+                  style={{
+                    width: '132px',
+                    height: '132px',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
 
-                      <label className="cursor-pointer">
-                        <div style={{
-                          width: '60px',
-                          height: '60px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                          color: 'white',
-                          border: '4px solid white',
-                          boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s ease'
-                        }}
-                          onMouseOver={e => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)';
-                          }}
-                          onMouseOut={e => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)';
-                          }}
-                        >
-                          <Camera size={32} />
-                        </div>
-                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                      </label>
-                    </div>
-                    </div>
+              <label className="absolute top-1/2 left-full ml-2 -translate-y-1/2 cursor-pointer">
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                  color: 'white',
+                  border: '4px solid white',
+                  boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)';
+                  }}
+                >
+                  <Camera size={32} />
+                </div>
+                <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+              </label>
+            </div>
+
 
             <div className="flex-1 text-center md:text-left">
               {isEditing ? (
