@@ -2957,7 +2957,7 @@ const DiaryWrite = ({ user }) => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  background: isDarkMode ? 'rgba(58, 58, 60, 0.8)' : 'rgba(0, 0, 0, 0.1)',
+                  background: 'red',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
