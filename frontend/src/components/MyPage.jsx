@@ -381,6 +381,7 @@ function MyPage({ user, onLogout }) {
         </div>
 
         {/* ── 정보 카드 2×2 ── */}
+        {/* 2×2 정사각 카드 – 고정 사이즈 */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {[
             { icon: Mail, color: 'text-cyan-500', label: '이메일', value: user?.email || '정보 없음' },
@@ -390,8 +391,11 @@ function MyPage({ user, onLogout }) {
           ].map(({ icon: Icon, color, label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center justify-center aspect-square rounded-xl shadow-md
-                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md ring-1 ring-white/20
+              className="flex flex-col items-center justify-center
+                 w-40 h-40  /* ← 160 px × 160 px 정사각형 */
+                 rounded-xl shadow-md
+                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md
+                 ring-1 ring-white/20
                  transition-transform duration-200 hover:-translate-y-1"
             >
               <Icon size={36} className={`mb-2 ${color} dark:opacity-90`} />
@@ -400,6 +404,7 @@ function MyPage({ user, onLogout }) {
             </div>
           ))}
         </div>
+
 
 
         {/* 설정 섹션 */}
