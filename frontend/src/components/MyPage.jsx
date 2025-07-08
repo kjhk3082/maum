@@ -161,19 +161,21 @@ function MyPage({ user, onLogout }) {
         }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative">
-              <div style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
-              }}>
+              <div
+                style={{
+                  width: '140px',
+                  height: '140px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
+                }}
+              >
                 <img
-                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name)}&background=ffffff&color=17A2B8&size=200`}
                   alt={user?.name}
                   style={{
                     width: '132px',
@@ -183,8 +185,10 @@ function MyPage({ user, onLogout }) {
                   }}
                 />
               </div>
+
+              {/* ↓ 여기 bottom/right 를 음수로 조정 ↓ */}
               <button
-                className="absolute bottom-4 right-4 transition-all duration-200"
+                className="absolute -bottom-8 -right-8 transition-all duration-200"
                 style={{
                   width: '60px',
                   height: '60px',
@@ -198,11 +202,11 @@ function MyPage({ user, onLogout }) {
                   justifyContent: 'center',
                   cursor: 'pointer'
                 }}
-                onMouseOver={(e) => {
+                onMouseOver={e => {
                   e.currentTarget.style.transform = 'scale(1.1)'
                   e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)'
                 }}
-                onMouseOut={(e) => {
+                onMouseOut={e => {
                   e.currentTarget.style.transform = 'scale(1)'
                   e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
                 }}
