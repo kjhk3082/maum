@@ -390,9 +390,11 @@ function MyPage({ user, onLogout }) {
           ].map(({ icon: Icon, color, label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center justify-center rounded-2xl shadow-md
-                 w-44 h-44                      /* 176×176 px = 정사각형 */
-                 backdrop-blur-md
+              className="flex flex-col items-center justify-center
+                 w-44 h-44                
+                 rounded-xl shadow-md
+                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md
+                 ring-1 ring-white/20
                  transition-transform duration-200 hover:-translate-y-1"
               style={{
                 background: isDarkMode
@@ -407,25 +409,18 @@ function MyPage({ user, onLogout }) {
               <div
                 className="mb-3 flex items-center justify-center rounded-xl"
                 style={{
-                  width: 56, height: 56,
+                  width: 56,
+                  height: 56,
                   background: `linear-gradient(145deg, ${color}66, ${color})`,
                   boxShadow: `0 6px 16px ${color}55`
                 }}
               >
                 <Icon size={28} color="white" />
               </div>
-
-              <span
-                className="text-sm font-medium"
-                style={{ color: isDarkMode ? '#e2e8f0' : '#475569' }}
-              >
+              <span className="text-sm font-medium" style={{ color: isDarkMode ? '#e2e8f0' : '#475569' }}>
                 {label}
               </span>
-
-              <span
-                className="text-lg font-semibold"
-                style={{ color: isDarkMode ? '#ffffff' : '#1e293b' }}
-              >
+              <span className="text-lg font-semibold" style={{ color: isDarkMode ? '#ffffff' : '#1e293b' }}>
                 {value}
               </span>
             </div>
