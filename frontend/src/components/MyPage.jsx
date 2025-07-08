@@ -380,23 +380,49 @@ function MyPage({ user, onLogout }) {
           </div>
         </div>
 
-        {/* ── 정보 카드 2×2 ── */}
+        {/* ────────── 정보 카드 2×2 ────────── */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {[
-            { icon: Mail, color: 'text-cyan-500', label: '이메일', value: user?.email || '정보 없음' },
-            { icon: Calendar, color: 'text-purple-500', label: '가입일', value: formatDate(user?.createdAt) },
-            { icon: BookOpen, color: 'text-emerald-500', label: '작성한 일기', value: `${diaryCount}개` },
-            { icon: User, color: 'text-amber-500', label: '계정 타입', value: user?.loginType === 'google' ? 'Google' : 'Kakao' }
+            { icon: Mail, color: '#17A2B8', label: '이메일', value: user?.email || '정보 없음' },
+            { icon: Calendar, color: '#8B5CF6', label: '가입일', value: formatDate(user?.createdAt) },
+            { icon: BookOpen, color: '#06D6A0', label: '작성한 일기', value: `${diaryCount}개` },
+            { icon: User, color: '#F59E0B', label: '계정 타입', value: user?.loginType === 'google' ? 'Google' : 'Kakao' }
           ].map(({ icon: Icon, color, label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center justify-center aspect-square rounded-xl shadow-md
-                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md ring-1 ring-white/20
+              className="flex flex-col items-center justify-center
+                 w-44 h-44                
+                 rounded-xl shadow-md
+                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md
+                 ring-1 ring-white/20
                  transition-transform duration-200 hover:-translate-y-1"
+              style={{
+                background: isDarkMode
+                  ? 'linear-gradient(145deg, rgba(44,44,46,.6), rgba(28,28,30,.8))'
+                  : 'linear-gradient(145deg, rgba(255,255,255,.9), rgba(248,250,252,.7))',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.05)'}`,
+                boxShadow: isDarkMode
+                  ? '0 8px 24px rgba(0,0,0,.25)'
+                  : '0 8px 24px rgba(0,0,0,.08)'
+              }}
             >
-              <Icon size={36} className={`mb-2 ${color} dark:opacity-90`} />
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</span>
-              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">{value}</span>
+              <div
+                className="mb-3 flex items-center justify-center rounded-xl"
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: `linear-gradient(145deg, ${color}66, ${color})`,
+                  boxShadow: `0 6px 16px ${color}55`
+                }}
+              >
+                <Icon size={28} color="white" />
+              </div>
+              <span className="text-sm font-medium" style={{ color: isDarkMode ? '#e2e8f0' : '#475569' }}>
+                {label}
+              </span>
+              <span className="text-lg font-semibold" style={{ color: isDarkMode ? '#ffffff' : '#1e293b' }}>
+                {value}
+              </span>
             </div>
           ))}
         </div>
