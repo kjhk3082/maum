@@ -47,22 +47,12 @@ function MyPage({ user, onLogout }) {
       setLoading(false)
     }
   }
-
-  const formatDate = (src) => {
-    if (!src) return '알 수 없음'
-    const d =
-      typeof src?.toDate === 'function' ? src.toDate() :
-        typeof src === 'string' ? new Date(src) :
-          src
-
-    if (isNaN(d)) return '알 수 없음'
-
-
-    return d.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+  const formatDate = (dateVal) => {
+    if (!dateVal) return '알 수 없음'
+    const d = typeof dateVal === 'string'
+      ? new Date(dateVal)
+      : dateVal.toDate ? dateVal.toDate() : new Date(dateVal)
+    return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
   return (
@@ -390,272 +380,95 @@ function MyPage({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 정보 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* 이메일 */}
-          <div style={{
-            padding: '24px',
-            borderRadius: '20px',
-            background: isDarkMode
-              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))'
-              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-            boxShadow: isDarkMode
-              ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-              : '0 8px 24px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.3s ease'
-          }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 12px 32px rgba(0, 0, 0, 0.3)'
-                : '0 12px 32px rgba(0, 0, 0, 0.1)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-                : '0 8px 24px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(23, 162, 184, 0.4)'
-              }}>
-                <Mail size={32} color="white" />
-              </div>
-              <span style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                color: isDarkMode ? '#e2e8f0' : '#475569'
-              }}>
-                이메일
-              </span>
-            </div>
-            <p style={{
-              fontSize: '18px',
-              fontWeight: '500',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              wordBreak: 'break-all'
-            }}>
-              {user?.email || '이메일 정보 없음'}
-            </p>
-          </div>
+        {/* 정보 배지(원형) */}
+        <div className="flex flex-wrap justify-center gap-6 mb-12">
+          {/* ── 공통 스타일 변수로 빼두면 더 깔끔 ── */}
+          {[
+            {
+              icon: Mail,
+              color: '#17A2B8',
+              label: '이메일',
+              value: user?.email || '정보 없음'
+            },
+            {
+              icon: Calendar,
+              color: '#8B5CF6',
+              label: '가입일',
+              value: formatDate(user?.createdAt)
+            },
+            {
+              icon: BookOpen,
+              color: '#06D6A0',
+              label: '작성한 일기',
+              value: `${diaryCount}개`
+            },
+            {
+              icon: User,
+              color: '#F59E0B',
+              label: '계정 타입',
+              value: user?.loginType === 'google' ? 'Google' : 'Kakao'
+            }
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="relative flex flex-col items-center justify-center"
+              style={{
+                width: '160px',
+                height: '160px',
+                borderRadius: '9999px',
+                background: isDarkMode
+                  ? 'rgba(44,44,46,0.7)'
+                  : 'rgba(255,255,255,0.85)',
+                border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)'
+                  }`,
+                backdropFilter: 'blur(12px)',
+                boxShadow: isDarkMode
+                  ? '0 8px 24px rgba(0,0,0,.35)'
+                  : '0 8px 24px rgba(0,0,0,.12)',
+                transition: 'all .25s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-6px)'
+                e.currentTarget.style.boxShadow = isDarkMode
+                  ? '0 12px 32px rgba(0,0,0,.45)'
+                  : '0 12px 32px rgba(0,0,0,.18)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = isDarkMode
+                  ? '0 8px 24px rgba(0,0,0,.35)'
+                  : '0 8px 24px rgba(0,0,0,.12)'
+              }}
+            >
+              {/* 아이콘 */}
+              <item.icon size={40} color="white" style={{
+                padding: '12px',
+                borderRadius: '50%',
+                background: `linear-gradient(145deg, ${item.color}66, ${item.color})`,
+                boxShadow: `0 4px 10px ${item.color}55`,
+                marginBottom: '10px'
+              }} />
 
-          {/* 가입일 */}
-          <div style={{
-            padding: '24px',
-            borderRadius: '20px',
-            background: isDarkMode
-              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))'
-              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-            boxShadow: isDarkMode
-              ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-              : '0 8px 24px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.3s ease'
-          }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 12px 32px rgba(0, 0, 0, 0.3)'
-                : '0 12px 32px rgba(0, 0, 0, 0.1)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-                : '0 8px 24px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: 'linear-gradient(145deg, #8b5cf6, #7c3aed)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(139, 92, 246, 0.4)'
-              }}>
-                <Calendar size={32} color="white" />
-              </div>
+              {/* 라벨 */}
               <span style={{
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: '600',
-                color: isDarkMode ? '#e2e8f0' : '#475569'
+                color: isDarkMode ? '#e2e8f0' : '#475569',
+                marginBottom: '2px'
               }}>
-                가입일
+                {item.label}
               </span>
-            </div>
-            <p style={{
-              fontSize: '18px',
-              fontWeight: '500',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0'
-            }}>
-              {formatDate(user?.createdAt)}
-            </p>
-          </div>
 
-          {/* 일기 개수 */}
-          <div style={{
-            padding: '24px',
-            borderRadius: '20px',
-            background: isDarkMode
-              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))'
-              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-            boxShadow: isDarkMode
-              ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-              : '0 8px 24px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.3s ease'
-          }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 12px 32px rgba(0, 0, 0, 0.3)'
-                : '0 12px 32px rgba(0, 0, 0, 0.1)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-                : '0 8px 24px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: 'linear-gradient(145deg, #06d6a0, #048c73)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(6, 214, 160, 0.4)'
-              }}>
-                <BookOpen size={32} color="white" />
-              </div>
+              {/* 값 */}
               <span style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                color: isDarkMode ? '#e2e8f0' : '#475569'
+                fontSize: item.label === '작성한 일기' ? '24px' : '16px',
+                fontWeight: '700',
+                color: isDarkMode ? '#ffffff' : '#1e293b'
               }}>
-                작성한 일기
+                {item.value}
               </span>
             </div>
-            <p style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: isDarkMode ? '#ffffff' : '#1e293b',
-              margin: '0',
-              background: 'linear-gradient(135deg, #06d6a0, #048c73)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              {diaryCount}개
-            </p>
-          </div>
-
-          {/* 계정 타입 */}
-          <div style={{
-            padding: '24px',
-            borderRadius: '20px',
-            background: isDarkMode
-              ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))'
-              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
-            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-            boxShadow: isDarkMode
-              ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-              : '0 8px 24px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.3s ease'
-          }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 12px 32px rgba(0, 0, 0, 0.3)'
-                : '0 12px 32px rgba(0, 0, 0, 0.1)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
-                : '0 8px 24px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: 'linear-gradient(145deg, #f59e0b, #d97706)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(245, 158, 11, 0.4)'
-              }}>
-                <User size={32} color="white" />
-              </div>
-              <span style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                color: isDarkMode ? '#e2e8f0' : '#475569'
-              }}>
-                계정 타입
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {user?.loginType === 'google' ? (
-                <>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  <span style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#4285F4'
-                  }}>
-                    Google
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: '#FEE500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <span style={{ fontSize: '16px', fontWeight: '700', color: '#000' }}>K</span>
-                  </div>
-                  <span style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#FEE500'
-                  }}>
-                    Kakao
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* 설정 섹션 */}
