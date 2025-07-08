@@ -195,7 +195,7 @@ const handleUpdateProfile = async () => {
             : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-8">
               <div style={{
                 width: '140px',
                 height: '140px',
