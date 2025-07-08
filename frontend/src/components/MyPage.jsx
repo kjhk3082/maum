@@ -380,93 +380,21 @@ function MyPage({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 정보 배지(원형) */}
-        <div className="flex flex-wrap justify-center gap-6 mb-12">
-          {/* ── 공통 스타일 변수로 빼두면 더 깔끔 ── */}
+        {/* 정보 카드 2×2 */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
           {[
-            {
-              icon: Mail,
-              color: '#17A2B8',
-              label: '이메일',
-              value: user?.email || '정보 없음'
-            },
-            {
-              icon: Calendar,
-              color: '#8B5CF6',
-              label: '가입일',
-              value: formatDate(user?.createdAt)
-            },
-            {
-              icon: BookOpen,
-              color: '#06D6A0',
-              label: '작성한 일기',
-              value: `${diaryCount}개`
-            },
-            {
-              icon: User,
-              color: '#F59E0B',
-              label: '계정 타입',
-              value: user?.loginType === 'google' ? 'Google' : 'Kakao'
-            }
-          ].map((item, i) => (
+            { icon: Mail, label: '이메일', value: user?.email || '정보 없음' },
+            { icon: Calendar, label: '가입일', value: formatDate(user?.createdAt) },
+            { icon: BookOpen, label: '작성한 일기', value: `${diaryCount}개` },
+            { icon: User, label: '계정 타입', value: user?.loginType === 'google' ? 'Google' : 'Kakao' }
+          ].map(({ icon: Icon, label, value }) => (
             <div
-              key={i}
-              className="relative flex flex-col items-center justify-center"
-              style={{
-                width: '160px',
-                height: '160px',
-                borderRadius: '9999px',
-                background: isDarkMode
-                  ? 'rgba(44,44,46,0.7)'
-                  : 'rgba(255,255,255,0.85)',
-                border: `2px solid ${isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)'
-                  }`,
-                backdropFilter: 'blur(12px)',
-                boxShadow: isDarkMode
-                  ? '0 8px 24px rgba(0,0,0,.35)'
-                  : '0 8px 24px rgba(0,0,0,.12)',
-                transition: 'all .25s ease'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-6px)'
-                e.currentTarget.style.boxShadow = isDarkMode
-                  ? '0 12px 32px rgba(0,0,0,.45)'
-                  : '0 12px 32px rgba(0,0,0,.18)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = isDarkMode
-                  ? '0 8px 24px rgba(0,0,0,.35)'
-                  : '0 8px 24px rgba(0,0,0,.12)'
-              }}
+              key={label}
+              className="flex flex-col items-center justify-center bg-white dark:bg-gray-800 aspect-square rounded-xl shadow-md transition-transform duration-200 hover:-translate-y-1"
             >
-              {/* 아이콘 */}
-              <item.icon size={40} color="white" style={{
-                padding: '12px',
-                borderRadius: '50%',
-                background: `linear-gradient(145deg, ${item.color}66, ${item.color})`,
-                boxShadow: `0 4px 10px ${item.color}55`,
-                marginBottom: '10px'
-              }} />
-
-              {/* 라벨 */}
-              <span style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: isDarkMode ? '#e2e8f0' : '#475569',
-                marginBottom: '2px'
-              }}>
-                {item.label}
-              </span>
-
-              {/* 값 */}
-              <span style={{
-                fontSize: item.label === '작성한 일기' ? '24px' : '16px',
-                fontWeight: '700',
-                color: isDarkMode ? '#ffffff' : '#1e293b'
-              }}>
-                {item.value}
-              </span>
+              <Icon size={32} className="mb-2 text-cyan-500 dark:text-cyan-300" />
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</span>
+              <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">{value}</span>
             </div>
           ))}
         </div>
