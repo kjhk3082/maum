@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, User, Mail, Calendar, BookOpen, LogOut, 
-  Edit3, Check, X, Camera, Palette, Moon, Sun 
+import {
+  ArrowLeft, User, Mail, Calendar, BookOpen, LogOut,
+  Edit3, Check, X, Camera, Palette, Moon, Sun
 } from 'lucide-react'
 import { signOutUser } from '../firebase/authService'
 import { getDiaryCount } from '../firebase/diaryService'
 import { useTheme } from '../App'
-import { updateUserDisplayName,updateUserProfileImage } from '../firebase/authService'
+import { updateUserDisplayName, updateUserProfileImage } from '../firebase/authService'
 import { uploadImage } from '../firebase/storageService'
 
-function MyPage({ user, onLogout,onUpdateUser ,onUpdateUserProfileImage}) {
+function MyPage({ user, onLogout, onUpdateUser, onUpdateUserProfileImage }) {
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const [diaryCount, setDiaryCount] = useState(0)
@@ -30,25 +30,25 @@ function MyPage({ user, onLogout,onUpdateUser ,onUpdateUserProfileImage}) {
   }, [user])
 
   const handleImageChange = async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
+    const file = e.target.files[0]
+    if (!file) return
 
-  setLoading(true)
-  try {
-    const result = await uploadImage(file, 'profile-images')
-    if (result.success) {
-      await updateUserProfileImage(user.uid, result.data.url)
-      onUpdateUserProfileImage(result.data.url) // 상태 업데이트용
-      console.log('프로필 이미지 변경 완료')
-    } else {
-      console.error('업로드 실패:', result.error)
+    setLoading(true)
+    try {
+      const result = await uploadImage(file, 'profile-images')
+      if (result.success) {
+        await updateUserProfileImage(user.uid, result.data.url)
+        onUpdateUserProfileImage(result.data.url) // 상태 업데이트용
+        console.log('프로필 이미지 변경 완료')
+      } else {
+        console.error('업로드 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('프로필 이미지 변경 오류:', error)
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error('프로필 이미지 변경 오류:', error)
-  } finally {
-    setLoading(false)
   }
-}
   const handleLogout = async () => {
     const result = await signOutUser()
     if (result.success) {
@@ -57,29 +57,29 @@ function MyPage({ user, onLogout,onUpdateUser ,onUpdateUserProfileImage}) {
     }
   }
 
-const handleUpdateProfile = async () => {
-  setLoading(true)
-  try {
-    const result = await updateUserDisplayName(user.uid, displayName)
+  const handleUpdateProfile = async () => {
+    setLoading(true)
+    try {
+      const result = await updateUserDisplayName(user.uid, displayName)
 
-    if (!result.success) {
-      console.error('이름 저장 실패:', result.error)
-      alert('이름 변경에 실패했습니다: ' + result.error)
-      return
+      if (!result.success) {
+        console.error('이름 저장 실패:', result.error)
+        alert('이름 변경에 실패했습니다: ' + result.error)
+        return
+      }
+
+      console.log('이름 저장 성공:', displayName)
+
+      onUpdateUser(displayName)  // App.jsx의 상태 변경
+      setIsEditing(false)        // 수정 모드 종료
+
+    } catch (error) {
+      console.error('프로필 업데이트 실패:', error)
+      alert('오류 발생: ' + error.message)
+    } finally {
+      setLoading(false)
     }
-
-    console.log('이름 저장 성공:', displayName)
-
-    onUpdateUser(displayName)  // App.jsx의 상태 변경
-    setIsEditing(false)        // 수정 모드 종료
-
-  } catch (error) {
-    console.error('프로필 업데이트 실패:', error)
-    alert('오류 발생: ' + error.message)
-  } finally {
-    setLoading(false)
   }
-}
 
   const formatDate = (dateString) => {
     if (!dateString) return '알 수 없음'
@@ -92,14 +92,14 @@ const handleUpdateProfile = async () => {
 
   return (
     <div className="min-h-screen" style={{
-      background: isDarkMode 
-        ? 'linear-gradient(to bottom, #1a1a1a 0%, #2d2d2d 100%)' 
+      background: isDarkMode
+        ? 'linear-gradient(to bottom, #1a1a1a 0%, #2d2d2d 100%)'
         : 'linear-gradient(to bottom, #f0f9ff 0%, #e0f2fe 100%)'
     }}>
       {/* 헤더 */}
       <div className="sticky top-0 z-10 backdrop-blur-lg border-b" style={{
-        background: isDarkMode 
-          ? 'rgba(26, 26, 26, 0.8)' 
+        background: isDarkMode
+          ? 'rgba(26, 26, 26, 0.8)'
           : 'rgba(255, 255, 255, 0.8)',
         borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
       }}>
@@ -112,8 +112,8 @@ const handleUpdateProfile = async () => {
                   width: '64px',
                   height: '64px',
                   borderRadius: '20px',
-                  background: isDarkMode 
-                    ? 'rgba(255, 255, 255, 0.05)' 
+                  background: isDarkMode
+                    ? 'rgba(255, 255, 255, 0.05)'
                     : 'rgba(0, 0, 0, 0.05)',
                   border: 'none',
                   cursor: 'pointer',
@@ -123,14 +123,14 @@ const handleUpdateProfile = async () => {
                   transition: 'all 0.2s ease'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = isDarkMode 
-                    ? 'rgba(255, 255, 255, 0.1)' 
+                  e.currentTarget.style.background = isDarkMode
+                    ? 'rgba(255, 255, 255, 0.1)'
                     : 'rgba(0, 0, 0, 0.1)'
                   e.currentTarget.style.transform = 'scale(1.05)'
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = isDarkMode 
-                    ? 'rgba(255, 255, 255, 0.05)' 
+                  e.currentTarget.style.background = isDarkMode
+                    ? 'rgba(255, 255, 255, 0.05)'
                     : 'rgba(0, 0, 0, 0.05)'
                   e.currentTarget.style.transform = 'scale(1)'
                 }}
@@ -149,8 +149,8 @@ const handleUpdateProfile = async () => {
                 width: '64px',
                 height: '64px',
                 borderRadius: '20px',
-                background: isDarkMode 
-                  ? 'rgba(255, 255, 255, 0.05)' 
+                background: isDarkMode
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(0, 0, 0, 0.05)',
                 border: 'none',
                 cursor: 'pointer',
@@ -160,14 +160,14 @@ const handleUpdateProfile = async () => {
                 transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = isDarkMode 
-                  ? 'rgba(255, 255, 255, 0.1)' 
+                e.currentTarget.style.background = isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
                   : 'rgba(0, 0, 0, 0.1)'
                 e.currentTarget.style.transform = 'scale(1.05)'
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.background = isDarkMode 
-                  ? 'rgba(255, 255, 255, 0.05)' 
+                e.currentTarget.style.background = isDarkMode
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(0, 0, 0, 0.05)'
                 e.currentTarget.style.transform = 'scale(1)'
               }}
@@ -186,69 +186,70 @@ const handleUpdateProfile = async () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* 프로필 섹션 */}
         <div className="mb-8 p-8 rounded-3xl backdrop-blur-sm shadow-xl" style={{
-          background: isDarkMode 
-            ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.8), rgba(28, 28, 30, 0.9))' 
+          background: isDarkMode
+            ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.8), rgba(28, 28, 30, 0.9))'
             : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))',
           border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-          boxShadow: isDarkMode 
-            ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
+          boxShadow: isDarkMode
+            ? '0 20px 40px rgba(0, 0, 0, 0.3)'
             : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex items-center gap-6">
-              <div style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
-              }}>
-                <img
-                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
-                  alt={user?.name}
-                  style={{
-                    width: '132px',
-                    height: '132px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-              <button 
-                className="absolute -bottom-2 -right-2 transition-all duration-200"
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(145deg, #17A2B8, #138496)',
-                  color: 'white',
-                  border: '4px solid white',
-                  boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)'
-                  e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)'
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)'
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
-                }}
-              >
-                <label>
-  <Camera size={32} />
-  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-</label>
-              </button>
-            </div>
-            
+              <div className="flex items-center gap-4 mb-6">
+                      <div style={{
+                        width: '140px',
+                        height: '140px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 12px 24px rgba(23, 162, 184, 0.3)'
+                      }}>
+                        <img
+                          src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=ffffff&color=17A2B8&size=200`}
+                          alt={user?.name}
+                          style={{
+                            width: '132px',
+                            height: '132px',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
+
+                      <label className="cursor-pointer">
+                        <div style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(145deg, #17A2B8, #138496)',
+                          color: 'white',
+                          border: '4px solid white',
+                          boxShadow: '0 12px 24px rgba(23, 162, 184, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                          onMouseOver={e => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.boxShadow = '0 16px 32px rgba(23, 162, 184, 0.5)';
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)';
+                          }}
+                        >
+                          <Camera size={32} />
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                      </label>
+                    </div>
+                    </div>
+
             <div className="flex-1 text-center md:text-left">
               {isEditing ? (
                 <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -329,7 +330,7 @@ const handleUpdateProfile = async () => {
                       fontWeight: '700',
                       margin: '0',
                       color: isDarkMode ? '#ffffff' : '#1d1d1f',
-                      background: isDarkMode 
+                      background: isDarkMode
                         ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
                         : 'linear-gradient(135deg, #1e293b, #475569)',
                       WebkitBackgroundClip: 'text',
@@ -344,8 +345,8 @@ const handleUpdateProfile = async () => {
                         width: '56px',
                         height: '56px',
                         borderRadius: '16px',
-                        background: isDarkMode 
-                          ? 'rgba(255, 255, 255, 0.1)' 
+                        background: isDarkMode
+                          ? 'rgba(255, 255, 255, 0.1)'
                           : 'rgba(0, 0, 0, 0.05)',
                         border: 'none',
                         cursor: 'pointer',
@@ -355,14 +356,14 @@ const handleUpdateProfile = async () => {
                         transition: 'all 0.2s'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = isDarkMode 
-                          ? 'rgba(255, 255, 255, 0.15)' 
+                        e.currentTarget.style.background = isDarkMode
+                          ? 'rgba(255, 255, 255, 0.15)'
                           : 'rgba(0, 0, 0, 0.1)'
                         e.currentTarget.style.transform = 'scale(1.05)'
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.background = isDarkMode 
-                          ? 'rgba(255, 255, 255, 0.1)' 
+                        e.currentTarget.style.background = isDarkMode
+                          ? 'rgba(255, 255, 255, 0.1)'
                           : 'rgba(0, 0, 0, 0.05)'
                         e.currentTarget.style.transform = 'scale(1)'
                       }}
@@ -374,10 +375,10 @@ const handleUpdateProfile = async () => {
                     {user?.loginType === 'google' ? (
                       <>
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
                         <span style={{
                           fontSize: '18px',
@@ -389,9 +390,9 @@ const handleUpdateProfile = async () => {
                       </>
                     ) : (
                       <>
-                        <img 
-                          src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+" 
-                          alt="Kakao" 
+                        <img
+                          src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAyMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiNGRkVCMDAiLz4KPC9zdmc+"
+                          alt="Kakao"
                           style={{ width: '32px', height: '32px' }}
                         />
                         <span style={{
@@ -417,7 +418,7 @@ const handleUpdateProfile = async () => {
             </div>
           </div>
         </div>
-{/* ────────── 정보 카드 2×2 ────────── */}
+        {/* ────────── 정보 카드 2×2 ────────── */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {[
             { icon: Mail, color: '#17A2B8', label: '이메일', value: user?.email || '정보 없음' },
@@ -480,7 +481,7 @@ const handleUpdateProfile = async () => {
             fontWeight: '700',
             marginBottom: '24px',
             color: isDarkMode ? '#ffffff' : '#1e293b',
-            background: isDarkMode 
+            background: isDarkMode
               ? 'linear-gradient(135deg, #ffffff, #e2e8f0)'
               : 'linear-gradient(135deg, #1e293b, #475569)',
             WebkitBackgroundClip: 'text',
@@ -497,12 +498,12 @@ const handleUpdateProfile = async () => {
               width: '100%',
               padding: '20px 24px',
               borderRadius: '20px',
-              background: isDarkMode 
-                ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))' 
+              background: isDarkMode
+                ? 'linear-gradient(145deg, rgba(44, 44, 46, 0.6), rgba(28, 28, 30, 0.8))'
                 : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.7))',
               border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-              boxShadow: isDarkMode 
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              boxShadow: isDarkMode
+                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
                 : '0 8px 24px rgba(0, 0, 0, 0.06)',
               display: 'flex',
               alignItems: 'center',
@@ -512,14 +513,14 @@ const handleUpdateProfile = async () => {
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = isDarkMode 
-                ? '0 12px 32px rgba(0, 0, 0, 0.3)' 
+              e.currentTarget.style.boxShadow = isDarkMode
+                ? '0 12px 32px rgba(0, 0, 0, 0.3)'
                 : '0 12px 32px rgba(0, 0, 0, 0.1)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = isDarkMode 
-                ? '0 8px 24px rgba(0, 0, 0, 0.2)' 
+              e.currentTarget.style.boxShadow = isDarkMode
+                ? '0 8px 24px rgba(0, 0, 0, 0.2)'
                 : '0 8px 24px rgba(0, 0, 0, 0.06)'
             }}
           >
@@ -549,13 +550,13 @@ const handleUpdateProfile = async () => {
                 width: '56px',
                 height: '56px',
                 borderRadius: '16px',
-                background: isDarkMode 
-                  ? 'linear-gradient(145deg, #374151, #1f2937)' 
+                background: isDarkMode
+                  ? 'linear-gradient(145deg, #374151, #1f2937)'
                   : 'linear-gradient(145deg, #fbbf24, #f59e0b)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: isDarkMode 
+                boxShadow: isDarkMode
                   ? '0 8px 20px rgba(55, 65, 81, 0.4)'
                   : '0 8px 20px rgba(251, 191, 36, 0.4)'
               }}>
