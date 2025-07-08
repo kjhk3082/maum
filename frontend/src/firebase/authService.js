@@ -16,19 +16,7 @@ import {
 } from 'firebase/firestore'
 import { auth, db } from './config'
 
-import { updateDoc, doc } from 'firebase/firestore'
-import { db } from './config'
 
-export const updateUserInFirestore = async (uid, updates) => {
-  try {
-    const userRef = doc(db, 'users', uid)
-    await updateDoc(userRef, updates)
-    console.log('사용자 정보 업데이트 완료:', updates)
-  } catch (error) {
-    console.error('사용자 정보 업데이트 실패:', error)
-    throw error
-  }
-}
 
 // Google 로그인 제공자 설정
 const googleProvider = new GoogleAuthProvider()
