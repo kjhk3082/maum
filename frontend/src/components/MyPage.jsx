@@ -9,7 +9,7 @@ import { getDiaryCount } from '../firebase/diaryService'
 import { useTheme } from '../App'
 import { updateUserDisplayName } from '../firebase/authService'
 
-function MyPage({ user, onLogout }) {
+function MyPage({ user, onLogout,onUpdateUser }) {
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const [diaryCount, setDiaryCount] = useState(0)
@@ -36,15 +36,15 @@ function MyPage({ user, onLogout }) {
     }
   }
 
-  const handleUpdateProfile = async () => {
+const handleUpdateProfile = async () => {
   setLoading(true)
   try {
     const result = await updateUserDisplayName(user.uid, displayName)
     if (result.success) {
-      console.log('이름 변경 성공')
+      onUpdateUser(displayName)   // 이 부분 추가
       setIsEditing(false)
     } else {
-      console.error('이름 변경 실패:', result.error)
+      console.error('이름 저장 실패:', result.error)
     }
   } catch (error) {
     console.error('프로필 업데이트 실패:', error)
