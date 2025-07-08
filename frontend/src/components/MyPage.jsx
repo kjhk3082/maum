@@ -39,6 +39,7 @@ function MyPage({ user, onLogout }) {
     setLoading(true)
     try {
       // TODO: 프로필 업데이트 로직 구현
+      await updateUserInFirestore(user.uid, { displayName })
       console.log('프로필 업데이트:', displayName)
       setIsEditing(false)
     } catch (error) {
