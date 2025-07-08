@@ -18,6 +18,7 @@ const emotions = [
   { emoji: '😰', label: '불안', value: 'ANXIOUS' }
 ]
 
+const [showPreview, setShowPreview] = useState(true);
 // 더미 데이터 생성 함수 제거 (실제 사용자 데이터만 사용)
 
 // 색상 변환 유틸리티 함수
@@ -1553,33 +1554,49 @@ const DiaryWrite = ({ user }) => {
               ></textarea>
               
               {/* 내용 미리보기 (하이라이트 적용) */}
-              {content && highlightedTexts.length > 0 && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  background: isDarkMode ? 'rgba(28, 28, 30, 0.5)' : 'rgba(248, 250, 252, 0.8)',
-                  borderRadius: '12px',
-                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
-                }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: isDarkMode ? '#FFFFFF' : '#333',
-                    marginBottom: '12px'
-                  }}>
-                    📝 미리보기 (하이라이트 적용)
-                  </div>
-                  <div style={{
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    color: isDarkMode ? '#CCCCCC' : '#666',
-                    whiteSpace: 'pre-wrap'
-                  }}>
-                    {renderContentWithHighlights(content)}
-                  </div>
-                </div>
-              )}
-            </div>
+                                        <div style={{
+                            marginTop: '16px',
+                            padding: '16px',
+                            background: isDarkMode ? 'rgba(28, 28, 30, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+                            borderRadius: '12px',
+                            border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+                            position: 'relative'
+                          }}>
+                            {/* 닫기 버튼 */}
+                            <button
+                              onClick={() => setShowPreview(false)}
+                              style={{
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: isDarkMode ? '#fff' : '#333',
+                                fontSize: '18px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ×
+                            </button>
+
+                            <div style={{
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              color: isDarkMode ? '#FFFFFF' : '#333',
+                              marginBottom: '12px'
+                            }}>
+                              📝 미리보기 (하이라이트 적용)
+                            </div>
+                            <div style={{
+                              fontSize: '14px',
+                              lineHeight: '1.6',
+                              color: isDarkMode ? '#CCCCCC' : '#666',
+                              whiteSpace: 'pre-wrap'
+                            }}>
+                              {renderContentWithHighlights(content)}
+                            </div>
+                          </div>
+                     </div>
 
             {/* 하이라이트 관리 */}
             {highlightedTexts.length > 0 && (
