@@ -492,6 +492,9 @@ const DiaryWrite = ({ user }) => {
 
   // 하이라이트 연결하기
   const handleConnectHighlight = () => {
+    console.log('🔍 연결하기 클릭됨')
+    console.log('선택된 텍스트:', selectedTextInfo)
+    console.log('업로드된 이미지 목록:', highlightImages)
     if (!selectedTextInfo || highlightImages.length === 0) {
       showNotification('error', '연결 실패', '텍스트와 이미지를 모두 선택해주세요.')
       return
