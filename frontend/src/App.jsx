@@ -12,7 +12,6 @@ import AdminDashboard from './components/AdminDashboard'
 import { onAuthStateChange, initializeAuth } from './firebase/authService'
 import './App.css'
 
-// 다크모드 컨텍스트
 export const ThemeContext = createContext()
 
 export const useTheme = () => {
@@ -29,11 +28,10 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState(null)
 
-  // 다크모드 초기 설정
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    
+
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark')
     } else {
@@ -41,13 +39,11 @@ function App() {
     }
   }, [])
 
-  // 다크모드 토글
   const toggleTheme = () => {
     const newTheme = !isDarkMode
     setIsDarkMode(newTheme)
     localStorage.setItem('theme', newTheme ? 'dark' : 'light')
-    
-    // 문서 클래스 변경
+
     if (newTheme) {
       document.documentElement.classList.add('dark')
     } else {
@@ -55,7 +51,6 @@ function App() {
     }
   }
 
-  // 다크모드 클래스 적용
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark')
@@ -64,13 +59,10 @@ function App() {
     }
   }, [isDarkMode])
 
-  // Firebase 인증 상태 리스너
   useEffect(() => {
     const setupAuth = async () => {
-      // 앱 시작 시 Firebase 초기화
       await initializeAuth()
-      
-      // Google 로그인 사용자 인증 상태 리스너 설정
+
       const unsubscribe = onAuthStateChange((user) => {
         setUser(user)
         setIsLoggedIn(!!user)
@@ -90,8 +82,6 @@ function App() {
     }
   }, [])
 
-  // 실제 웹용 - 로컬스토리지 사용 안함
-
   const handleLogin = (userData) => {
     setUser(userData)
     setIsLoggedIn(true)
@@ -102,12 +92,18 @@ function App() {
     setIsLoggedIn(false)
   }
 
+  const updateUserName = (newName) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      name: newName
+    }))
+  }
+
   const themeValue = {
     isDarkMode,
     toggleTheme
   }
 
-  // 로딩 중 화면
   if (isLoading) {
     return (
       <ThemeContext.Provider value={themeValue}>
@@ -151,7 +147,7 @@ function App() {
               isLoggedIn ? <StatsPage user={user} /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/mypage" element={
-              isLoggedIn ? <MyPage user={user} onLogout={handleLogout} /> : <Login onLogin={handleLogin} />
+              isLoggedIn ? <MyPage user={user} onLogout={handleLogout} onUpdateUser={updateUserName} /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/faq" element={<FAQ />} />
