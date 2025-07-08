@@ -380,24 +380,27 @@ function MyPage({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 정보 카드 2×2 */}
+        {/* ── 정보 카드 2×2 ── */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {[
-            { icon: Mail, label: '이메일', value: user?.email || '정보 없음' },
-            { icon: Calendar, label: '가입일', value: formatDate(user?.createdAt) },
-            { icon: BookOpen, label: '작성한 일기', value: `${diaryCount}개` },
-            { icon: User, label: '계정 타입', value: user?.loginType === 'google' ? 'Google' : 'Kakao' }
-          ].map(({ icon: Icon, label, value }) => (
+            { icon: Mail, color: 'text-cyan-500', label: '이메일', value: user?.email || '정보 없음' },
+            { icon: Calendar, color: 'text-purple-500', label: '가입일', value: formatDate(user?.createdAt) },
+            { icon: BookOpen, color: 'text-emerald-500', label: '작성한 일기', value: `${diaryCount}개` },
+            { icon: User, color: 'text-amber-500', label: '계정 타입', value: user?.loginType === 'google' ? 'Google' : 'Kakao' }
+          ].map(({ icon: Icon, color, label, value }) => (
             <div
               key={label}
-              className="flex flex-col items-center justify-center bg-white dark:bg-gray-800 aspect-square rounded-xl shadow-md transition-transform duration-200 hover:-translate-y-1"
+              className="flex flex-col items-center justify-center aspect-square rounded-xl shadow-md
+                 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md ring-1 ring-white/20
+                 transition-transform duration-200 hover:-translate-y-1"
             >
-              <Icon size={32} className="mb-2 text-cyan-500 dark:text-cyan-300" />
+              <Icon size={36} className={`mb-2 ${color} dark:opacity-90`} />
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</span>
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-100">{value}</span>
             </div>
           ))}
         </div>
+
 
         {/* 설정 섹션 */}
         <div className="space-y-6">
