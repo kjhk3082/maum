@@ -49,8 +49,17 @@ function MyPage({ user, onLogout }) {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '알 수 없음'
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+      if (!dateVal) return '알 수 없음'
+
+    
+    const dateObj =
+      typeof dateVal?.toDate === 'function'
+        ? dateVal.toDate()
+        : (typeof dateVal === 'string' ? new Date(dateVal) : dateVal)
+
+    if (isNaN(dateObj)) return '알 수 없음'
+
+    return dateObj.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -186,7 +195,7 @@ function MyPage({ user, onLogout }) {
                 />
               </div>
               <button 
-                className="absolute bottom-2 right-2 transition-all duration-200"
+                className="absolute bottom-4 right-4 transition-all duration-200"
                 style={{
                   width: '60px',
                   height: '60px',

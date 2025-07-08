@@ -164,7 +164,10 @@ export const onAuthStateChange = (callback) => {
             name: userData.displayName || firebaseUser.displayName || 'Google 사용자',
             email: userData.email || firebaseUser.email || '',
             profileImage: userData.photoURL || firebaseUser.photoURL || '',
-            loginType: 'google'
+            loginType: 'google',
+            createdAt:
+            userData.createdAt?.toDate?.().toISOString()
+            || firebaseUser.metadata?.creationTime
           }
           callback(userInfo)
         } else {
