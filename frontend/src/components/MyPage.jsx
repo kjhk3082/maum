@@ -380,8 +380,8 @@ function MyPage({ user, onLogout }) {
           </div>
         </div>
 
-        {/* ────────── 정보 카드 2×2 ────────── */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        {/* ── 정보 카드 2×2 (인라인 사이즈 고정) ── */}
+        <div className="grid grid-cols-2 gap-6 mb-8 justify-center">
           {[
             { icon: Mail, color: '#17A2B8', label: '이메일', value: user?.email || '정보 없음' },
             { icon: Calendar, color: '#8B5CF6', label: '가입일', value: formatDate(user?.createdAt) },
@@ -391,12 +391,13 @@ function MyPage({ user, onLogout }) {
             <div
               key={label}
               className="flex flex-col items-center justify-center
-                 w-44 h-44                
                  rounded-xl shadow-md
                  bg-white/70 dark:bg-slate-800/60 backdrop-blur-md
                  ring-1 ring-white/20
                  transition-transform duration-200 hover:-translate-y-1"
               style={{
+                width: '176px',       // 고정 폭
+                height: '176px',      // 고정 높이
                 background: isDarkMode
                   ? 'linear-gradient(145deg, rgba(44,44,46,.6), rgba(28,28,30,.8))'
                   : 'linear-gradient(145deg, rgba(255,255,255,.9), rgba(248,250,252,.7))',
@@ -409,8 +410,7 @@ function MyPage({ user, onLogout }) {
               <div
                 className="mb-3 flex items-center justify-center rounded-xl"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 56, height: 56,
                   background: `linear-gradient(145deg, ${color}66, ${color})`,
                   boxShadow: `0 6px 16px ${color}55`
                 }}
@@ -426,7 +426,6 @@ function MyPage({ user, onLogout }) {
             </div>
           ))}
         </div>
-
 
 
         {/* 설정 섹션 */}
