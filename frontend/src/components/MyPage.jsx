@@ -195,7 +195,7 @@ const handleUpdateProfile = async () => {
             : '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex items-center gap-10">
+            <div className="flex items-center gap-6">
               <div style={{
                 width: '140px',
                 height: '140px',
@@ -218,9 +218,9 @@ const handleUpdateProfile = async () => {
                   }}
                 />
               </div>
-              <button 
-                className="absolute -bottom-2 -right-2 transition-all duration-200"
-                style={{
+              <label>
+          
+                <div style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
@@ -231,7 +231,8 @@ const handleUpdateProfile = async () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'scale(1.1)'
@@ -242,12 +243,12 @@ const handleUpdateProfile = async () => {
                   e.currentTarget.style.boxShadow = '0 12px 24px rgba(23, 162, 184, 0.4)'
                 }}
               >
-                <label>
-  <Camera size={32} />
-  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-</label>
-              </button>
-            </div>
+                
+                  <Camera size={32} />
+                  </div>
+                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                </label>
+                </div>
             
             <div className="flex-1 text-center md:text-left">
               {isEditing ? (
