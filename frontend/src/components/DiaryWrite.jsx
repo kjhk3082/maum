@@ -1848,46 +1848,7 @@ const DiaryWrite = ({ user }) => {
                     </>
                   )}
                 </button>
-              
-              <button
-                onClick={handleImageAttach}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '16px',
-                  padding: '20px 28px',
-                  borderRadius: '20px',
-                  background: isDarkMode 
-                    ? 'rgba(58, 58, 60, 0.8)' 
-                    : 'rgba(255, 255, 255, 0.8)',
-                  color: isDarkMode ? '#FFFFFF' : '#333',
-                  fontWeight: '600',
-                  fontSize: '16px',
-                  boxShadow: isDarkMode 
-                    ? '0 12px 24px rgba(0, 0, 0, 0.25)' 
-                    : '0 12px 24px rgba(0, 0, 0, 0.08)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(233, 236, 239, 0.8)'}`,
-                  transition: 'all 0.3s',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 16px 32px rgba(0, 0, 0, 0.35)' 
-                    : '0 16px 32px rgba(0, 0, 0, 0.12)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = isDarkMode 
-                    ? '0 12px 24px rgba(0, 0, 0, 0.25)' 
-                    : '0 12px 24px rgba(0, 0, 0, 0.08)';
-                }}
-              >
-                <Image style={{ width: '28px', height: '28px' }} />
-                <span>이미지 첨부</span>
-              </button>
+           
             </div>
 
             {/* 저장 버튼 */}
